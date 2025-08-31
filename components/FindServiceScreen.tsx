@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   Dimensions,
-  FlatList,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -12,33 +12,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { getServicesWithProviders, getTopProviders, Provider, Service } from '../lib/firestore';
 
 const { width, height } = Dimensions.get('window');
 
-// Mock data for services
-const services = [
-  { id: '1', name: 'House Cleaning', icon: 'home-outline', rating: 4.8, providers: 24, color: '#FF6B6B' },
-  { id: '2', name: 'Plumbing', icon: 'water-outline', rating: 4.6, providers: 18, color: '#4ECDC4' },
-  { id: '3', name: 'Electrical', icon: 'flash-outline', rating: 4.7, providers: 15, color: '#45B7D1' },
-  { id: '4', name: 'Landscaping', icon: 'leaf-outline', rating: 4.5, providers: 12, color: '#96CEB4' },
-  { id: '5', name: 'Moving', icon: 'car-outline', rating: 4.4, providers: 8, color: '#FFEAA7' },
-  { id: '6', name: 'Painting', icon: 'color-palette-outline', rating: 4.3, providers: 20, color: '#DDA0DD' },
-  { id: '7', name: 'Carpentry', icon: 'hammer-outline', rating: 4.2, providers: 16, color: '#FDCB6E' },
-  { id: '8', name: 'HVAC', icon: 'thermometer-outline', rating: 4.1, providers: 14, color: '#74B9FF' },
-];
-
-// Featured services for the top section
-const featuredServices = [
+// Default featured services (fallback)
+const defaultFeaturedServices = [
   { id: '1', name: 'House Cleaning', icon: 'home-outline', rating: 4.8, providers: 24, color: '#FF6B6B', description: 'Professional cleaning services' },
   { id: '2', name: 'Plumbing', icon: 'water-outline', rating: 4.6, providers: 18, color: '#4ECDC4', description: 'Expert plumbing solutions' },
-];
-
-// Mock data for top providers
-const topProviders = [
-  { id: '1', name: 'John Smith', service: 'House Cleaning', rating: 4.9, reviews: 127, avatar: 'person-circle' },
-  { id: '2', name: 'Sarah Johnson', service: 'Plumbing', rating: 4.8, reviews: 89, avatar: 'person-circle' },
-  { id: '3', name: 'Mike Wilson', service: 'Electrical', rating: 4.7, reviews: 156, avatar: 'person-circle' },
-  { id: '4', name: 'Lisa Brown', service: 'Landscaping', rating: 4.6, reviews: 73, avatar: 'person-circle' },
 ];
 
 const ProviderCard = ({ provider }: { provider: any }) => (
@@ -134,10 +115,45 @@ const activityList = [
 
 export const FindServiceScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredServices, setFilteredServices] = useState(services);
+  const [services, setServices] = useState<Service[]>([]);
+  const [featuredServices, setFeaturedServices] = useState<Service[]>([]);
+  const [topProviders, setTopProviders] = useState<Provider[]>([]);
+  const [filteredServices, setFilteredServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch data from Firebase
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [servicesData, providersData] = await Promise.all([
+          getServicesWithProviders(),
+          getTopProviders()
+        ]);
+        
+        setServices(servicesData);
+        setFilteredServices(servicesData);
+        setTopProviders(providersData);
+        
+        // Set featured services (first 2 services)
+        setFeaturedServices(servicesData.slice(0, 2));
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        Alert.alert('Error', 'Failed to load services. Please try again.');
+        // Use default data as fallback
+        setServices([]);
+        setFeaturedServices(defaultFeaturedServices);
+        setTopProviders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Filter services based on search query
-  React.useEffect(() => {
+  useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredServices(services);
     } else {
@@ -146,7 +162,7 @@ export const FindServiceScreen: React.FC = () => {
       );
       setFilteredServices(filtered);
     }
-  }, [searchQuery]);
+  }, [searchQuery, services]);
 
   const renderHeader = () => (
     <LinearGradient
@@ -160,7 +176,7 @@ export const FindServiceScreen: React.FC = () => {
         <View style={styles.headerTop}>
           <View>
             <Text style={styles.greeting}>Good morning!</Text>
-            <Text style={styles.userName}>What service do you need?</Text>
+            <Text style={styles.userName}>What category do you need?</Text>
           </View>
           <TouchableOpacity style={styles.profileButton}>
             <Ionicons name="person-circle" size={40} color="#fff" />
@@ -172,7 +188,7 @@ export const FindServiceScreen: React.FC = () => {
             <Ionicons name="search" size={20} color={searchQuery.length > 0 ? "#667eea" : "#999"} style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search for services..."
+              placeholder="Search for categories..."
               placeholderTextColor="#999"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -193,20 +209,16 @@ export const FindServiceScreen: React.FC = () => {
   const renderFeaturedSection = () => (
     <View style={styles.sectionContainer}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Featured Services</Text>
+        <Text style={styles.sectionTitle}>Featured Categories</Text>
         <TouchableOpacity>
           <Text style={styles.seeAllText}>See all</Text>
         </TouchableOpacity>
       </View>
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.featuredScrollContainer}
-      >
+      <View style={styles.featuredScrollContainer}>
         {featuredServices.map((service) => (
           <FeaturedServiceCard key={service.id} service={service} />
         ))}
-      </ScrollView>
+      </View>
     </View>
   );
 
@@ -214,28 +226,24 @@ export const FindServiceScreen: React.FC = () => {
     <View style={styles.sectionContainer}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>
-          {searchQuery ? 'Search Results' : 'All Services'}
+          {searchQuery ? 'Search Results' : 'All Categories'}
         </Text>
         <Text style={styles.serviceCount}>
-          {filteredServices.length} {searchQuery ? 'results' : 'services available'}
+          {filteredServices.length} {searchQuery ? 'results' : 'categories available'}
         </Text>
       </View>
       {filteredServices.length === 0 && searchQuery ? (
         <View style={styles.noResultsContainer}>
           <Ionicons name="search" size={48} color="#ccc" />
-          <Text style={styles.noResultsText}>No services found</Text>
-          <Text style={styles.noResultsSubtext}>Try a different search term</Text>
+                  <Text style={styles.noResultsText}>No categories found</Text>
+        <Text style={styles.noResultsSubtext}>Try a different search term</Text>
         </View>
       ) : (
-        <FlatList
-          data={filteredServices}
-          renderItem={({ item }) => <ServiceCard service={item} />}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.servicesGrid}
-          scrollEnabled={false}
-        />
+        <View style={styles.servicesGrid}>
+          {filteredServices.map((service) => (
+            <ServiceCard key={service.id} service={service} />
+          ))}
+        </View>
       )}
     </View>
   );
@@ -248,15 +256,11 @@ export const FindServiceScreen: React.FC = () => {
           <Text style={styles.seeAllText}>View all</Text>
         </TouchableOpacity>
       </View>
-      <FlatList
-        data={topProviders}
-        renderItem={({ item }) => <ProviderCard key={item.id} provider={item} />}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.providersGrid}
-        scrollEnabled={false}
-      />
+      <View style={styles.providersGrid}>
+        {topProviders.map((provider) => (
+          <ProviderCard key={provider.id} provider={provider} />
+        ))}
+      </View>
     </View>
   );
   
@@ -268,13 +272,11 @@ export const FindServiceScreen: React.FC = () => {
           <Text style={styles.seeAllText}>View all</Text>
         </TouchableOpacity>
       </View>
-      <FlatList
-        data={activityList}
-        renderItem={({ item }) => <ActivityCard key={item.id} activity={item} />}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.activityList}
-      />
+      <View style={styles.activityList}>
+        {activityList.map((activity) => (
+          <ActivityCard key={activity.id} activity={activity} />
+        ))}
+      </View>
     </View>
   );
 
@@ -391,6 +393,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   featuredScrollContainer: {
+    flexDirection: 'row',
     paddingRight: 20,
   },
   featuredServiceCard: {
@@ -463,14 +466,17 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   servicesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     paddingBottom: 20,
   },
   serviceCard: {
-    flex: 1,
+    width: (width - 52) / 2, // Account for container padding and margins
     backgroundColor: '#fff',
     borderRadius: 20,
     padding: 20,
-    margin: 6,
+    marginBottom: 12,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -527,14 +533,17 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   providersGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     paddingBottom: 20,
   },
   providerCard: {
-    flex: 1,
+    width: (width - 52) / 2, // Account for container padding and margins
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
-    margin: 6,
+    marginBottom: 12,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {

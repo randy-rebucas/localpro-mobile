@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   Dimensions,
   FlatList,
   ScrollView,
@@ -12,11 +13,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { getUserConversations } from '../lib/firestore';
 
 const { width, height } = Dimensions.get('window');
 
-// Mock data for messages
-const messages = [
+// Fallback mock data in case Firebase fails
+const fallbackMessages = [
   {
     id: '1',
     provider: 'Sarah Johnson',
@@ -37,39 +39,6 @@ const messages = [
     unread: false,
     avatar: 'MC',
     online: false,
-    messageCount: 0
-  },
-  {
-    id: '3',
-    provider: 'Emma Davis',
-    service: 'Electrical',
-    lastMessage: 'I can come tomorrow morning at 9 AM. Does that work for you?',
-    time: '3 hours ago',
-    unread: true,
-    avatar: 'ED',
-    online: true,
-    messageCount: 1
-  },
-  {
-    id: '4',
-    provider: 'David Wilson',
-    service: 'Landscaping',
-    lastMessage: 'The garden looks great! Thank you for the work. The new plants are thriving.',
-    time: 'Yesterday',
-    unread: false,
-    avatar: 'DW',
-    online: false,
-    messageCount: 0
-  },
-  {
-    id: '5',
-    provider: 'Lisa Thompson',
-    service: 'Painting',
-    lastMessage: 'I\'ve finished the living room. The color turned out exactly as you wanted!',
-    time: '2 days ago',
-    unread: false,
-    avatar: 'LT',
-    online: true,
     messageCount: 0
   },
 ];
@@ -116,6 +85,66 @@ const MessageCard = ({ message }: { message: any }) => (
 
 export const MessagesScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filteredMessages, setFilteredMessages] = useState<any[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState('all');
+
+  // Mock user ID - in a real app, this would come from authentication
+  const mockUserId = 'user123';
+
+  // Fetch messages from Firebase
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        setLoading(true);
+        const messagesData = await getUserConversations(mockUserId);
+        setMessages(messagesData);
+        setFilteredMessages(messagesData);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+        Alert.alert('Error', 'Failed to load messages. Using sample data.');
+        setMessages(fallbackMessages);
+        setFilteredMessages(fallbackMessages);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMessages();
+  }, []);
+
+  // Filter messages based on search query and selected filter
+  useEffect(() => {
+    let filtered = messages;
+    
+    // Apply search filter
+    if (searchQuery.trim() !== '') {
+      filtered = filtered.filter(message =>
+        message.provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        message.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        message.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    // Apply category filter
+    switch (selectedFilter) {
+      case 'unread':
+        filtered = filtered.filter(message => message.unread);
+        break;
+      case 'online':
+        filtered = filtered.filter(message => message.online);
+        break;
+      case 'recent':
+        // Keep all messages as they're already sorted by recent
+        break;
+      default:
+        // 'all' - no additional filtering
+        break;
+    }
+    
+    setFilteredMessages(filtered);
+  }, [searchQuery, selectedFilter, messages]);
 
   const renderHeader = () => (
     <LinearGradient
@@ -179,23 +208,35 @@ export const MessagesScreen: React.FC = () => {
   const renderFilterTabs = () => (
     <View style={styles.filterTabs}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <TouchableOpacity style={[styles.filterTab, styles.filterTabActive]}>
-          <Text style={[styles.filterTabText, styles.filterTabTextActive]}>
+        <TouchableOpacity 
+          style={[styles.filterTab, selectedFilter === 'all' && styles.filterTabActive]}
+          onPress={() => setSelectedFilter('all')}
+        >
+          <Text style={[styles.filterTabText, selectedFilter === 'all' && styles.filterTabTextActive]}>
             All Messages
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.filterTab}>
-          <Text style={styles.filterTabText}>
+        <TouchableOpacity 
+          style={[styles.filterTab, selectedFilter === 'unread' && styles.filterTabActive]}
+          onPress={() => setSelectedFilter('unread')}
+        >
+          <Text style={[styles.filterTabText, selectedFilter === 'unread' && styles.filterTabTextActive]}>
             Unread
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.filterTab}>
-          <Text style={styles.filterTabText}>
+        <TouchableOpacity 
+          style={[styles.filterTab, selectedFilter === 'online' && styles.filterTabActive]}
+          onPress={() => setSelectedFilter('online')}
+        >
+          <Text style={[styles.filterTabText, selectedFilter === 'online' && styles.filterTabTextActive]}>
             Online
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.filterTab}>
-          <Text style={styles.filterTabText}>
+        <TouchableOpacity 
+          style={[styles.filterTab, selectedFilter === 'recent' && styles.filterTabActive]}
+          onPress={() => setSelectedFilter('recent')}
+        >
+          <Text style={[styles.filterTabText, selectedFilter === 'recent' && styles.filterTabTextActive]}>
             Recent
           </Text>
         </TouchableOpacity>
@@ -213,14 +254,28 @@ export const MessagesScreen: React.FC = () => {
         {renderStats()}
         {renderFilterTabs()}
         <View style={styles.messagesContainer}>
-          <FlatList
-            data={messages}
-            renderItem={({ item }) => <MessageCard message={item} />}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.messagesList}
-            scrollEnabled={false}
-          />
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Loading messages...</Text>
+            </View>
+          ) : filteredMessages.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="chatbubble-outline" size={48} color="#ccc" />
+              <Text style={styles.emptyText}>No messages found</Text>
+              <Text style={styles.emptySubtext}>
+                {searchQuery ? 'Try a different search term' : 'Start a conversation with a provider!'}
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredMessages}
+              renderItem={({ item }) => <MessageCard message={item} />}
+              keyExtractor={(item) => item.id}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.messagesList}
+              scrollEnabled={false}
+            />
+          )}
         </View>
       </ScrollView>
     </View>
@@ -473,5 +528,34 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: '#667eea',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#666',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 20,
+  },
+  emptySubtext: {
+    fontSize: 16,
+    color: '#999',
+    marginTop: 10,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
 });

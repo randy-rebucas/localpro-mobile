@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   Dimensions,
   FlatList,
   ScrollView,
@@ -11,11 +12,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { getReviewsWithProviderInfo } from '../lib/firestore';
 
 const { width, height } = Dimensions.get('window');
 
-// Mock data for reviews
-const reviews = [
+// Fallback mock data in case Firebase fails
+const fallbackReviews = [
   {
     id: '1',
     provider: 'Sarah Johnson',
@@ -38,46 +40,7 @@ const reviews = [
     verified: true,
     helpful: 8
   },
-  {
-    id: '3',
-    provider: 'Emma Davis',
-    service: 'Electrical',
-    rating: 5,
-    review: 'Great work installing the new outlets. Very clean and professional installation. Emma was punctual and completed the job efficiently.',
-    date: '2 weeks ago',
-    avatar: 'ED',
-    verified: false,
-    helpful: 15
-  },
-  {
-    id: '4',
-    provider: 'David Wilson',
-    service: 'Landscaping',
-    rating: 4,
-    review: 'Beautiful garden design and implementation. The plants are thriving and the overall design exceeded my expectations. Great attention to detail.',
-    date: '3 weeks ago',
-    avatar: 'DW',
-    verified: true,
-    helpful: 6
-  },
-  {
-    id: '5',
-    provider: 'Lisa Thompson',
-    service: 'Painting',
-    rating: 5,
-    review: 'Amazing attention to detail. The paint job looks perfect and professional. Lisa was very careful with furniture and cleaned up thoroughly.',
-    date: '1 month ago',
-    avatar: 'LT',
-    verified: true,
-    helpful: 20
-  },
 ];
-
-// Calculate overall rating statistics
-const overallRating = reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length;
-const totalReviews = reviews.length;
-const fiveStarReviews = reviews.filter(review => review.rating === 5).length;
-const fourStarReviews = reviews.filter(review => review.rating === 4).length;
 
 const StarRating = ({ rating, size = 16 }: { rating: number; size?: number }) => {
   return (
@@ -96,7 +59,7 @@ const StarRating = ({ rating, size = 16 }: { rating: number; size?: number }) =>
 };
 
 const RatingBar = ({ rating, count, total }: { rating: number; count: number; total: number }) => {
-  const percentage = (count / total) * 100;
+  const percentage = total > 0 ? (count / total) * 100 : 0;
   
   return (
     <View style={styles.ratingBarContainer}>
@@ -152,6 +115,60 @@ const ReviewCard = ({ review }: { review: any }) => (
 
 export const ReviewsScreen: React.FC = () => {
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filteredReviews, setFilteredReviews] = useState<any[]>([]);
+
+  // Fetch reviews from Firebase
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        setLoading(true);
+        const reviewsData = await getReviewsWithProviderInfo();
+        setReviews(reviewsData);
+        setFilteredReviews(reviewsData);
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+        Alert.alert('Error', 'Failed to load reviews. Using sample data.');
+        setReviews(fallbackReviews);
+        setFilteredReviews(fallbackReviews);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, []);
+
+  // Filter reviews based on selected filter
+  useEffect(() => {
+    let filtered = reviews;
+    
+    switch (selectedFilter) {
+      case '5star':
+        filtered = reviews.filter(review => review.rating === 5);
+        break;
+      case '4star':
+        filtered = reviews.filter(review => review.rating === 4);
+        break;
+      case 'verified':
+        filtered = reviews.filter(review => review.verified);
+        break;
+      default:
+        filtered = reviews;
+    }
+    
+    setFilteredReviews(filtered);
+  }, [selectedFilter, reviews]);
+
+  // Calculate overall rating statistics
+  const overallRating = reviews.length > 0 ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length : 0;
+  const totalReviews = reviews.length;
+  const fiveStarReviews = reviews.filter(review => review.rating === 5).length;
+  const fourStarReviews = reviews.filter(review => review.rating === 4).length;
+  const threeStarReviews = reviews.filter(review => review.rating === 3).length;
+  const twoStarReviews = reviews.filter(review => review.rating === 2).length;
+  const oneStarReviews = reviews.filter(review => review.rating === 1).length;
 
   const renderHeader = () => (
     <LinearGradient
@@ -181,9 +198,9 @@ export const ReviewsScreen: React.FC = () => {
           <View style={styles.ratingBreakdown}>
             <RatingBar rating={5} count={fiveStarReviews} total={totalReviews} />
             <RatingBar rating={4} count={fourStarReviews} total={totalReviews} />
-            <RatingBar rating={3} count={2} total={totalReviews} />
-            <RatingBar rating={2} count={1} total={totalReviews} />
-            <RatingBar rating={1} count={0} total={totalReviews} />
+            <RatingBar rating={3} count={threeStarReviews} total={totalReviews} />
+            <RatingBar rating={2} count={twoStarReviews} total={totalReviews} />
+            <RatingBar rating={1} count={oneStarReviews} total={totalReviews} />
           </View>
         </View>
       </View>
@@ -238,14 +255,26 @@ export const ReviewsScreen: React.FC = () => {
         {renderHeader()}
         {renderFilterTabs()}
         <View style={styles.reviewsContainer}>
-          <FlatList
-            data={reviews}
-            renderItem={({ item }) => <ReviewCard review={item} />}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.reviewsList}
-            scrollEnabled={false}
-          />
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Loading reviews...</Text>
+            </View>
+          ) : filteredReviews.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="chatbubble-outline" size={48} color="#ccc" />
+              <Text style={styles.emptyText}>No reviews found</Text>
+              <Text style={styles.emptySubtext}>Be the first to leave a review!</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredReviews}
+              renderItem={({ item }) => <ReviewCard review={item} />}
+              keyExtractor={(item) => item.id}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.reviewsList}
+              scrollEnabled={false}
+            />
+          )}
         </View>
       </ScrollView>
     </View>
@@ -468,5 +497,31 @@ const styles = StyleSheet.create({
     color: '#667eea',
     marginLeft: 6,
     fontWeight: '500',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#666',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    fontSize: 20,
+    color: '#333',
+    marginTop: 20,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 5,
   },
 });
