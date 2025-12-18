@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Drawer } from 'expo-router/drawer';
 import { CustomDrawerContent } from '../../components/CustomDrawerContent';
 import { DrawerHeaderRight } from '../../components/DrawerHeaderRight';
@@ -25,6 +24,9 @@ export default function AppLayout() {
         },
         headerTitleAlign: 'left',
         headerRight: () => <DrawerHeaderRight />,
+        drawerItemStyle: {
+          display: 'none', // Hide default drawer items since we're using custom content
+        },
       }}
     >
       <Drawer.Screen
@@ -32,11 +34,39 @@ export default function AppLayout() {
         options={{
           title: 'Home',
           headerTitle: 'LocalPro',
-          drawerLabel: 'Home',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
-          headerShown: true,
+          drawerItemStyle: { display: 'none' },
+        }}
+      />
+      <Drawer.Screen
+        name="search"
+        options={{
+          title: 'Search',
+          headerTitle: 'Search',
+          drawerItemStyle: { display: 'none' },
+        }}
+      />
+      <Drawer.Screen
+        name="bookings"
+        options={{
+          title: 'My Bookings',
+          headerTitle: 'My Bookings',
+          drawerItemStyle: { display: 'none' },
+        }}
+      />
+      <Drawer.Screen
+        name="favorites"
+        options={{
+          title: 'Favorites',
+          headerTitle: 'Favorites',
+          drawerItemStyle: { display: 'none' },
+        }}
+      />
+      <Drawer.Screen
+        name="messages"
+        options={{
+          title: 'Messages',
+          headerTitle: 'Messages',
+          drawerItemStyle: { display: 'none' },
         }}
       />
       <Drawer.Screen
@@ -44,10 +74,23 @@ export default function AppLayout() {
         options={{
           title: 'Notifications',
           headerTitle: 'Notifications',
-          drawerLabel: 'Notifications',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="notifications-outline" size={size} color={color} />
-          ),
+          drawerItemStyle: { display: 'none' },
+        }}
+      />
+      <Drawer.Screen
+        name="finance"
+        options={{
+          title: 'Finance',
+          headerTitle: 'Finance',
+          drawerItemStyle: { display: 'none' },
+        }}
+      />
+      <Drawer.Screen
+        name="academy"
+        options={{
+          title: 'Academy',
+          headerTitle: 'Academy',
+          drawerItemStyle: { display: 'none' },
         }}
       />
       <Drawer.Screen
@@ -55,10 +98,23 @@ export default function AppLayout() {
         options={{
           title: 'Settings',
           headerTitle: 'Settings',
-          drawerLabel: 'Settings',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="settings" size={size} color={color} />
-          ),
+          drawerItemStyle: { display: 'none' },
+        }}
+      />
+      <Drawer.Screen
+        name="help-support"
+        options={{
+          title: 'Help & Support',
+          headerTitle: 'Help & Support',
+          drawerItemStyle: { display: 'none' },
+        }}
+      />
+      <Drawer.Screen
+        name="about"
+        options={{
+          title: 'About',
+          headerTitle: 'About',
+          drawerItemStyle: { display: 'none' },
         }}
       />
     </Drawer>

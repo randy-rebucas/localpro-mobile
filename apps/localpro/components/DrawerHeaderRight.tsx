@@ -4,9 +4,11 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { usePackageContext, type PackageType } from '../contexts/PackageContext';
 
 export function DrawerHeaderRight() {
   const { user } = useAuthContext();
+  const { activePackage, setActivePackage } = usePackageContext();
   const router = useRouter();
   const [packageModalVisible, setPackageModalVisible] = useState(false);
 
@@ -18,6 +20,23 @@ export function DrawerHeaderRight() {
     router.push('/(app)/notifications');
   };
 
+
+  // Map package IDs to PackageType
+  const mapPackageIdToType = (id: string): PackageType | null => {
+    const mapping: Record<string, PackageType> = {
+      'marketplace': 'marketplace',
+      'jobs': 'job-board',
+      'academy': 'academy',
+      'finance': 'finance',
+    };
+    return mapping[id] || null;
+  };
+
+  // Check if a package is active
+  const isPackageActive = (id: string): boolean => {
+    const packageType = mapPackageIdToType(id);
+    return packageType !== null && packageType === activePackage;
+  };
 
   const packages = [
     { id: 'marketplace', name: 'Marketplace', icon: 'storefront' },
@@ -82,28 +101,53 @@ export function DrawerHeaderRight() {
 
               <ScrollView style={styles.packagesList} showsVerticalScrollIndicator={false}>
                 <View style={styles.packagesGrid}>
-                  {packages.map((pkg) => (
-                    <TouchableOpacity
-                      key={pkg.id}
-                      style={styles.packageBlock}
-                      onPress={() => {
-                        // Handle package navigation
-                        console.log(`Navigate to ${pkg.name}`);
-                        setPackageModalVisible(false);
-                      }}
-                    >
-                      <View style={styles.packageBlockIcon}>
-                        <Ionicons
-                          name={pkg.icon as any}
-                          size={28}
-                          color="#007AFF"
-                        />
-                      </View>
-                      <Text style={styles.packageBlockName} numberOfLines={2}>
-                        {pkg.name}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                  {packages.map((pkg) => {
+                    const isActive = isPackageActive(pkg.id);
+                    return (
+                      <TouchableOpacity
+                        key={pkg.id}
+                        style={[
+                          styles.packageBlock,
+                          isActive && styles.packageBlockActive,
+                        ]}
+                        onPress={async () => {
+                          const packageType = mapPackageIdToType(pkg.id);
+                          if (packageType) {
+                            await setActivePackage(packageType);
+                            // Navigate based on package type
+                            if (packageType === 'marketplace') {
+                              router.push('/(app)/(tabs)/marketplace');
+                            } else if (packageType === 'job-board') {
+                              router.push('/(app)/(tabs)/jobs');
+                            } else if (packageType === 'finance') {
+                              router.push('/(app)/finance');
+                            } else if (packageType === 'academy') {
+                              router.push('/(app)/academy');
+                            }
+                          }
+                          setPackageModalVisible(false);
+                        }}
+                      >
+                        <View style={styles.packageBlockHeader}>
+                          <View style={styles.packageBlockIcon}>
+                            <Ionicons
+                              name={pkg.icon as any}
+                              size={28}
+                              color={isActive ? "#007AFF" : "#007AFF"}
+                            />
+                          </View>
+                          {isActive && (
+                            <View style={styles.activeIndicator}>
+                              <Ionicons name="checkmark-circle" size={20} color="#34C759" />
+                            </View>
+                          )}
+                        </View>
+                        <Text style={styles.packageBlockName} numberOfLines={2}>
+                          {pkg.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               </ScrollView>
             </Pressable>
@@ -190,12 +234,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#e0e0e0',
+    position: 'relative',
+  },
+  packageBlockActive: {
+    backgroundColor: '#E6F4FE',
+    borderColor: '#007AFF',
+    borderWidth: 2,
+  },
+  packageBlockHeader: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    marginBottom: 8,
   },
   packageBlockIcon: {
-    marginBottom: 8,
     padding: 8,
     backgroundColor: '#E6F4FE',
     borderRadius: 20,
+  },
+  activeIndicator: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#fff',
+    borderRadius: 10,
   },
   packageBlockName: {
     fontSize: 12,
