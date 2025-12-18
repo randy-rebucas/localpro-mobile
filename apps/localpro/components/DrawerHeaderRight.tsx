@@ -114,15 +114,15 @@ export function DrawerHeaderRight() {
                           const packageType = mapPackageIdToType(pkg.id);
                           if (packageType) {
                             await setActivePackage(packageType);
-                            // Navigate based on package type
+                            // Navigate to initial tab based on package type
                             if (packageType === 'marketplace') {
-                              router.push('/(app)/(tabs)/marketplace');
+                              router.push('/(app)/(tabs)');
                             } else if (packageType === 'job-board') {
-                              router.push('/(app)/(tabs)/jobs');
+                              router.push('/(app)/(tabs)');
                             } else if (packageType === 'finance') {
-                              router.push('/(app)/finance');
+                              router.push('/(app)/(tabs)/wallet');
                             } else if (packageType === 'academy') {
-                              router.push('/(app)/academy');
+                              router.push('/(app)/(tabs)/courses');
                             }
                           }
                           setPackageModalVisible(false);

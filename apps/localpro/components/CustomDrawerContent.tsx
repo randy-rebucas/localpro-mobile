@@ -82,17 +82,6 @@ export function CustomDrawerContent(props: any) {
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
-                router.push('/(app)/(tabs)/marketplace');
-                props.navigation.closeDrawer();
-              }}
-            >
-              <Ionicons name="storefront-outline" size={24} color="#4A90E2" />
-              <Text style={styles.menuItemText}>Marketplace</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => {
                 router.push('/(app)/(tabs)');
                 props.navigation.closeDrawer();
               }}
@@ -166,7 +155,7 @@ export function CustomDrawerContent(props: any) {
               style={styles.menuItem}
               onPress={async () => {
                 await setActivePackage('marketplace');
-                router.push('/(app)/(tabs)/marketplace');
+                router.push('/(app)/(tabs)');
                 props.navigation.closeDrawer();
               }}
             >
@@ -181,7 +170,7 @@ export function CustomDrawerContent(props: any) {
               style={styles.menuItem}
               onPress={async () => {
                 await setActivePackage('job-board');
-                router.push('/(app)/(tabs)/jobs');
+                router.push('/(app)/(tabs)');
                 props.navigation.closeDrawer();
               }}
             >
@@ -196,7 +185,7 @@ export function CustomDrawerContent(props: any) {
               style={styles.menuItem}
               onPress={async () => {
                 await setActivePackage('finance');
-                router.push('/(app)/finance');
+                router.push('/(app)/(tabs)/wallet');
                 props.navigation.closeDrawer();
               }}
             >
@@ -211,7 +200,7 @@ export function CustomDrawerContent(props: any) {
               style={styles.menuItem}
               onPress={async () => {
                 await setActivePackage('academy');
-                router.push('/(app)/academy');
+                router.push('/(app)/(tabs)/courses');
                 props.navigation.closeDrawer();
               }}
             >

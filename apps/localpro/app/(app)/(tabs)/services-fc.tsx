@@ -1,11 +1,13 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function MarketplaceScreen() {
+export default function ServicesFcTabScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <Text style={styles.title}>Marketplace</Text>
-      <Text style={styles.subtitle}>Browse services and bookings</Text>
+      <View style={styles.content}>
+        <Text style={styles.title}>Services</Text>
+        <Text style={styles.subtitle}>Browse facility care services</Text>
+      </View>
     </SafeAreaView>
   );
 }
@@ -13,14 +15,19 @@ export default function MarketplaceScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
+  },
+  content: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    padding: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 8,
+    color: '#000',
   },
   subtitle: {
     fontSize: 16,

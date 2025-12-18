@@ -2,9 +2,10 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 const TOKEN_KEY = 'auth_token';
+const ACTIVE_PACKAGE_KEY = 'active_package';
 
 // List of all known keys in secure storage
-const KNOWN_KEYS = [TOKEN_KEY];
+const KNOWN_KEYS = [TOKEN_KEY, ACTIVE_PACKAGE_KEY];
 
 /**
  * Secure storage utility that uses expo-secure-store on native

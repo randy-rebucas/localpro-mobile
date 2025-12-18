@@ -1,7 +1,17 @@
 import { SecureStorage } from '@localpro/storage';
 import React, { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 
-export type PackageType = 'marketplace' | 'job-board' | 'finance' | 'academy';
+export type PackageType = 
+  | 'marketplace' 
+  | 'job-board' 
+  | 'finance' 
+  | 'academy'
+  | 'supplies'
+  | 'rentals'
+  | 'referrals'
+  | 'agencies'
+  | 'communication'
+  | 'facility-care';
 
 interface PackageContextType {
   activePackage: PackageType;
@@ -36,7 +46,8 @@ export const PackageProvider: React.FC<PackageProviderProps> = ({ children }) =>
   const loadActivePackage = async () => {
     try {
       const stored = await SecureStorage.getItem(ACTIVE_PACKAGE_KEY);
-      if (stored && ['marketplace', 'job-board', 'finance', 'academy'].includes(stored)) {
+      const validPackages = ['marketplace', 'job-board', 'finance', 'academy', 'supplies', 'rentals', 'referrals', 'agencies', 'communication', 'facility-care'];
+      if (stored && validPackages.includes(stored)) {
         setActivePackageState(stored as PackageType);
       } else {
         setActivePackageState(DEFAULT_PACKAGE);
