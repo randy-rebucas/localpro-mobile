@@ -1,28 +1,46 @@
 import { AuthProvider, useAuthContext } from '@localpro/auth';
 import { Loading } from '@localpro/ui';
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 function RootLayoutNav() {
-  const { isAuthenticated, isLoading, isOnboarding } = useAuthContext();
+  const { isAuthenticated, isLoading } = useAuthContext();
   const segments = useSegments();
   const router = useRouter();
+  const hasNavigated = useRef(false);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading) {
+      hasNavigated.current = false;
+      return;
+    }
 
     const inAuthGroup = segments[0] === '(auth)';
     const inAppGroup = segments[0] === '(app)';
+    const inTabsGroup = segments[1] === '(tabs)';
 
+    // If already in correct location, reset flag and don't redirect
+    if ((!isAuthenticated && inAuthGroup) || 
+        (isAuthenticated && inAppGroup && inTabsGroup)) {
+      hasNavigated.current = false;
+      return;
+    }
+
+    // Prevent infinite loops by checking if we've already navigated
+    if (hasNavigated.current) {
+      return;
+    }
+
+    // Only redirect if we're not already in the correct group
     if (!isAuthenticated && !inAuthGroup) {
-      // Redirect to phone entry if not authenticated
+      hasNavigated.current = true;
       router.replace('/(auth)/phone');
     } else if (isAuthenticated) {
-      // Redirect to app if authenticated and onboarded
-      router.replace('/(app)/(tabs)');
+        hasNavigated.current = true;
+        router.replace('/(app)/(tabs)');
     }
-  }, [isAuthenticated, isLoading, isOnboarding, segments]);
+  }, [isAuthenticated, isLoading]);
 
   if (isLoading) {
     return (

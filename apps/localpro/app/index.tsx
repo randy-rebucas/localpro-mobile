@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 export default function Index() {
-  const { isAuthenticated, isLoading, isOnboarding } = useAuthContext();
+  const { isAuthenticated, isLoading } = useAuthContext();
   const router = useRouter();
 
   useEffect(() => {
@@ -13,12 +13,10 @@ export default function Index() {
 
     if (!isAuthenticated) {
       router.replace('/(auth)/phone');
-    } else if (isOnboarding) {
-      router.replace('/(auth)/onboarding');
     } else {
       router.replace('/(app)/(tabs)');
     }
-  }, [isAuthenticated, isLoading, isOnboarding]);
+  }, [isAuthenticated, isLoading]);
 
   return (
     <View style={styles.container}>

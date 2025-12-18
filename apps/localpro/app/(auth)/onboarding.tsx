@@ -3,7 +3,7 @@ import { SecureStorage } from '@localpro/storage';
 import { Button, Input } from '@localpro/ui';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function OnboardingScreen() {
@@ -14,14 +14,15 @@ export default function OnboardingScreen() {
   const [loading, setLoading] = useState(false);
   const { completeOnboarding, isAuthenticated, isOnboarding } = useAuthContext();
   const router = useRouter();
+  const hasNavigated = useRef(false);
 
   // Watch for auth state changes and navigate to home when onboarding is complete
   useEffect(() => {
-    if (!loading && isAuthenticated && !isOnboarding) {
-      // User has completed onboarding - navigate to home
-      router.replace('/(app)/(tabs)');
+    if (!loading && isAuthenticated && !isOnboarding && !hasNavigated.current) {
+      hasNavigated.current = true;
+      router.replace('/(app)/(tabs)/index' as any);
     }
-  }, [isAuthenticated, isOnboarding, loading, router]);
+  }, [isAuthenticated, isOnboarding, loading]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();

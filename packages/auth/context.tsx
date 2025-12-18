@@ -98,7 +98,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(response.user);
         setToken(response.token);
         setIsAuthenticated(true);
-        setIsOnboarding(response.isNewUser || !response.user.isOnboarded);
+        setIsOnboarding(response.isNewUser);
       }
       return response;
     } catch (error) {

@@ -1,7 +1,7 @@
 import { useAuthContext } from '@localpro/auth';
 import { OTPInput } from '@localpro/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function OTPScreen() {
@@ -12,20 +12,22 @@ export default function OTPScreen() {
   const [resendTimer, setResendTimer] = useState(60);
   const { verifyOTP, sendOTP, isAuthenticated, isOnboarding } = useAuthContext();
   const router = useRouter();
+  const hasNavigated = useRef(false);
 
   // Watch for auth state changes and navigate accordingly
   // Only navigate if we're still on the OTP screen (not already navigating)
   useEffect(() => {
-    if (!loading && isAuthenticated) {
+    if (!loading && isAuthenticated && !hasNavigated.current) {
+      hasNavigated.current = true;
       if (!isOnboarding) {
         // User is authenticated and onboarded - navigate to app
-        router.replace('/(app)/(tabs)');
+        router.replace('/(app)/(tabs)/index' as any);
       } else {
         // User is authenticated but needs onboarding
         router.replace('/(auth)/onboarding');
       }
     }
-  }, [isAuthenticated, isOnboarding, loading, router]);
+  }, [isAuthenticated, isOnboarding, loading]);
 
   useEffect(() => {
     if (resendTimer > 0) {
