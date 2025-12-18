@@ -36,3 +36,29 @@ export type NotificationType =
   | 'system'
   | 'marketing';
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+export interface NotificationSettings {
+  enabled: boolean;
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  types: {
+    booking: boolean;
+    message: boolean;
+    job: boolean;
+    payment: boolean;
+    system: boolean;
+    marketing: boolean;
+  };
+}
+

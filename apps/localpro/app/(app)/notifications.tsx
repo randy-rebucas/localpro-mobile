@@ -4,8 +4,8 @@ import { CommunicationService } from '@localpro/communication';
 import type { Notification } from '@localpro/types';
 import { Card } from '@localpro/ui';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const getNotificationIcon = (type: string): keyof typeof Ionicons.glyphMap => {
@@ -46,24 +46,73 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const limit = 20;
 
   useEffect(() => {
-    loadNotifications();
+    if (user?.id) {
+      loadNotifications();
+      loadUnreadCount();
+    }
   }, [user?.id]);
 
-  const loadNotifications = async () => {
+  const loadUnreadCount = async () => {
+    try {
+      const response = await CommunicationService.getUnreadCount();
+      setUnreadCount(response.count);
+    } catch (error) {
+      console.error('Failed to load unread count:', error);
+    }
+  };
+
+  const loadNotifications = async (pageNum: number = 1, append: boolean = false) => {
     if (!user?.id) return;
     
     try {
-      setLoading(true);
-      const data = await CommunicationService.getNotifications(user.id);
-      setNotifications(data);
-    } catch (error) {
+      if (pageNum === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const response = await CommunicationService.getNotifications({
+        page: pageNum,
+        limit,
+      });
+      console.log('response', response);
+      if (append) {
+        setNotifications(prev => [...prev, ...response.data]);
+      } else {
+        setNotifications(response.data);
+      }
+
+      setPage(pageNum);
+      setHasMore(response.pagination.hasNext);
+    } catch (error: any) {
       console.error('Failed to load notifications:', error);
+      Alert.alert('Error', error.message || 'Failed to load notifications');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+      setRefreshing(false);
     }
   };
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadNotifications(1, false);
+    loadUnreadCount();
+  }, [user?.id]);
+
+  const loadMore = useCallback(() => {
+    if (!loadingMore && hasMore) {
+      loadNotifications(page + 1, true);
+    }
+  }, [page, hasMore, loadingMore]);
 
   const handleNotificationPress = async (notification: Notification) => {
     if (!notification.read) {
@@ -72,8 +121,10 @@ export default function NotificationsScreen() {
         setNotifications(prev =>
           prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
         );
-      } catch (error) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (error: any) {
         console.error('Failed to mark notification as read:', error);
+        Alert.alert('Error', error.message || 'Failed to mark notification as read');
       }
     }
 
@@ -84,33 +135,96 @@ export default function NotificationsScreen() {
   };
 
   const markAllAsRead = async () => {
-    const unreadNotifications = notifications.filter(n => !n.read);
     try {
-      await Promise.all(
-        unreadNotifications.map(n => CommunicationService.markNotificationAsRead(n.id))
-      );
+      await CommunicationService.markAllAsRead();
       setNotifications(prev =>
         prev.map(n => ({ ...n, read: true }))
       );
-    } catch (error) {
+      setUnreadCount(0);
+    } catch (error: any) {
       console.error('Failed to mark all as read:', error);
+      Alert.alert('Error', error.message || 'Failed to mark all as read');
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const handleDeleteNotification = async (notificationId: string) => {
+    Alert.alert(
+      'Delete Notification',
+      'Are you sure you want to delete this notification?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await CommunicationService.deleteNotification(notificationId);
+              setNotifications(prev => prev.filter(n => n.id !== notificationId));
+              if (notifications.find(n => n.id === notificationId && !n.read)) {
+                setUnreadCount(prev => Math.max(0, prev - 1));
+              }
+            } catch (error: any) {
+              console.error('Failed to delete notification:', error);
+              Alert.alert('Error', error.message || 'Failed to delete notification');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteAll = () => {
+    Alert.alert(
+      'Delete All Notifications',
+      'Are you sure you want to delete all notifications?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete All',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await CommunicationService.deleteAllNotifications();
+              setNotifications([]);
+              setUnreadCount(0);
+            } catch (error: any) {
+              console.error('Failed to delete all notifications:', error);
+              Alert.alert('Error', error.message || 'Failed to delete all notifications');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Notifications</Text>
-        {unreadCount > 0 && (
-          <TouchableOpacity onPress={markAllAsRead} style={styles.markAllButton}>
-            <Text style={styles.markAllText}>Mark all as read</Text>
-          </TouchableOpacity>
-        )}
+        <View style={styles.headerLeft}>
+          <Text style={styles.title}>Notifications</Text>
+          {unreadCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{unreadCount}</Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.headerRight}>
+          {notifications.length > 0 && (
+            <>
+              {unreadCount > 0 && (
+                <TouchableOpacity onPress={markAllAsRead} style={styles.headerButton}>
+                  <Text style={styles.headerButtonText}>Mark all read</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={handleDeleteAll} style={styles.headerButton}>
+                <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
       </View>
 
-      {loading ? (
+      {loading && notifications.length === 0 ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
         </View>
@@ -121,50 +235,80 @@ export default function NotificationsScreen() {
           <Text style={styles.emptySubtext}>You're all caught up!</Text>
         </View>
       ) : (
-        <ScrollView style={styles.scrollView}>
+        <ScrollView
+          style={styles.scrollView}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+          onScroll={({ nativeEvent }) => {
+            const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+            const paddingToBottom = 20;
+            if (
+              layoutMeasurement.height + contentOffset.y >=
+              contentSize.height - paddingToBottom
+            ) {
+              loadMore();
+            }
+          }}
+          scrollEventThrottle={400}
+        >
           <View style={styles.content}>
             {notifications.map((notification) => (
-              <TouchableOpacity
-                key={notification.id}
-                onPress={() => handleNotificationPress(notification)}
-                activeOpacity={0.7}
-              >
-                <Card style={StyleSheet.flatten([
-                  styles.notificationCard,
-                  !notification.read && styles.unreadCard
-                ]) as ViewStyle}>
-                  <View style={styles.notificationContent}>
-                    <View style={[
-                      styles.iconContainer,
-                      !notification.read && styles.unreadIconContainer
-                    ]}>
-                      <Ionicons
-                        name={getNotificationIcon(notification.type)}
-                        size={24}
-                        color={notification.read ? '#666' : '#007AFF'}
-                      />
-                    </View>
-                    <View style={styles.textContainer}>
-                      <View style={styles.notificationHeader}>
-                        <Text style={[
-                          styles.notificationTitle,
-                          !notification.read && styles.unreadTitle
-                        ]}>
-                          {notification.title}
-                        </Text>
-                        {!notification.read && <View style={styles.unreadDot} />}
+              <View key={notification.id} style={styles.notificationWrapper}>
+                <TouchableOpacity
+                  onPress={() => handleNotificationPress(notification)}
+                  activeOpacity={0.7}
+                  style={styles.notificationTouchable}
+                >
+                  <Card style={StyleSheet.flatten([
+                    styles.notificationCard,
+                    !notification.read && styles.unreadCard
+                  ]) as ViewStyle}>
+                    <View style={styles.notificationContent}>
+                      <View style={[
+                        styles.iconContainer,
+                        !notification.read && styles.unreadIconContainer
+                      ]}>
+                        <Ionicons
+                          name={getNotificationIcon(notification.type)}
+                          size={24}
+                          color={notification.read ? '#666' : '#007AFF'}
+                        />
                       </View>
-                      <Text style={styles.notificationBody} numberOfLines={2}>
-                        {notification.body}
-                      </Text>
-                      <Text style={styles.notificationTime}>
-                        {formatDate(notification.createdAt)}
-                      </Text>
+                      <View style={styles.textContainer}>
+                        <View style={styles.notificationHeader}>
+                          <Text style={[
+                            styles.notificationTitle,
+                            !notification.read && styles.unreadTitle
+                          ]}>
+                            {notification.title}
+                          </Text>
+                          {!notification.read && <View style={styles.unreadDot} />}
+                        </View>
+                        <Text style={styles.notificationBody} numberOfLines={2}>
+                          {notification.body}
+                        </Text>
+                        <Text style={styles.notificationTime}>
+                          {formatDate(notification.createdAt)}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                </Card>
-              </TouchableOpacity>
+                  </Card>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleDeleteNotification(notification.id)}
+                  style={styles.deleteButton}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons name="trash-outline" size={18} color="#FF3B30" />
+                </TouchableOpacity>
+              </View>
             ))}
+            {loadingMore && (
+              <View style={styles.loadingMore}>
+                <ActivityIndicator size="small" color="#007AFF" />
+              </View>
+            )}
           </View>
         </ScrollView>
       )}
@@ -185,16 +329,40 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 8,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#000',
   },
-  markAllButton: {
+  badge: {
+    backgroundColor: '#007AFF',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerButton: {
     paddingVertical: 4,
     paddingHorizontal: 8,
   },
-  markAllText: {
+  headerButtonText: {
     fontSize: 14,
     color: '#007AFF',
     fontWeight: '600',
@@ -280,6 +448,24 @@ const styles = StyleSheet.create({
   notificationTime: {
     fontSize: 12,
     color: '#999',
+  },
+  notificationWrapper: {
+    position: 'relative',
+    marginBottom: 12,
+  },
+  notificationTouchable: {
+    flex: 1,
+  },
+  deleteButton: {
+    position: 'absolute',
+    right: 16,
+    top: 16,
+    padding: 8,
+    zIndex: 1,
+  },
+  loadingMore: {
+    paddingVertical: 20,
+    alignItems: 'center',
   },
 });
 

@@ -30,5 +30,28 @@ export const API_ENDPOINTS = {
     sendOTP: '/api/auth/send-code',
     verifyOTP: '/api/auth/verify-code',
   },
+  // Notification endpoints
+  notifications: {
+    // Get user notifications (paginated)
+    getNotifications: '/api/notifications',
+    // Get unread notification count
+    getUnreadCount: '/api/notifications/unread-count',
+    // Mark a notification as read
+    markAsRead: (id: string) => `/api/notifications/${id}/read`,
+    // Mark all notifications as read
+    markAllAsRead: '/api/notifications/read-all',
+    // Delete a notification
+    deleteNotification: (id: string) => `/api/notifications/${id}`,
+    // Delete all notifications (optional: ?readOnly=true)
+    deleteAll: '/api/notifications',
+    // Get notification settings/preferences
+    getSettings: '/api/notifications/settings',
+    // Update notification settings/preferences
+    updateSettings: '/api/notifications/settings',
+    // Check if notification type is enabled
+    checkType: (type: string) => `/api/notifications/check/${type}`,
+    // Send test notification to current user
+    sendTest: '/api/notifications/test',
+  },
 } as const;
 
