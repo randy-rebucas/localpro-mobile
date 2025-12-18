@@ -9,6 +9,9 @@ interface InputProps {
   secureTextEntry?: boolean;
   error?: string;
   multiline?: boolean;
+  keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad' | 'number-pad';
+  autoComplete?: string;
+  autoFocus?: boolean;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -19,6 +22,9 @@ export const Input: React.FC<InputProps> = ({
   secureTextEntry = false,
   error,
   multiline = false,
+  keyboardType = 'default',
+  autoComplete,
+  autoFocus = false,
 }) => {
   return (
     <View style={styles.container}>
@@ -30,6 +36,9 @@ export const Input: React.FC<InputProps> = ({
         placeholder={placeholder}
         secureTextEntry={secureTextEntry}
         multiline={multiline}
+        keyboardType={keyboardType}
+        autoComplete={autoComplete as any}
+        autoFocus={autoFocus}
         placeholderTextColor="#999"
       />
       {error && <Text style={styles.error}>{error}</Text>}

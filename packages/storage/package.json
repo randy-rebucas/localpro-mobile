@@ -1,13 +1,11 @@
 {
-  "name": "@localpro/utils",
+  "name": "@localpro/storage",
   "version": "1.0.0",
   "main": "index.ts",
   "types": "index.ts",
   "private": true,
   "dependencies": {
-    "@localpro/types": "*",
-    "expo-location": "^19.0.8",
-    "libphonenumber-js": "^1.12.31"
+    "expo-secure-store": "~15.0.8"
   },
   "devDependencies": {
     "typescript": "~5.9.2"
