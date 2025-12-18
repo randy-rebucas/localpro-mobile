@@ -1,5 +1,5 @@
 import { useAuthContext } from '@localpro/auth';
-import { Button, Card } from '@localpro/ui';
+import { Card } from '@localpro/ui';
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,32 +8,20 @@ export default function HomeScreen() {
   const { user, logout } = useAuthContext();
   const router = useRouter();
 
-  const handleLogout = async () => {
-    await logout();
-    router.replace('/(auth)/phone');
-  };
-
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
-        <Text style={styles.title}>Welcome back, {user?.name || 'User'}!</Text>
-        <Text style={styles.subtitle}>Your LocalPro Dashboard</Text>
+          <Text style={styles.title}>Welcome back, {user?.name || 'User'}!</Text>
+          <Text style={styles.subtitle}>Your LocalPro Dashboard</Text>
 
-        <Card style={styles.card}>
-          <Text style={styles.cardTitle}>Quick Actions</Text>
-          <Text style={styles.cardText}>
-            Explore the marketplace, find jobs, manage your profile, and more!
-          </Text>
-        </Card>
+          <Card style={styles.card}>
+            <Text style={styles.cardTitle}>Quick Actions</Text>
+            <Text style={styles.cardText}>
+              Explore the marketplace, find jobs, manage your profile, and more!
+            </Text>
+          </Card>
 
-        <View style={styles.logoutButton}>
-          <Button
-            title="Logout"
-            onPress={handleLogout}
-            variant="outline"
-          />
-        </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -49,18 +37,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 20,
+    padding: 16,
+    paddingTop: 12,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 4,
     color: '#000',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#666',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   card: {
     marginBottom: 16,

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Drawer } from 'expo-router/drawer';
-import { CustomDrawerContent } from './components/CustomDrawerContent';
-import { DrawerHeaderRight } from './components/DrawerHeaderRight';
+import { CustomDrawerContent } from '../../components/CustomDrawerContent';
+import { DrawerHeaderRight } from '../../components/DrawerHeaderRight';
 
 export default function AppLayout() {
   return (
@@ -37,6 +37,17 @@ export default function AppLayout() {
             <Ionicons name="home" size={size} color={color} />
           ),
           headerShown: true,
+        }}
+      />
+      <Drawer.Screen
+        name="notifications"
+        options={{
+          title: 'Notifications',
+          headerTitle: 'Notifications',
+          drawerLabel: 'Notifications',
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="notifications-outline" size={size} color={color} />
+          ),
         }}
       />
       <Drawer.Screen

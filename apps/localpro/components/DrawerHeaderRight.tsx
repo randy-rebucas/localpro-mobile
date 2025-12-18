@@ -15,9 +15,7 @@ export function DrawerHeaderRight() {
   };
 
   const handleNotifications = () => {
-    // Navigate to notifications screen when implemented
-    // router.push('/(app)/notifications');
-    console.log('Notifications pressed');
+    router.push('/(app)/notifications');
   };
 
 
@@ -207,4 +205,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
 });
+
+export default DrawerHeaderRight;
 
