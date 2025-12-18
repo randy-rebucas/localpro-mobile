@@ -1,11 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function MarketplaceScreen() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <Text style={styles.title}>Marketplace</Text>
       <Text style={styles.subtitle}>Browse services and bookings</Text>
-    </View>
+    </SafeAreaView>
   );
 }
 

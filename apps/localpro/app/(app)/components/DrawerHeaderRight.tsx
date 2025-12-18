@@ -1,0 +1,210 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useAuthContext } from '@localpro/auth';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+export function DrawerHeaderRight() {
+  const { user } = useAuthContext();
+  const router = useRouter();
+  const [packageModalVisible, setPackageModalVisible] = useState(false);
+
+  const handlePackageSwitcher = () => {
+    setPackageModalVisible(true);
+  };
+
+  const handleNotifications = () => {
+    // Navigate to notifications screen when implemented
+    // router.push('/(app)/notifications');
+    console.log('Notifications pressed');
+  };
+
+
+  const packages = [
+    { id: 'marketplace', name: 'Marketplace', icon: 'storefront' },
+    { id: 'jobs', name: 'Job Board', icon: 'briefcase' },
+    { id: 'referrals', name: 'Referrals', icon: 'people' },
+    { id: 'agencies', name: 'Agencies', icon: 'business' },
+    { id: 'supplies', name: 'Supplies', icon: 'cube' },
+    { id: 'academy', name: 'Academy', icon: 'school' },
+    { id: 'finance', name: 'Finance', icon: 'wallet' },
+    { id: 'rentals', name: 'Rentals', icon: 'home' },
+    { id: 'ads', name: 'Ads', icon: 'megaphone' },
+    { id: 'facility-care', name: 'FacilityCare', icon: 'medical' },
+    { id: 'subscriptions', name: 'Subscriptions', icon: 'card' },
+    { id: 'trust', name: 'Trust Verification', icon: 'shield-checkmark' },
+    { id: 'communication', name: 'Communication', icon: 'chatbubbles' },
+    { id: 'partners', name: 'Partners', icon: 'people' },
+  ];
+
+  return (
+    <>
+      <View style={styles.container}>
+        <TouchableOpacity
+          onPress={handlePackageSwitcher}
+          style={styles.iconButton}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="apps" size={24} color="#000" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handleNotifications}
+          style={styles.iconButton}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="notifications-outline" size={24} color="#000" />
+          {/* Badge indicator can be added here */}
+        </TouchableOpacity>
+      </View>
+
+      {/* Package Switcher Modal */}
+      <Modal
+        visible={packageModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPackageModalVisible(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setPackageModalVisible(false)}
+        >
+          <SafeAreaView edges={['top']} style={styles.modalContent}>
+            <Pressable onPress={(e) => e.stopPropagation()}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Switch Package</Text>
+                <TouchableOpacity
+                  onPress={() => setPackageModalVisible(false)}
+                  style={styles.closeButton}
+                >
+                  <Ionicons name="close" size={24} color="#000" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.packagesList} showsVerticalScrollIndicator={false}>
+                <View style={styles.packagesGrid}>
+                  {packages.map((pkg) => (
+                    <TouchableOpacity
+                      key={pkg.id}
+                      style={styles.packageBlock}
+                      onPress={() => {
+                        // Handle package navigation
+                        console.log(`Navigate to ${pkg.name}`);
+                        setPackageModalVisible(false);
+                      }}
+                    >
+                      <View style={styles.packageBlockIcon}>
+                        <Ionicons
+                          name={pkg.icon as any}
+                          size={28}
+                          color="#007AFF"
+                        />
+                      </View>
+                      <Text style={styles.packageBlockName} numberOfLines={2}>
+                        {pkg.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            </Pressable>
+          </SafeAreaView>
+        </Pressable>
+      </Modal>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginRight: 8,
+  },
+  iconButton: {
+    padding: 4,
+  },
+  profileButton: {
+    padding: 2,
+  },
+  avatarContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+    paddingBottom: 20,
+    paddingTop: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  packagesList: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  packagesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginTop: 20,
+  },
+  packageBlock: {
+    width: '48%',
+    aspectRatio: 1,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  packageBlockIcon: {
+    marginBottom: 8,
+    padding: 8,
+    backgroundColor: '#E6F4FE',
+    borderRadius: 20,
+  },
+  packageBlockName: {
+    fontSize: 12,
+    color: '#000',
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+});
+

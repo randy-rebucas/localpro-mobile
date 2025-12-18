@@ -1,13 +1,15 @@
 import { useAuthContext } from '@localpro/auth';
 import { Card } from '@localpro/ui';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
   const { user } = useAuthContext();
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.content}>
         <Text style={styles.title}>Profile</Text>
 
         <Card style={styles.card}>
@@ -26,8 +28,9 @@ export default function ProfileScreen() {
             <Text style={styles.value}>{user.email}</Text>
           </Card>
         )}
-      </View>
-    </ScrollView>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -36,9 +39,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+  scrollView: {
+    flex: 1,
+  },
   content: {
     padding: 20,
-    paddingTop: 60,
   },
   title: {
     fontSize: 28,

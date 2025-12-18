@@ -2,6 +2,7 @@ import { useAuthContext } from '@localpro/auth';
 import { Button, Card } from '@localpro/ui';
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const { user, logout } = useAuthContext();
@@ -13,8 +14,9 @@ export default function HomeScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.content}>
         <Text style={styles.title}>Welcome back, {user?.name || 'User'}!</Text>
         <Text style={styles.subtitle}>Your LocalPro Dashboard</Text>
 
@@ -25,14 +27,16 @@ export default function HomeScreen() {
           </Text>
         </Card>
 
-        <Button
-          title="Logout"
-          onPress={handleLogout}
-          variant="outline"
-          style={styles.logoutButton}
-        />
-      </View>
-    </ScrollView>
+        <View style={styles.logoutButton}>
+          <Button
+            title="Logout"
+            onPress={handleLogout}
+            variant="outline"
+          />
+        </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -41,9 +45,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+  scrollView: {
+    flex: 1,
+  },
   content: {
     padding: 20,
-    paddingTop: 60,
   },
   title: {
     fontSize: 28,

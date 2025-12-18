@@ -3,6 +3,7 @@ import { Loading } from '@localpro/ui';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Index() {
   const { isAuthenticated, isLoading } = useAuthContext();
@@ -19,9 +20,9 @@ export default function Index() {
   }, [isAuthenticated, isLoading]);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <Loading message="Loading..." />
-    </View>
+    </SafeAreaView>
   );
 }
 
