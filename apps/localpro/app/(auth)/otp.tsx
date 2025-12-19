@@ -4,6 +4,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { usePackageContext } from '../../contexts/PackageContext';
+import { navigateToFirstTab } from '../../utils/navigation';
 
 export default function OTPScreen() {
   const { phone, sessionId } = useLocalSearchParams<{ phone: string; sessionId: string }>();
@@ -12,6 +14,7 @@ export default function OTPScreen() {
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
   const { verifyOTP, sendOTP, isAuthenticated, isOnboarding } = useAuthContext();
+  const { activePackage } = usePackageContext();
   const router = useRouter();
   const hasNavigated = useRef(false);
 
@@ -21,14 +24,19 @@ export default function OTPScreen() {
     if (!loading && isAuthenticated && !hasNavigated.current) {
       hasNavigated.current = true;
       if (!isOnboarding) {
-        // User is authenticated and onboarded - navigate to app
-        router.replace('/(app)/(tabs)/index' as any);
+        // User is authenticated and onboarded - navigate to first available tab for active package
+        // Use double requestAnimationFrame to ensure tabs layout has fully initialized
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            navigateToFirstTab(router, activePackage);
+          });
+        });
       } else {
         // User is authenticated but needs onboarding
         router.replace('/(auth)/onboarding');
       }
     }
-  }, [isAuthenticated, isOnboarding, loading]);
+  }, [isAuthenticated, isOnboarding, loading, activePackage]);
 
   useEffect(() => {
     if (resendTimer > 0) {

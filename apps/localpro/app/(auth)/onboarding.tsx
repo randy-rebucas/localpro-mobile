@@ -6,6 +6,8 @@ import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { usePackageContext } from '../../contexts/PackageContext';
+import { navigateToFirstTab } from '../../utils/navigation';
 
 export default function OnboardingScreen() {
   const [name, setName] = useState('');
@@ -14,6 +16,7 @@ export default function OnboardingScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { completeOnboarding, isAuthenticated, isOnboarding } = useAuthContext();
+  const { activePackage } = usePackageContext();
   const router = useRouter();
   const hasNavigated = useRef(false);
 
@@ -21,9 +24,15 @@ export default function OnboardingScreen() {
   useEffect(() => {
     if (!loading && isAuthenticated && !isOnboarding && !hasNavigated.current) {
       hasNavigated.current = true;
-      router.replace('/(app)/(tabs)/index' as any);
+      // Navigate to first available tab for active package
+      // Use double requestAnimationFrame to ensure tabs layout has fully initialized
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          navigateToFirstTab(router, activePackage);
+        });
+      });
     }
-  }, [isAuthenticated, isOnboarding, loading]);
+  }, [isAuthenticated, isOnboarding, loading, activePackage]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();

@@ -66,6 +66,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setIsOnboarding(false);
       }
     } catch (error) {
+      console.error('Auth check error:', error);
       setIsAuthenticated(false);
       setIsOnboarding(false);
       setToken(undefined);

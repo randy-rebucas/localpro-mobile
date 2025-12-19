@@ -1,7 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { usePackageGuard } from '../../../hooks/usePackageGuard';
 
 export default function BrowseRentalsTabScreen() {
+  usePackageGuard(['rentals']);
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.content}>

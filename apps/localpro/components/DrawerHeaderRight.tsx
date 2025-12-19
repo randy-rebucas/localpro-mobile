@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePackageContext, type PackageType } from '../contexts/PackageContext';
+import { navigateToFirstTab } from '../utils/navigation';
 
 export function DrawerHeaderRight() {
   const { user } = useAuthContext();
@@ -28,6 +29,16 @@ export function DrawerHeaderRight() {
       'jobs': 'job-board',
       'academy': 'academy',
       'finance': 'finance',
+      'rentals': 'rentals',
+      'referrals': 'referrals',
+      'agencies': 'agencies',
+      'supplies': 'supplies',
+      'communication': 'communication',
+      'facility-care': 'facility-care',
+      'subscriptions': 'subscriptions',
+      'trust': 'trust',
+      'partners': 'partners',
+      'ads': 'ads',
     };
     return mapping[id] || null;
   };
@@ -113,19 +124,16 @@ export function DrawerHeaderRight() {
                         onPress={async () => {
                           const packageType = mapPackageIdToType(pkg.id);
                           if (packageType) {
+                            setPackageModalVisible(false);
                             await setActivePackage(packageType);
-                            // Navigate to initial tab based on package type
-                            if (packageType === 'marketplace') {
-                              router.push('/(app)/(tabs)');
-                            } else if (packageType === 'job-board') {
-                              router.push('/(app)/(tabs)');
-                            } else if (packageType === 'finance') {
-                              router.push('/(app)/(tabs)/wallet');
-                            } else if (packageType === 'academy') {
-                              router.push('/(app)/(tabs)/courses');
-                            }
+                            // Use double requestAnimationFrame to ensure React has re-rendered and tabs layout updated
+                            requestAnimationFrame(() => {
+                              requestAnimationFrame(() => {
+                                // Use type-safe navigation utility
+                                navigateToFirstTab(router, packageType);
+                              });
+                            });
                           }
-                          setPackageModalVisible(false);
                         }}
                       >
                         <View style={styles.packageBlockHeader}>

@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { isValidTabRoute, pushToTab } from '../../utils/navigation';
 
 const getNotificationIcon = (type: string): keyof typeof Ionicons.glyphMap => {
   switch (type) {
@@ -130,7 +131,24 @@ export default function NotificationsScreen() {
 
     // Handle navigation based on notification type and data
     if (notification.data?.route) {
-      router.push(notification.data.route as any);
+      try {
+        // Validate route before navigation to prevent unmatched route errors
+        const route = notification.data.route;
+        // If it's a tab route, validate it
+        if (typeof route === 'string' && route.startsWith('/(app)/(tabs)/')) {
+          const tabName = route.replace('/(app)/(tabs)/', '');
+          if (isValidTabRoute(tabName)) {
+            pushToTab(router, tabName);
+          } else {
+            console.warn(`Invalid tab route in notification: ${route}`);
+          }
+        } else {
+          // For non-tab routes, navigate directly with error handling
+          router.push(route as any);
+        }
+      } catch (error) {
+        console.error('Error navigating from notification:', error);
+      }
     }
   };
 

@@ -4,8 +4,10 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePackageContext } from '../../../contexts/PackageContext';
+import { usePackageGuard } from '../../../hooks/usePackageGuard';
 
 export default function HomeScreen() {
+  usePackageGuard(['marketplace', 'job-board']);
   const { user } = useAuthContext();
   const { activePackage } = usePackageContext();
   const router = useRouter();

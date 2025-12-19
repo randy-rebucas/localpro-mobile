@@ -4,13 +4,16 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { PackageProvider } from '../contexts/PackageContext';
+import { PackageProvider, usePackageContext } from '../contexts/PackageContext';
+import { navigateToFirstTab } from '../utils/navigation';
 
 function RootLayoutNav() {
-  const { isAuthenticated, isLoading } = useAuthContext();
+  const { isAuthenticated, isLoading: authLoading } = useAuthContext();
+  const { activePackage, isLoading: packageLoading } = usePackageContext();
   const segments = useSegments();
   const router = useRouter();
   const hasNavigated = useRef(false);
+  const isLoading = authLoading || packageLoading;
 
   useEffect(() => {
     if (isLoading) {
@@ -40,9 +43,15 @@ function RootLayoutNav() {
       router.replace('/(auth)/phone');
     } else if (isAuthenticated) {
         hasNavigated.current = true;
-        router.replace('/(app)/(tabs)');
+        // Use double requestAnimationFrame to ensure tabs layout has fully initialized
+        // This prevents unmatched route errors
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            navigateToFirstTab(router, activePackage);
+          });
+        });
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, activePackage]);
 
   if (isLoading) {
     return (

@@ -2,8 +2,10 @@ import { useAuthContext } from '@localpro/auth';
 import { Card } from '@localpro/ui';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { usePackageGuard } from '../../../hooks/usePackageGuard';
 
 export default function ProfileScreen() {
+  usePackageGuard(['marketplace', 'job-board', 'finance', 'academy', 'supplies', 'rentals', 'referrals', 'agencies', 'communication', 'facility-care', 'subscriptions', 'trust', 'partners', 'ads']);
   const { user } = useAuthContext();
 
   return (

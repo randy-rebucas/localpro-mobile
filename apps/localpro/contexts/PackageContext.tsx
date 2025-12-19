@@ -11,11 +11,16 @@ export type PackageType =
   | 'referrals'
   | 'agencies'
   | 'communication'
-  | 'facility-care';
+  | 'facility-care'
+  | 'subscriptions'
+  | 'trust'
+  | 'partners'
+  | 'ads';
 
 interface PackageContextType {
   activePackage: PackageType;
   setActivePackage: (pkg: PackageType) => Promise<void>;
+  isLoading: boolean;
 }
 
 const PackageContext = createContext<PackageContextType | undefined>(undefined);
@@ -45,16 +50,28 @@ export const PackageProvider: React.FC<PackageProviderProps> = ({ children }) =>
 
   const loadActivePackage = async () => {
     try {
+      setIsLoading(true);
       const stored = await SecureStorage.getItem(ACTIVE_PACKAGE_KEY);
-      const validPackages = ['marketplace', 'job-board', 'finance', 'academy', 'supplies', 'rentals', 'referrals', 'agencies', 'communication', 'facility-care'];
+      const validPackages = ['marketplace', 'job-board', 'finance', 'academy', 'supplies', 'rentals', 'referrals', 'agencies', 'communication', 'facility-care', 'subscriptions', 'trust', 'partners', 'ads'];
+      
       if (stored && validPackages.includes(stored)) {
+        // Valid package found, use it
         setActivePackageState(stored as PackageType);
       } else {
+        // No package stored or invalid package - set default and persist it
         setActivePackageState(DEFAULT_PACKAGE);
+        // Persist the default package to storage so it's available on next launch
+        await SecureStorage.setItem(ACTIVE_PACKAGE_KEY, DEFAULT_PACKAGE);
       }
     } catch (error) {
       console.error('Error loading active package:', error);
       setActivePackageState(DEFAULT_PACKAGE);
+      // Try to persist default even on error
+      try {
+        await SecureStorage.setItem(ACTIVE_PACKAGE_KEY, DEFAULT_PACKAGE);
+      } catch (persistError) {
+        console.error('Error persisting default package:', persistError);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -72,12 +89,11 @@ export const PackageProvider: React.FC<PackageProviderProps> = ({ children }) =>
   const value: PackageContextType = {
     activePackage,
     setActivePackage,
+    isLoading,
   };
 
-  if (isLoading) {
-    return null; // Or a loading spinner
-  }
-
+  // Always render children - don't block app rendering for package loading
+  // Package will default to 'marketplace' if loading fails
   return <PackageContext.Provider value={value}>{children}</PackageContext.Provider>;
 };
 

@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { usePackageContext, type PackageType } from '../../../contexts/PackageContext';
+import { isValidTabRoute, navigateToFirstTab } from '../../../utils/navigation';
+import { ALL_TABS as BASE_TABS } from '../../../utils/tabConfig';
 
 // Tab configuration with package visibility mapping
 type TabConfig = {
@@ -10,6 +12,7 @@ type TabConfig = {
   packages: PackageType[]; // Which packages should show this tab
 };
 
+// Extend base tabs with UI metadata
 const ALL_TABS: TabConfig[] = [
   // Marketplace & Job Board tabs
   { name: 'index', title: 'Home', icon: 'home', packages: ['marketplace', 'job-board'] },
@@ -61,15 +64,26 @@ const ALL_TABS: TabConfig[] = [
   { name: 'subscriptions-fc', title: 'Subscriptions', icon: 'card', packages: ['facility-care'] },
   
   // Common tabs (always visible)
-  { name: 'profile', title: 'Profile', icon: 'person', packages: ['marketplace', 'job-board', 'finance', 'academy', 'supplies', 'rentals', 'referrals', 'agencies', 'communication', 'facility-care'] }
-];
+  { name: 'profile', title: 'Profile', icon: 'person', packages: ['marketplace', 'job-board', 'finance', 'academy', 'supplies', 'rentals', 'referrals', 'agencies', 'communication', 'facility-care', 'subscriptions', 'trust', 'partners', 'ads'] }
+].map(tab => {
+  // Ensure packages match base configuration
+  const baseTab = BASE_TABS.find(t => t.name === tab.name);
+  return {
+    ...tab,
+    packages: (baseTab?.packages || tab.packages) as PackageType[],
+  } as TabConfig;
+});
 
 export default function TabsLayout() {
   const { activePackage } = usePackageContext();
+  const router = useRouter();
 
   // Get visible tabs for current package
   const visibleTabs = ALL_TABS.filter(tab => tab.packages.includes(activePackage));
-  const initialRouteName = visibleTabs[0]?.name || 'index';
+  // Always fallback to profile since it's available for all packages
+  // Validate that the route exists before using it
+  const firstVisibleTab = visibleTabs[0]?.name || 'profile';
+  const initialRouteName = isValidTabRoute(firstVisibleTab) ? firstVisibleTab : 'profile';
 
   // Helper to check if a tab should be visible
   const isTabVisible = (tabName: string): boolean => {
@@ -81,6 +95,8 @@ export default function TabsLayout() {
   const getTabConfig = (tabName: string): TabConfig | undefined => {
     return ALL_TABS.find(t => t.name === tabName);
   };
+
+  // Use shared utility for consistency
 
   return (
     <Tabs
@@ -117,8 +133,18 @@ export default function TabsLayout() {
               ),
               // Hide tab from tab bar if not visible for current package
               tabBarItemStyle: isVisible ? undefined : { display: 'none' },
-              // Also use href: null for better compatibility
+              // Prevent navigation to unauthorized tabs
               href: isVisible ? undefined : null,
+            }}
+            listeners={{
+              // Prevent tab press if not visible
+              tabPress: (e) => {
+                if (!isVisible) {
+                  e.preventDefault();
+                  // Redirect to first available tab using type-safe navigation
+                  navigateToFirstTab(router, activePackage);
+                }
+              },
             }}
           />
         );
