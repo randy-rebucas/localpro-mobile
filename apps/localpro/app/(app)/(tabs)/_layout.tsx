@@ -113,11 +113,6 @@ export default function TabsLayout() {
     return tab ? tab.packages.includes(activePackage) : false;
   };
 
-  // Get tab configuration
-  const getTabConfig = (tabName: string): TabConfig | undefined => {
-    return ALL_TABS.find(t => t.name === tabName);
-  };
-
   return (
     <Tabs
       initialRouteName={initialRouteName}
