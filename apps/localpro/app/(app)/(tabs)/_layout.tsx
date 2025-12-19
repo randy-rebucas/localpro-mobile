@@ -44,6 +44,7 @@ const ALL_TABS: TabConfig[] = [
   { name: 'refer', title: 'Refer', icon: 'share-social', packages: ['referrals'] },
   { name: 'stats', title: 'Stats', icon: 'stats-chart', packages: ['referrals'] },
   { name: 'rewards', title: 'Rewards', icon: 'gift', packages: ['referrals'] },
+  { name: 'leaderboard', title: 'Leaderboard', icon: 'trophy', packages: ['referrals'] },
   
   // Agencies tabs
   { name: 'browse-agencies', title: 'Browse', icon: 'business', packages: ['agencies'] },
@@ -63,6 +64,8 @@ const ALL_TABS: TabConfig[] = [
   // Ads tabs
   { name: 'browse-ads', title: 'Browse', icon: 'megaphone', packages: ['ads'] },
   { name: 'my-ads', title: 'My Ads', icon: 'list', packages: ['ads'] },
+  { name: 'ads-search', title: 'Search', icon: 'search', packages: ['ads'] },
+  { name: 'ads-analytics', title: 'Analytics', icon: 'stats-chart', packages: ['ads'] },
   
   // Subscriptions tabs
   { name: 'browse-subscriptions', title: 'Plans', icon: 'card', packages: ['subscriptions'] },
@@ -73,10 +76,13 @@ const ALL_TABS: TabConfig[] = [
   { name: 'verify', title: 'Verify', icon: 'shield-checkmark', packages: ['trust'] },
   { name: 'verification-status', title: 'Status', icon: 'checkmark-circle', packages: ['trust'] },
   { name: 'documents', title: 'Documents', icon: 'document-text', packages: ['trust'] },
+  { name: 'verified', title: 'Verified', icon: 'checkmark-done', packages: ['trust'] },
   
   // Partners tabs
   { name: 'browse-partners', title: 'Browse', icon: 'people', packages: ['partners'] },
   { name: 'my-partners', title: 'My Partners', icon: 'people-circle', packages: ['partners'] },
+  { name: 'onboarding', title: 'Onboarding', icon: 'person-add', packages: ['partners'] },
+  { name: 'usage', title: 'Usage', icon: 'analytics', packages: ['partners'] },
   
   // Search package tabs
   { name: 'global-search', title: 'Global', icon: 'search', packages: ['search'] },
