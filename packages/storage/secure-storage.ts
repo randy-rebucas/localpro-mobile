@@ -3,9 +3,10 @@ import { Platform } from 'react-native';
 
 const TOKEN_KEY = 'auth_token';
 const ACTIVE_PACKAGE_KEY = 'active_package';
+const ACTIVE_ROLE_KEY = 'active_role';
 
 // List of all known keys in secure storage
-const KNOWN_KEYS = [TOKEN_KEY, ACTIVE_PACKAGE_KEY];
+const KNOWN_KEYS = [TOKEN_KEY, ACTIVE_PACKAGE_KEY, ACTIVE_ROLE_KEY];
 
 /**
  * Secure storage utility that uses expo-secure-store on native

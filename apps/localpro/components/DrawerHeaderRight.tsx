@@ -1,16 +1,24 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthContext } from '@localpro/auth';
+import type { UserRole } from '@localpro/types';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePackageContext, type PackageType } from '../contexts/PackageContext';
+import { useRoleContext } from '../contexts/RoleContext';
 
 export function DrawerHeaderRight() {
   const { user } = useAuthContext();
   const { activePackage, setActivePackage } = usePackageContext();
+  const { activeRole, setActiveRole, availableRoles } = useRoleContext();
   const router = useRouter();
   const [packageModalVisible, setPackageModalVisible] = useState(false);
+  const [roleModalVisible, setRoleModalVisible] = useState(false);
+
+  const handleRoleSwitcher = () => {
+    setRoleModalVisible(true);
+  };
 
   const handlePackageSwitcher = () => {
     setPackageModalVisible(true);
@@ -18,6 +26,76 @@ export function DrawerHeaderRight() {
 
   const handleNotifications = () => {
     router.push('/(app)/notifications');
+  };
+
+  // Role helper functions
+  const getRoleDisplayName = (role: UserRole): string => {
+    switch (role) {
+      case 'client':
+        return 'Client';
+      case 'provider':
+        return 'Provider';
+      case 'admin':
+        return 'Admin';
+      case 'supplier':
+        return 'Supplier';
+      case 'instructor':
+        return 'Instructor';
+      case 'agency_owner':
+        return 'Agency Owner';
+      case 'agency_admin':
+        return 'Agency Admin';
+      case 'partner':
+        return 'Partner';
+      default:
+        return role;
+    }
+  };
+
+  const getRoleIcon = (role: UserRole): keyof typeof Ionicons.glyphMap => {
+    switch (role) {
+      case 'client':
+        return 'person-outline';
+      case 'provider':
+        return 'briefcase-outline';
+      case 'admin':
+        return 'shield-outline';
+      case 'supplier':
+        return 'cube-outline';
+      case 'instructor':
+        return 'school-outline';
+      case 'agency_owner':
+        return 'business-outline';
+      case 'agency_admin':
+        return 'people-outline';
+      case 'partner':
+        return 'link-outline';
+      default:
+        return 'person-outline';
+    }
+  };
+
+  const getRoleDescription = (role: UserRole): string => {
+    switch (role) {
+      case 'client':
+        return 'Browse and book services';
+      case 'provider':
+        return 'Offer and manage services';
+      case 'admin':
+        return 'Manage platform settings';
+      case 'supplier':
+        return 'Manage and sell supplies';
+      case 'instructor':
+        return 'Create and teach courses';
+      case 'agency_owner':
+        return 'Own and manage your agency';
+      case 'agency_admin':
+        return 'Manage agency operations';
+      case 'partner':
+        return 'Collaborate with partners';
+      default:
+        return '';
+    }
   };
 
 
@@ -72,6 +150,21 @@ export function DrawerHeaderRight() {
   return (
     <>
       <View style={styles.container}>
+        {/* Role Switcher - only show if user has multiple roles */}
+        {availableRoles.length > 1 && (
+          <TouchableOpacity
+            onPress={handleRoleSwitcher}
+            style={styles.iconButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons 
+              name={getRoleIcon(activeRole)} 
+              size={24} 
+              color="#000" 
+            />
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity
           onPress={handlePackageSwitcher}
           style={styles.iconButton}
@@ -89,6 +182,85 @@ export function DrawerHeaderRight() {
           {/* Badge indicator can be added here */}
         </TouchableOpacity>
       </View>
+
+      {/* Role Switcher Modal */}
+      {availableRoles.length > 1 && (
+        <Modal
+          visible={roleModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setRoleModalVisible(false)}
+        >
+          <Pressable
+            style={styles.modalOverlay}
+            onPress={() => setRoleModalVisible(false)}
+          >
+            <SafeAreaView edges={['top']} style={styles.modalContent}>
+              <Pressable onPress={(e) => e.stopPropagation()}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Switch Role</Text>
+                  <TouchableOpacity
+                    onPress={() => setRoleModalVisible(false)}
+                    style={styles.closeButton}
+                  >
+                    <Ionicons name="close" size={24} color="#000" />
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView style={styles.rolesList} showsVerticalScrollIndicator={false}>
+                  {availableRoles.map((role) => {
+                    const isActive = role === activeRole;
+                    return (
+                      <TouchableOpacity
+                        key={role}
+                        style={[
+                          styles.roleItem,
+                          isActive && styles.roleItemActive,
+                        ]}
+                        onPress={async () => {
+                          await setActiveRole(role);
+                          setRoleModalVisible(false);
+                        }}
+                      >
+                        <View style={styles.roleItemContent}>
+                          <View style={styles.roleItemLeft}>
+                            <View style={[
+                              styles.roleItemIcon,
+                              isActive && styles.roleItemIconActive
+                            ]}>
+                              <Ionicons
+                                name={getRoleIcon(role)}
+                                size={24}
+                                color={isActive ? "#007AFF" : "#666"}
+                              />
+                            </View>
+                            <View style={styles.roleItemText}>
+                              <Text style={[
+                                styles.roleItemName,
+                                isActive && styles.roleItemNameActive
+                              ]}>
+                                {getRoleDisplayName(role)}
+                              </Text>
+                              <Text style={styles.roleItemDescription}>
+                                {getRoleDescription(role)}
+                              </Text>
+                            </View>
+                          </View>
+                          {isActive && (
+                            <Ionicons name="checkmark-circle" size={24} color="#34C759" />
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </Pressable>
+            </SafeAreaView>
+          </Pressable>
+        </Modal>
+      )}
+
+      {/* Package Switcher Modal */}
 
       {/* Package Switcher Modal */}
       <Modal
@@ -305,6 +477,61 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     lineHeight: 16,
+  },
+  rolesList: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  roleItem: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  roleItemActive: {
+    backgroundColor: '#E6F4FE',
+    borderColor: '#007AFF',
+    borderWidth: 2,
+  },
+  roleItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  roleItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  roleItemIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#E6F4FE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  roleItemIconActive: {
+    backgroundColor: '#B3E0FF',
+  },
+  roleItemText: {
+    flex: 1,
+  },
+  roleItemName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 4,
+  },
+  roleItemNameActive: {
+    color: '#007AFF',
+  },
+  roleItemDescription: {
+    fontSize: 14,
+    color: '#666',
   },
 });
 

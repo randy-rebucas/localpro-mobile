@@ -1,16 +1,22 @@
 import { AuthProvider, useAuthContext } from '@localpro/auth';
 import { Loading } from '@localpro/ui';
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PackageProvider } from '../contexts/PackageContext';
+import { RoleProvider } from '../contexts/RoleContext';
 
 function RootLayoutNav() {
-  const { isAuthenticated, isLoading } = useAuthContext();
+  const { isAuthenticated, isLoading, user } = useAuthContext();
   const segments = useSegments();
   const router = useRouter();
   const hasNavigated = useRef(false);
+  
+  // Get available roles from user, default to client if none specified
+  const availableRoles = user?.roles && user.roles.length > 0 
+    ? user.roles 
+    : ['client' as const];
 
   useEffect(() => {
     if (isLoading) {
@@ -66,10 +72,25 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AuthProvider>
         <PackageProvider>
-          <RootLayoutNav />
+          <RoleProviderWrapper>
+            <RootLayoutNav />
+          </RoleProviderWrapper>
         </PackageProvider>
       </AuthProvider>
     </SafeAreaProvider>
+  );
+}
+
+function RoleProviderWrapper({ children }: { children: React.ReactNode }) {
+  const { user } = useAuthContext();
+  const availableRoles = user?.roles && user.roles.length > 0 
+    ? user.roles 
+    : ['client' as const];
+  
+  return (
+    <RoleProvider availableRoles={availableRoles}>
+      {children}
+    </RoleProvider>
   );
 }
 

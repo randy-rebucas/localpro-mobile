@@ -1,3 +1,13 @@
+export type UserRole = 
+  | 'client' 
+  | 'provider' 
+  | 'admin' 
+  | 'supplier' 
+  | 'instructor' 
+  | 'agency_owner' 
+  | 'agency_admin' 
+  | 'partner';
+
 export interface User {
   id: string;
   email?: string;
@@ -5,6 +15,7 @@ export interface User {
   phone: string;
   avatar?: string;
   isOnboarded: boolean;
+  roles?: UserRole[]; // User can have multiple roles
   createdAt: Date;
   updatedAt: Date;
 }
