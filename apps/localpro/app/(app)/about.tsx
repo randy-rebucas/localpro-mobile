@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@localpro/ui';
+import Constants from 'expo-constants';
 import React from 'react';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,34 +12,34 @@ export default function AboutScreen() {
 
   const appInfo = {
     name: 'LocalPro',
-    version: '1.0.0',
+    version: Constants.expoConfig?.version || Constants.manifest?.version || '1.0.0',
     description: 'Connect with local professionals and services in your community. Find services, book appointments, and manage everything in one place.',
-    buildNumber: '1',
+    buildNumber: Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode?.toString() || '1',
   };
 
   const links = [
     {
       icon: 'globe-outline' as const,
       title: 'Website',
-      url: 'https://localpro.com',
+      url: 'https://www.localpro.asia',
       color: colors.primary[600],
     },
     {
       icon: 'logo-facebook' as const,
       title: 'Facebook',
-      url: 'https://facebook.com/localpro',
+      url: 'https://www.facebook.com/localpro.asia',
       color: colors.primary[600],
     },
     {
       icon: 'logo-twitter' as const,
       title: 'Twitter',
-      url: 'https://twitter.com/localpro',
+      url: 'https://www.twitter.com/localpro.asia',
       color: colors.primary[600],
     },
     {
       icon: 'logo-instagram' as const,
       title: 'Instagram',
-      url: 'https://instagram.com/localpro',
+      url: 'https://www.instagram.com/localpro.asia',
       color: colors.primary[600],
     },
   ];
