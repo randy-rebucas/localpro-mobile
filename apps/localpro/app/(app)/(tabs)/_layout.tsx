@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { usePackageContext, type PackageType } from '../../../contexts/PackageContext';
+import { Colors } from '../../../constants/theme';
 
 // Tab configuration with package visibility mapping
 type TabConfig = {
@@ -118,12 +119,12 @@ export default function TabsLayout() {
       initialRouteName={initialRouteName}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#999',
+        tabBarActiveTintColor: Colors.primary[600],
+        tabBarInactiveTintColor: Colors.text.tertiary,
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: '#E0E0E0',
-          backgroundColor: '#fff',
+          borderTopColor: Colors.border.light,
+          backgroundColor: Colors.background.primary,
           elevation: 0,
           shadowOpacity: 0,
         },

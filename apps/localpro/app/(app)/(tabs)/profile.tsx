@@ -5,12 +5,16 @@ import { Card } from '@localpro/ui';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BorderRadius, Colors, Spacing } from '../../../constants/theme';
 import { useRoleContext } from '../../../contexts/RoleContext';
+import { useStylePresets, useThemeColors } from '../../../hooks/use-theme';
 
 export default function ProfileScreen() {
   const { user } = useAuthContext();
   const { activeRole, setActiveRole, availableRoles } = useRoleContext();
   const [roleModalVisible, setRoleModalVisible] = useState(false);
+  const colors = useThemeColors();
+  const presets = useStylePresets();
 
   const getRoleDisplayName = (role: UserRole): string => {
     switch (role) {
@@ -100,7 +104,7 @@ export default function ProfileScreen() {
                     <Ionicons
                       name={getRoleIcon(activeRole)}
                       size={24}
-                      color="#007AFF"
+                      color={colors.primary[600]}
                       style={styles.roleIcon}
                     />
                     <View>
@@ -108,7 +112,7 @@ export default function ProfileScreen() {
                       <Text style={styles.roleDescription}>{getRoleDescription(activeRole)}</Text>
                     </View>
                   </View>
-                  <Ionicons name="chevron-forward" size={20} color="#666" />
+                  <Ionicons name="chevron-forward" size={20} color={colors.text.secondary} />
                 </View>
               </TouchableOpacity>
             </Card>
@@ -153,7 +157,7 @@ export default function ProfileScreen() {
                     onPress={() => setRoleModalVisible(false)}
                     style={styles.closeButton}
                   >
-                    <Ionicons name="close" size={24} color="#000" />
+                    <Ionicons name="close" size={24} color={colors.text.primary} />
                   </TouchableOpacity>
                 </View>
 
@@ -181,7 +185,7 @@ export default function ProfileScreen() {
                               <Ionicons
                                 name={getRoleIcon(role)}
                                 size={24}
-                                color={isActive ? "#007AFF" : "#666"}
+                                color={isActive ? colors.primary[600] : colors.text.secondary}
                               />
                             </View>
                             <View style={styles.roleItemText}>
@@ -197,7 +201,7 @@ export default function ProfileScreen() {
                             </View>
                           </View>
                           {isActive && (
-                            <Ionicons name="checkmark-circle" size={24} color="#34C759" />
+                            <Ionicons name="checkmark-circle" size={24} color={colors.secondary[600]} />
                           )}
                         </View>
                       </TouchableOpacity>
@@ -216,41 +220,41 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.background.secondary,
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    padding: 20,
+    padding: Spacing.lg,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 24,
-    color: '#000',
+    marginBottom: Spacing.lg,
+    color: Colors.text.primary,
   },
   card: {
-    marginBottom: 16,
+    marginBottom: Spacing.md,
   },
   label: {
     fontSize: 14,
-    color: '#666',
+    color: Colors.text.secondary,
     marginBottom: 4,
   },
   value: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000',
+    color: Colors.text.primary,
   },
   roleSwitcher: {
-    marginTop: 8,
+    marginTop: Spacing.sm,
   },
   roleSwitcherContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: Spacing.sm,
   },
   roleSwitcherLeft: {
     flexDirection: 'row',
@@ -263,12 +267,12 @@ const styles = StyleSheet.create({
   roleName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000',
+    color: Colors.text.primary,
     marginBottom: 2,
   },
   roleDescription: {
     fontSize: 12,
-    color: '#666',
+    color: Colors.text.secondary,
   },
   modalOverlay: {
     flex: 1,
@@ -276,44 +280,44 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: Colors.background.primary,
+    borderTopLeftRadius: BorderRadius['2xl'],
+    borderTopRightRadius: BorderRadius['2xl'],
     maxHeight: '80%',
-    paddingBottom: 20,
-    paddingTop: 20,
+    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.lg,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: Colors.border.light,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#000',
+    color: Colors.text.primary,
   },
   closeButton: {
     padding: 4,
   },
   rolesList: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
   roleItem: {
-    backgroundColor: '#f8f8f8',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: Colors.neutral.gray100,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: Colors.border.light,
   },
   roleItemActive: {
-    backgroundColor: '#E6F4FE',
-    borderColor: '#007AFF',
+    backgroundColor: Colors.primary[100],
+    borderColor: Colors.primary[600],
     borderWidth: 2,
   },
   roleItemContent: {
@@ -330,13 +334,13 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#E6F4FE',
+    backgroundColor: Colors.primary[100],
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   roleItemIconActive: {
-    backgroundColor: '#B3E0FF',
+    backgroundColor: Colors.primary[200],
   },
   roleItemText: {
     flex: 1,
@@ -344,15 +348,15 @@ const styles = StyleSheet.create({
   roleItemName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000',
+    color: Colors.text.primary,
     marginBottom: 4,
   },
   roleItemNameActive: {
-    color: '#007AFF',
+    color: Colors.primary[600],
   },
   roleItemDescription: {
     fontSize: 14,
-    color: '#666',
+    color: Colors.text.secondary,
   },
 });
 

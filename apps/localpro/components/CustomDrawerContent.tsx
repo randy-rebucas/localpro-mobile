@@ -8,6 +8,7 @@ import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePackageContext } from '../contexts/PackageContext';
+import { Colors, Spacing, BorderRadius } from '../constants/theme';
 
 export function CustomDrawerContent(props: any) {
   const { user, logout } = useAuthContext();
@@ -60,7 +61,7 @@ export function CustomDrawerContent(props: any) {
           {/* Current Package Section */}
           <View style={styles.section}>
             <View style={styles.menuItem}>
-              <Ionicons name="cube-outline" size={24} color="#D4A574" />
+              <Ionicons name="cube-outline" size={24} color={Colors.secondary[600]} />
               <Text style={styles.menuItemText}>Current Package</Text>
             </View>
             <View style={styles.currentPackageContainer}>
@@ -82,7 +83,7 @@ export function CustomDrawerContent(props: any) {
                 {activePackage === 'search' && 'Search'}
                 {activePackage === 'analytics' && 'Analytics'}
               </Text>
-              <Ionicons name="checkmark-circle" size={20} color="#34C759" />
+              <Ionicons name="checkmark-circle" size={20} color={Colors.secondary[600]} />
             </View>
           </View>
 
@@ -98,7 +99,7 @@ export function CustomDrawerContent(props: any) {
                 props.navigation.closeDrawer();
               }}
             >
-              <Ionicons name="home-outline" size={24} color="#5FA8D3" />
+              <Ionicons name="home-outline" size={24} color={Colors.primary[500]} />
               <Text style={styles.menuItemText}>Home</Text>
             </TouchableOpacity>
 
@@ -109,7 +110,7 @@ export function CustomDrawerContent(props: any) {
                 props.navigation.closeDrawer();
               }}
             >
-              <Ionicons name="search-outline" size={24} color="#87CEEB" />
+              <Ionicons name="search-outline" size={24} color={Colors.primary[400]} />
               <Text style={styles.menuItemText}>Search</Text>
             </TouchableOpacity>
 
@@ -120,7 +121,7 @@ export function CustomDrawerContent(props: any) {
                 props.navigation.closeDrawer();
               }}
             >
-              <Ionicons name="calendar-outline" size={24} color="#D4A574" />
+              <Ionicons name="calendar-outline" size={24} color={Colors.secondary[600]} />
               <Text style={styles.menuItemText}>My Bookings</Text>
             </TouchableOpacity>
 
@@ -131,7 +132,7 @@ export function CustomDrawerContent(props: any) {
                 props.navigation.closeDrawer();
               }}
             >
-              <Ionicons name="star-outline" size={24} color="#FFD700" />
+              <Ionicons name="star-outline" size={24} color={Colors.semantic.warning} />
               <Text style={styles.menuItemText}>Favorites</Text>
             </TouchableOpacity>
 
@@ -142,7 +143,7 @@ export function CustomDrawerContent(props: any) {
                 props.navigation.closeDrawer();
               }}
             >
-              <Ionicons name="chatbubble-outline" size={24} color="#B19CD9" />
+              <Ionicons name="chatbubble-outline" size={24} color={Colors.primary[600]} />
               <Text style={styles.menuItemText}>Messages</Text>
             </TouchableOpacity>
 
@@ -153,7 +154,7 @@ export function CustomDrawerContent(props: any) {
                 props.navigation.closeDrawer();
               }}
             >
-              <Ionicons name="notifications-outline" size={24} color="#FFD700" />
+              <Ionicons name="notifications-outline" size={24} color={Colors.semantic.warning} />
               <Text style={styles.menuItemText}>Notifications</Text>
             </TouchableOpacity>
           </View>
@@ -170,7 +171,7 @@ export function CustomDrawerContent(props: any) {
                 props.navigation.closeDrawer();
               }}
             >
-              <Ionicons name="settings-outline" size={24} color="#A0A0A0" />
+              <Ionicons name="settings-outline" size={24} color={Colors.text.tertiary} />
               <Text style={styles.menuItemText}>Settings</Text>
             </TouchableOpacity>
 
@@ -181,7 +182,7 @@ export function CustomDrawerContent(props: any) {
                 props.navigation.closeDrawer();
               }}
             >
-              <Ionicons name="help-circle-outline" size={24} color="#FF4444" />
+              <Ionicons name="help-circle-outline" size={24} color={Colors.semantic.error} />
               <Text style={styles.menuItemText}>Help & Support</Text>
             </TouchableOpacity>
 
@@ -192,7 +193,7 @@ export function CustomDrawerContent(props: any) {
                 props.navigation.closeDrawer();
               }}
             >
-              <Ionicons name="document-text-outline" size={24} color="#A0A0A0" />
+              <Ionicons name="document-text-outline" size={24} color={Colors.text.tertiary} />
               <Text style={styles.menuItemText}>About</Text>
             </TouchableOpacity>
 
@@ -203,7 +204,7 @@ export function CustomDrawerContent(props: any) {
                 props.navigation.closeDrawer();
               }}
             >
-              <Ionicons name="log-out-outline" size={24} color="#D4A574" />
+              <Ionicons name="log-out-outline" size={24} color={Colors.secondary[600]} />
               <Text style={styles.menuItemText}>Logout</Text>
             </TouchableOpacity>
           </View>
@@ -216,23 +217,23 @@ export function CustomDrawerContent(props: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.background.primary,
   },
   safeArea: {
     flex: 1,
   },
   drawerContent: {
     paddingTop: 0,
-    paddingBottom: 20,
+    paddingBottom: Spacing.lg,
   },
   profileSection: {
-    padding: 16,
+    padding: Spacing.md,
     margin: 12,
-    marginBottom: 16,
+    marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    backgroundColor: '#fff',
+    borderColor: Colors.border.light,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.background.primary,
   },
   profileContainer: {
     alignItems: 'center',
@@ -243,51 +244,51 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#e0e0e0',
+    borderColor: Colors.border.light,
   },
   profileAvatarPlaceholder: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: Colors.neutral.gray100,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#e0e0e0',
+    borderColor: Colors.border.light,
   },
   profileAvatarText: {
-    color: '#666',
+    color: Colors.text.secondary,
     fontSize: 24,
     fontWeight: '600',
   },
   profileName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000',
+    color: Colors.text.primary,
     marginBottom: 4,
     textAlign: 'center',
   },
   profileEmail: {
     fontSize: 14,
-    color: '#666',
+    color: Colors.text.secondary,
     marginBottom: 12,
     textAlign: 'center',
   },
   viewProfileButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
   },
   viewProfileText: {
     fontSize: 14,
-    color: '#007AFF',
+    color: Colors.primary[600],
     fontWeight: '500',
   },
   divider: {
     height: 1,
-    backgroundColor: '#e0e0e0',
-    marginVertical: 8,
-    marginHorizontal: 16,
+    backgroundColor: Colors.border.light,
+    marginVertical: Spacing.sm,
+    marginHorizontal: Spacing.md,
   },
   section: {
     paddingVertical: 4,
@@ -296,12 +297,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.md,
     gap: 12,
   },
   menuItemText: {
     fontSize: 16,
-    color: '#000',
+    color: Colors.text.primary,
     fontWeight: '500',
     flex: 1,
   },
@@ -312,16 +313,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginHorizontal: 16,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginHorizontal: Spacing.md,
+    backgroundColor: Colors.background.secondary,
+    borderRadius: BorderRadius.md,
     marginTop: 4,
   },
   currentPackageText: {
     fontSize: 14,
-    color: '#000',
+    color: Colors.text.primary,
     fontWeight: '600',
   },
 });

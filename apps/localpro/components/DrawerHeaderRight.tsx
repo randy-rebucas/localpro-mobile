@@ -7,6 +7,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePackageContext, type PackageType } from '../contexts/PackageContext';
 import { useRoleContext } from '../contexts/RoleContext';
+import { Colors, Spacing, BorderRadius } from '../constants/theme';
 
 export function DrawerHeaderRight() {
   const { user } = useAuthContext();
@@ -160,7 +161,7 @@ export function DrawerHeaderRight() {
             <Ionicons 
               name={getRoleIcon(activeRole)} 
               size={24} 
-              color="#000" 
+              color={Colors.text.primary} 
             />
           </TouchableOpacity>
         )}
@@ -170,7 +171,7 @@ export function DrawerHeaderRight() {
           style={styles.iconButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="apps" size={24} color="#000" />
+          <Ionicons name="apps" size={24} color={Colors.text.primary} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -178,7 +179,7 @@ export function DrawerHeaderRight() {
           style={styles.iconButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="notifications-outline" size={24} color="#000" />
+          <Ionicons name="notifications-outline" size={24} color={Colors.text.primary} />
           {/* Badge indicator can be added here */}
         </TouchableOpacity>
       </View>
@@ -203,7 +204,7 @@ export function DrawerHeaderRight() {
                     onPress={() => setRoleModalVisible(false)}
                     style={styles.closeButton}
                   >
-                    <Ionicons name="close" size={24} color="#000" />
+                    <Ionicons name="close" size={24} color={Colors.text.primary} />
                   </TouchableOpacity>
                 </View>
 
@@ -231,7 +232,7 @@ export function DrawerHeaderRight() {
                               <Ionicons
                                 name={getRoleIcon(role)}
                                 size={24}
-                                color={isActive ? "#007AFF" : "#666"}
+                                color={isActive ? Colors.primary[600] : Colors.text.secondary}
                               />
                             </View>
                             <View style={styles.roleItemText}>
@@ -247,7 +248,7 @@ export function DrawerHeaderRight() {
                             </View>
                           </View>
                           {isActive && (
-                            <Ionicons name="checkmark-circle" size={24} color="#34C759" />
+                            <Ionicons name="checkmark-circle" size={24} color={Colors.secondary[600]} />
                           )}
                         </View>
                       </TouchableOpacity>
@@ -277,12 +278,12 @@ export function DrawerHeaderRight() {
             <Pressable onPress={(e) => e.stopPropagation()}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Switch Package</Text>
-                <TouchableOpacity
-                  onPress={() => setPackageModalVisible(false)}
-                  style={styles.closeButton}
-                >
-                  <Ionicons name="close" size={24} color="#000" />
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setPackageModalVisible(false)}
+                    style={styles.closeButton}
+                  >
+                    <Ionicons name="close" size={24} color={Colors.text.primary} />
+                  </TouchableOpacity>
               </View>
 
               <ScrollView style={styles.packagesList} showsVerticalScrollIndicator={false}>
@@ -343,12 +344,12 @@ export function DrawerHeaderRight() {
                             <Ionicons
                               name={pkg.icon as any}
                               size={28}
-                              color={isActive ? "#007AFF" : "#007AFF"}
+                              color={Colors.primary[600]}
                             />
                           </View>
                           {isActive && (
                             <View style={styles.activeIndicator}>
-                              <Ionicons name="checkmark-circle" size={20} color="#34C759" />
+                              <Ionicons name="checkmark-circle" size={20} color={Colors.secondary[600]} />
                             </View>
                           )}
                         </View>
@@ -385,12 +386,12 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#007AFF',
+    backgroundColor: Colors.primary[600],
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
-    color: '#fff',
+    color: Colors.text.inverse,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -400,55 +401,55 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: Colors.background.primary,
+    borderTopLeftRadius: BorderRadius['2xl'],
+    borderTopRightRadius: BorderRadius['2xl'],
     maxHeight: '80%',
-    paddingBottom: 20,
-    paddingTop: 20,
+    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.lg,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: Colors.border.light,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#000',
+    color: Colors.text.primary,
   },
   closeButton: {
     padding: 4,
   },
   packagesList: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
   packagesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: 12,
-    marginTop: 20,
+    marginTop: Spacing.lg,
   },
   packageBlock: {
     width: '48%',
     aspectRatio: 1,
-    backgroundColor: '#f8f8f8',
-    borderRadius: 12,
+    backgroundColor: Colors.neutral.gray100,
+    borderRadius: BorderRadius.lg,
     padding: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: Colors.border.light,
     position: 'relative',
   },
   packageBlockActive: {
-    backgroundColor: '#E6F4FE',
-    borderColor: '#007AFF',
+    backgroundColor: Colors.primary[100],
+    borderColor: Colors.primary[600],
     borderWidth: 2,
   },
   packageBlockHeader: {
@@ -457,42 +458,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
   packageBlockIcon: {
-    padding: 8,
-    backgroundColor: '#E6F4FE',
+    padding: Spacing.sm,
+    backgroundColor: Colors.primary[100],
     borderRadius: 20,
   },
   activeIndicator: {
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.background.primary,
     borderRadius: 10,
   },
   packageBlockName: {
     fontSize: 12,
-    color: '#000',
+    color: Colors.text.primary,
     fontWeight: '500',
     textAlign: 'center',
     lineHeight: 16,
   },
   rolesList: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
   roleItem: {
-    backgroundColor: '#f8f8f8',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: Colors.neutral.gray100,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: Colors.border.light,
   },
   roleItemActive: {
-    backgroundColor: '#E6F4FE',
-    borderColor: '#007AFF',
+    backgroundColor: Colors.primary[100],
+    borderColor: Colors.primary[600],
     borderWidth: 2,
   },
   roleItemContent: {
@@ -509,13 +510,13 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#E6F4FE',
+    backgroundColor: Colors.primary[100],
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   roleItemIconActive: {
-    backgroundColor: '#B3E0FF',
+    backgroundColor: Colors.primary[200],
   },
   roleItemText: {
     flex: 1,
@@ -523,15 +524,15 @@ const styles = StyleSheet.create({
   roleItemName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000',
+    color: Colors.text.primary,
     marginBottom: 4,
   },
   roleItemNameActive: {
-    color: '#007AFF',
+    color: Colors.primary[600],
   },
   roleItemDescription: {
     fontSize: 14,
-    color: '#666',
+    color: Colors.text.secondary,
   },
 });
 

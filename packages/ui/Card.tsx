@@ -4,15 +4,30 @@ import { View, StyleSheet, ViewStyle } from 'react-native';
 interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
+  variant?: 'default' | 'flat';
 }
 
-export const Card: React.FC<CardProps> = ({ children, style }) => {
-  return <View style={[styles.card, style]}>{children}</View>;
+// Theme colors - matching logo brand colors
+const themeColors = {
+  white: '#FFFFFF',
+  beige: '#F5F5F0',  // Light beige background from logo
+};
+
+export const Card: React.FC<CardProps> = ({ children, style, variant = 'default' }) => {
+  return (
+    <View style={[
+      styles.card,
+      variant === 'flat' && styles.cardFlat,
+      style
+    ]}>
+      {children}
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: themeColors.white,
     borderRadius: 12,
     padding: 16,
     shadowColor: '#000',
@@ -20,6 +35,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  cardFlat: {
+    shadowOpacity: 0,
+    elevation: 0,
   },
 });
 

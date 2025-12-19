@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PackageProvider } from '../contexts/PackageContext';
 import { RoleProvider } from '../contexts/RoleContext';
+import { Colors } from '../constants/theme';
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading, user } = useAuthContext();
@@ -99,6 +100,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: Colors.background.primary,
   },
 });

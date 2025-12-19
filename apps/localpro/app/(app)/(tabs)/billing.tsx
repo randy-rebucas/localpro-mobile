@@ -1,12 +1,16 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors, Spacing } from '../../../constants/theme';
+import { useStylePresets } from '../../../hooks/use-theme';
 
 export default function BillingTabScreen() {
+  const presets = useStylePresets();
+  
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.content}>
-        <Text style={styles.title}>Billing</Text>
-        <Text style={styles.subtitle}>Manage your billing information</Text>
+        <Text style={presets.textHeading2}>Billing</Text>
+        <Text style={presets.textBody}>Manage your billing information</Text>
       </View>
     </SafeAreaView>
   );
@@ -15,23 +19,13 @@ export default function BillingTabScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.background.secondary,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#000',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
+    padding: Spacing.lg,
   },
 });
 

@@ -4,10 +4,19 @@ import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-nat
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   loading?: boolean;
   disabled?: boolean;
 }
+
+// Theme colors - matching logo brand colors
+const themeColors = {
+  primary: '#2563EB',      // Medium-dark blue from logo
+  secondary: '#16A34A',    // Fresh green from logo
+  white: '#FFFFFF',
+  textPrimary: '#1F2937',
+  textSecondary: '#6B7280',
+};
 
 export const Button: React.FC<ButtonProps> = ({
   title,
@@ -16,6 +25,20 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   disabled = false,
 }) => {
+  const getTextColor = () => {
+    switch (variant) {
+      case 'primary':
+      case 'secondary':
+        return themeColors.white;
+      case 'outline':
+        return themeColors.primary;
+      case 'ghost':
+        return themeColors.primary;
+      default:
+        return themeColors.white;
+    }
+  };
+
   return (
     <TouchableOpacity
       style={[
@@ -27,7 +50,7 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled || loading}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#fff' : '#007AFF'} />
+        <ActivityIndicator color={getTextColor()} />
       ) : (
         <Text style={[styles.text, styles[`${variant}Text`]]}>{title}</Text>
       )}
@@ -45,15 +68,18 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   primary: {
-    backgroundColor: '#007AFF',
+    backgroundColor: themeColors.primary,
   },
   secondary: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: themeColors.secondary,
   },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#007AFF',
+    borderColor: themeColors.primary,
+  },
+  ghost: {
+    backgroundColor: 'transparent',
   },
   disabled: {
     opacity: 0.5,
@@ -63,13 +89,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   primaryText: {
-    color: '#fff',
+    color: themeColors.white,
   },
   secondaryText: {
-    color: '#000',
+    color: themeColors.white,
   },
   outlineText: {
-    color: '#007AFF',
+    color: themeColors.primary,
+  },
+  ghostText: {
+    color: themeColors.primary,
   },
 });
 

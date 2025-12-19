@@ -39,11 +39,21 @@ export const Input: React.FC<InputProps> = ({
         keyboardType={keyboardType}
         autoComplete={autoComplete as any}
         autoFocus={autoFocus}
-        placeholderTextColor="#999"
+        placeholderTextColor={themeColors.gray600}
       />
       {error && <Text style={styles.error}>{error}</Text>}
     </View>
   );
+};
+
+// Theme colors - matching logo brand colors
+const themeColors = {
+  white: '#FFFFFF',
+  gray200: '#E5E7EB',
+  gray600: '#6B7280',
+  gray900: '#1F2937',
+  primary: '#2563EB',      // Medium-dark blue from logo
+  error: '#DC2626',       // Error red
 };
 
 const styles = StyleSheet.create({
@@ -54,25 +64,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
-    color: '#000',
+    color: themeColors.gray900,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: themeColors.gray200,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: themeColors.white,
+    color: themeColors.gray900,
   },
   inputError: {
-    borderColor: '#FF3B30',
+    borderColor: themeColors.error,
   },
   multiline: {
     minHeight: 100,
     textAlignVertical: 'top',
   },
   error: {
-    color: '#FF3B30',
+    color: themeColors.error,
     fontSize: 12,
     marginTop: 4,
   },
