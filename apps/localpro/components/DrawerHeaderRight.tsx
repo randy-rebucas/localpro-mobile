@@ -38,6 +38,8 @@ export function DrawerHeaderRight() {
       'trust': 'trust',
       'communication': 'communication',
       'partners': 'partners',
+      'search': 'search',
+      'analytics': 'analytics',
     };
     return mapping[id] || null;
   };
@@ -63,6 +65,8 @@ export function DrawerHeaderRight() {
     { id: 'trust', name: 'Trust Verification', icon: 'shield-checkmark' },
     { id: 'communication', name: 'Communication', icon: 'chatbubbles' },
     { id: 'partners', name: 'Partners', icon: 'people' },
+    { id: 'search', name: 'Search', icon: 'search' },
+    { id: 'analytics', name: 'Analytics', icon: 'stats-chart' },
   ];
 
   return (
@@ -153,6 +157,10 @@ export function DrawerHeaderRight() {
                               router.push('/(app)/(tabs)/messages-comm');
                             } else if (packageType === 'partners') {
                               router.push('/(app)/(tabs)/browse-partners');
+                            } else if (packageType === 'search') {
+                              router.push('/(app)/(tabs)/global-search');
+                            } else if (packageType === 'analytics') {
+                              router.push('/(app)/(tabs)/dashboard');
                             }
                           }
                           setPackageModalVisible(false);

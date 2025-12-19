@@ -78,8 +78,20 @@ const ALL_TABS: TabConfig[] = [
   { name: 'browse-partners', title: 'Browse', icon: 'people', packages: ['partners'] },
   { name: 'my-partners', title: 'My Partners', icon: 'people-circle', packages: ['partners'] },
   
+  // Search package tabs
+  { name: 'global-search', title: 'Global', icon: 'search', packages: ['search'] },
+  { name: 'popular', title: 'Popular', icon: 'trending-up', packages: ['search'] },
+  { name: 'locations', title: 'Locations', icon: 'location', packages: ['search'] },
+  { name: 'categories', title: 'Categories', icon: 'grid', packages: ['search'] },
+  
+  // Analytics package tabs
+  { name: 'dashboard', title: 'Dashboard', icon: 'stats-chart', packages: ['analytics'] },
+  { name: 'trends', title: 'Trends', icon: 'trending-up', packages: ['analytics'] },
+  { name: 'financial-analytics', title: 'Financial', icon: 'cash', packages: ['analytics'] },
+  { name: 'user-analytics', title: 'Users', icon: 'people', packages: ['analytics'] },
+  
   // Common tabs (always visible)
-  { name: 'profile', title: 'Profile', icon: 'person', packages: ['marketplace', 'job-board', 'finance', 'academy', 'supplies', 'rentals', 'referrals', 'agencies', 'communication', 'facility-care', 'ads', 'subscriptions', 'trust', 'partners'] }
+  { name: 'profile', title: 'Profile', icon: 'person', packages: ['marketplace', 'job-board', 'finance', 'academy', 'supplies', 'rentals', 'referrals', 'agencies', 'communication', 'facility-care', 'ads', 'subscriptions', 'trust', 'partners', 'search', 'analytics'] }
 ];
 
 export default function TabsLayout() {

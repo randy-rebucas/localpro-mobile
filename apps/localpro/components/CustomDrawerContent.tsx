@@ -79,6 +79,8 @@ export function CustomDrawerContent(props: any) {
                 {activePackage === 'trust' && 'Trust Verification'}
                 {activePackage === 'communication' && 'Communication'}
                 {activePackage === 'partners' && 'Partners'}
+                {activePackage === 'search' && 'Search'}
+                {activePackage === 'analytics' && 'Analytics'}
               </Text>
               <Ionicons name="checkmark-circle" size={20} color="#34C759" />
             </View>
