@@ -69,6 +69,16 @@ export function CustomDrawerContent(props: any) {
                 {activePackage === 'job-board' && 'Job Board'}
                 {activePackage === 'finance' && 'Finance'}
                 {activePackage === 'academy' && 'Academy'}
+                {activePackage === 'referrals' && 'Referrals'}
+                {activePackage === 'agencies' && 'Agencies'}
+                {activePackage === 'supplies' && 'Supplies'}
+                {activePackage === 'rentals' && 'Rentals'}
+                {activePackage === 'ads' && 'Ads'}
+                {activePackage === 'facility-care' && 'FacilityCare'}
+                {activePackage === 'subscriptions' && 'Subscriptions'}
+                {activePackage === 'trust' && 'Trust Verification'}
+                {activePackage === 'communication' && 'Communication'}
+                {activePackage === 'partners' && 'Partners'}
               </Text>
               <Ionicons name="checkmark-circle" size={20} color="#34C759" />
             </View>
@@ -143,72 +153,6 @@ export function CustomDrawerContent(props: any) {
             >
               <Ionicons name="notifications-outline" size={24} color="#FFD700" />
               <Text style={styles.menuItemText}>Notifications</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Divider */}
-          <View style={styles.divider} />
-
-          {/* Context Switching */}
-          <View style={styles.section}>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={async () => {
-                await setActivePackage('marketplace');
-                router.push('/(app)/(tabs)');
-                props.navigation.closeDrawer();
-              }}
-            >
-              <Ionicons name="storefront-outline" size={24} color="#4A90E2" />
-              <Text style={styles.menuItemText}>Switch to Marketplace</Text>
-              {activePackage === 'marketplace' && (
-                <Ionicons name="checkmark-circle" size={20} color="#34C759" style={styles.checkmark} />
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={async () => {
-                await setActivePackage('job-board');
-                router.push('/(app)/(tabs)');
-                props.navigation.closeDrawer();
-              }}
-            >
-              <Ionicons name="briefcase-outline" size={24} color="#D4A574" />
-              <Text style={styles.menuItemText}>Switch to Job Board</Text>
-              {activePackage === 'job-board' && (
-                <Ionicons name="checkmark-circle" size={20} color="#34C759" style={styles.checkmark} />
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={async () => {
-                await setActivePackage('finance');
-                router.push('/(app)/(tabs)/wallet');
-                props.navigation.closeDrawer();
-              }}
-            >
-              <Ionicons name="wallet-outline" size={24} color="#FFD700" />
-              <Text style={styles.menuItemText}>Switch to Finance</Text>
-              {activePackage === 'finance' && (
-                <Ionicons name="checkmark-circle" size={20} color="#34C759" style={styles.checkmark} />
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={async () => {
-                await setActivePackage('academy');
-                router.push('/(app)/(tabs)/courses');
-                props.navigation.closeDrawer();
-              }}
-            >
-              <Ionicons name="school-outline" size={24} color="#B19CD9" />
-              <Text style={styles.menuItemText}>Switch to Academy</Text>
-              {activePackage === 'academy' && (
-                <Ionicons name="checkmark-circle" size={20} color="#34C759" style={styles.checkmark} />
-              )}
             </TouchableOpacity>
           </View>
 

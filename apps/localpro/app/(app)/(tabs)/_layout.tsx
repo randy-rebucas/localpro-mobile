@@ -60,8 +60,24 @@ const ALL_TABS: TabConfig[] = [
   { name: 'contracts', title: 'Contracts', icon: 'document-text', packages: ['facility-care'] },
   { name: 'subscriptions-fc', title: 'Subscriptions', icon: 'card', packages: ['facility-care'] },
   
+  // Ads tabs
+  { name: 'browse-ads', title: 'Browse', icon: 'megaphone', packages: ['ads'] },
+  { name: 'my-ads', title: 'My Ads', icon: 'list', packages: ['ads'] },
+  
+  // Subscriptions tabs
+  { name: 'browse-subscriptions', title: 'Subscriptions', icon: 'card', packages: ['subscriptions'] },
+  { name: 'my-subscriptions', title: 'My Subscriptions', icon: 'receipt', packages: ['subscriptions'] },
+  
+  // Trust Verification tabs
+  { name: 'verify', title: 'Verify', icon: 'shield-checkmark', packages: ['trust'] },
+  { name: 'verification-status', title: 'Status', icon: 'checkmark-circle', packages: ['trust'] },
+  
+  // Partners tabs
+  { name: 'browse-partners', title: 'Browse', icon: 'people', packages: ['partners'] },
+  { name: 'my-partners', title: 'My Partners', icon: 'people-circle', packages: ['partners'] },
+  
   // Common tabs (always visible)
-  { name: 'profile', title: 'Profile', icon: 'person', packages: ['marketplace', 'job-board', 'finance', 'academy', 'supplies', 'rentals', 'referrals', 'agencies', 'communication', 'facility-care'] }
+  { name: 'profile', title: 'Profile', icon: 'person', packages: ['marketplace', 'job-board', 'finance', 'academy', 'supplies', 'rentals', 'referrals', 'agencies', 'communication', 'facility-care', 'ads', 'subscriptions', 'trust', 'partners'] }
 ];
 
 export default function TabsLayout() {

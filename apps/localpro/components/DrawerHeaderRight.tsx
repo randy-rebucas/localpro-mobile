@@ -28,6 +28,16 @@ export function DrawerHeaderRight() {
       'jobs': 'job-board',
       'academy': 'academy',
       'finance': 'finance',
+      'referrals': 'referrals',
+      'agencies': 'agencies',
+      'supplies': 'supplies',
+      'rentals': 'rentals',
+      'ads': 'ads',
+      'facility-care': 'facility-care',
+      'subscriptions': 'subscriptions',
+      'trust': 'trust',
+      'communication': 'communication',
+      'partners': 'partners',
     };
     return mapping[id] || null;
   };
@@ -123,6 +133,26 @@ export function DrawerHeaderRight() {
                               router.push('/(app)/(tabs)/wallet');
                             } else if (packageType === 'academy') {
                               router.push('/(app)/(tabs)/courses');
+                            } else if (packageType === 'referrals') {
+                              router.push('/(app)/(tabs)/refer');
+                            } else if (packageType === 'agencies') {
+                              router.push('/(app)/(tabs)/browse-agencies');
+                            } else if (packageType === 'supplies') {
+                              router.push('/(app)/(tabs)/shop');
+                            } else if (packageType === 'rentals') {
+                              router.push('/(app)/(tabs)/browse-rentals');
+                            } else if (packageType === 'ads') {
+                              router.push('/(app)/(tabs)/browse-ads');
+                            } else if (packageType === 'facility-care') {
+                              router.push('/(app)/(tabs)/services-fc');
+                            } else if (packageType === 'subscriptions') {
+                              router.push('/(app)/(tabs)/browse-subscriptions');
+                            } else if (packageType === 'trust') {
+                              router.push('/(app)/(tabs)/verify');
+                            } else if (packageType === 'communication') {
+                              router.push('/(app)/(tabs)/messages-comm');
+                            } else if (packageType === 'partners') {
+                              router.push('/(app)/(tabs)/browse-partners');
                             }
                           }
                           setPackageModalVisible(false);

@@ -11,7 +11,11 @@ export type PackageType =
   | 'referrals'
   | 'agencies'
   | 'communication'
-  | 'facility-care';
+  | 'facility-care'
+  | 'ads'
+  | 'subscriptions'
+  | 'trust'
+  | 'partners';
 
 interface PackageContextType {
   activePackage: PackageType;
@@ -46,7 +50,7 @@ export const PackageProvider: React.FC<PackageProviderProps> = ({ children }) =>
   const loadActivePackage = async () => {
     try {
       const stored = await SecureStorage.getItem(ACTIVE_PACKAGE_KEY);
-      const validPackages = ['marketplace', 'job-board', 'finance', 'academy', 'supplies', 'rentals', 'referrals', 'agencies', 'communication', 'facility-care'];
+      const validPackages = ['marketplace', 'job-board', 'finance', 'academy', 'supplies', 'rentals', 'referrals', 'agencies', 'communication', 'facility-care', 'ads', 'subscriptions', 'trust', 'partners'];
       if (stored && validPackages.includes(stored)) {
         setActivePackageState(stored as PackageType);
       } else {
