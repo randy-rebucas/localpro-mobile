@@ -65,12 +65,14 @@ const ALL_TABS: TabConfig[] = [
   { name: 'my-ads', title: 'My Ads', icon: 'list', packages: ['ads'] },
   
   // Subscriptions tabs
-  { name: 'browse-subscriptions', title: 'Subscriptions', icon: 'card', packages: ['subscriptions'] },
+  { name: 'browse-subscriptions', title: 'Plans', icon: 'card', packages: ['subscriptions'] },
   { name: 'my-subscriptions', title: 'My Subscriptions', icon: 'receipt', packages: ['subscriptions'] },
+  { name: 'billing', title: 'Billing', icon: 'card-outline', packages: ['subscriptions'] },
   
   // Trust Verification tabs
   { name: 'verify', title: 'Verify', icon: 'shield-checkmark', packages: ['trust'] },
   { name: 'verification-status', title: 'Status', icon: 'checkmark-circle', packages: ['trust'] },
+  { name: 'documents', title: 'Documents', icon: 'document-text', packages: ['trust'] },
   
   // Partners tabs
   { name: 'browse-partners', title: 'Browse', icon: 'people', packages: ['partners'] },
