@@ -1,0 +1,1 @@
+Completing and fixing spacing in this screen. Reviewing the current implementation and enhancing it:

@@ -33,25 +33,25 @@ export const API_ENDPOINTS = {
   // Notification endpoints
   notifications: {
     // Get user notifications (paginated)
-    getNotifications: '/api/notifications',
+    getNotifications: '/api/communication/notifications',
     // Get unread notification count
-    getUnreadCount: '/api/notifications/unread-count',
+    getUnreadCount: '/api/communication/notifications/count',
     // Mark a notification as read
-    markAsRead: (id: string) => `/api/notifications/${id}/read`,
+    markAsRead: (id: string) => `/api/communication/notifications/${id}/read`,
     // Mark all notifications as read
-    markAllAsRead: '/api/notifications/read-all',
+    markAllAsRead: '/api/communication/notifications/read-all',
     // Delete a notification
-    deleteNotification: (id: string) => `/api/notifications/${id}`,
+    deleteNotification: (id: string) => `/api/communication/notifications/${id}`,
     // Delete all notifications (optional: ?readOnly=true)
-    deleteAll: '/api/notifications',
+    deleteAll: '/api/communication/notifications',
     // Get notification settings/preferences
-    getSettings: '/api/notifications/settings',
+    getSettings: '/api/communication/notifications/settings',
     // Update notification settings/preferences
-    updateSettings: '/api/notifications/settings',
+    updateSettings: '/api/communication/notifications/settings',
     // Check if notification type is enabled
-    checkType: (type: string) => `/api/notifications/check/${type}`,
+    checkType: (type: string) => `/api/communication/notifications/check/${type}`,
     // Send test notification to current user
-    sendTest: '/api/notifications/test',
+    sendTest: '/api/communication/notifications/test',
   },
 } as const;
 

@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthContext } from '@localpro/auth';
+import { CommunicationService } from '@localpro/communication';
 import type { UserRole } from '@localpro/types';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BorderRadius, Colors, Spacing } from '../constants/theme';
 import { usePackageContext, type PackageType } from '../contexts/PackageContext';
 import { useRoleContext } from '../contexts/RoleContext';
-import { Colors, Spacing, BorderRadius } from '../constants/theme';
 
 export function DrawerHeaderRight() {
   const { user } = useAuthContext();
@@ -16,6 +17,7 @@ export function DrawerHeaderRight() {
   const router = useRouter();
   const [packageModalVisible, setPackageModalVisible] = useState(false);
   const [roleModalVisible, setRoleModalVisible] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const handleRoleSwitcher = () => {
     setRoleModalVisible(true);
@@ -28,6 +30,31 @@ export function DrawerHeaderRight() {
   const handleNotifications = () => {
     router.push('/(app)/notifications');
   };
+
+  // Load unread notification count
+  const loadUnreadCount = useCallback(async () => {
+    if (!user?.id) return;
+    
+    try {
+      const response = await CommunicationService.getUnreadCount();
+      setUnreadCount(response.count);
+    } catch (error) {
+      console.error('Failed to load unread count:', error);
+      // Set to 0 on error to hide badge
+      setUnreadCount(0);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    loadUnreadCount();
+  }, [loadUnreadCount]);
+
+  // Refresh count when screen comes into focus (e.g., returning from notifications)
+  useFocusEffect(
+    useCallback(() => {
+      loadUnreadCount();
+    }, [loadUnreadCount])
+  );
 
   // Role helper functions
   const getRoleDisplayName = (role: UserRole): string => {
@@ -180,7 +207,13 @@ export function DrawerHeaderRight() {
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Ionicons name="notifications-outline" size={24} color={Colors.text.primary} />
-          {/* Badge indicator can be added here */}
+          {unreadCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>
+                {unreadCount > 99 ? '99+' : unreadCount.toString()}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -533,6 +566,23 @@ const styles = StyleSheet.create({
   roleItemDescription: {
     fontSize: 14,
     color: Colors.text.secondary,
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: Colors.primary[600],
+    borderRadius: BorderRadius.full,
+    padding: Spacing.xs,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: Colors.text.inverse,
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
 

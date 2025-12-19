@@ -5,8 +5,10 @@ import type { Notification } from '@localpro/types';
 import { Card } from '@localpro/ui';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BorderRadius, Colors, Spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/use-theme';
 
 const getNotificationIcon = (type: string): keyof typeof Ionicons.glyphMap => {
   switch (type) {
@@ -27,6 +29,25 @@ const getNotificationIcon = (type: string): keyof typeof Ionicons.glyphMap => {
   }
 };
 
+const getNotificationIconColor = (type: string, colors: any) => {
+  switch (type) {
+    case 'booking':
+      return colors.primary[600];
+    case 'message':
+      return colors.secondary[600];
+    case 'job':
+      return colors.primary[600];
+    case 'payment':
+      return colors.secondary[600];
+    case 'system':
+      return colors.text.secondary;
+    case 'marketing':
+      return colors.primary[600];
+    default:
+      return colors.text.secondary;
+  }
+};
+
 const formatDate = (date: Date): string => {
   const now = new Date();
   const diff = now.getTime() - new Date(date).getTime();
@@ -44,6 +65,7 @@ const formatDate = (date: Date): string => {
 export default function NotificationsScreen() {
   const { user } = useAuthContext();
   const router = useRouter();
+  const colors = useThemeColors();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -57,6 +79,9 @@ export default function NotificationsScreen() {
     if (user?.id) {
       loadNotifications();
       loadUnreadCount();
+    } else {
+      // If user is not available, stop loading
+      setLoading(false);
     }
   }, [user?.id]);
 
@@ -70,7 +95,10 @@ export default function NotificationsScreen() {
   };
 
   const loadNotifications = async (pageNum: number = 1, append: boolean = false) => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
     
     try {
       if (pageNum === 1) {
@@ -83,18 +111,27 @@ export default function NotificationsScreen() {
         page: pageNum,
         limit,
       });
-      console.log('response', response);
+      
+      console.log('Notifications response:', response);
+      
       if (append) {
-        setNotifications(prev => [...prev, ...response.data]);
+        setNotifications(prev => [...prev, ...(response.data || [])]);
       } else {
-        setNotifications(response.data);
+        setNotifications(response.data || []);
       }
 
       setPage(pageNum);
-      setHasMore(response.pagination.hasNext);
+      setHasMore(response.pagination?.hasNext || false);
     } catch (error: any) {
       console.error('Failed to load notifications:', error);
-      Alert.alert('Error', error.message || 'Failed to load notifications');
+      // Set empty array on error to show empty state
+      if (!append) {
+        setNotifications([]);
+      }
+      // Don't show alert for every error, just log it
+      if (error.message && !error.message.includes('Network')) {
+        Alert.alert('Error', error.message || 'Failed to load notifications');
+      }
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -198,12 +235,12 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.title}>Notifications</Text>
           {unreadCount > 0 && (
-            <View style={styles.badge}>
+            <View style={[styles.badge, { backgroundColor: colors.primary[600] }]}>
               <Text style={styles.badgeText}>{unreadCount}</Text>
             </View>
           )}
@@ -213,11 +250,13 @@ export default function NotificationsScreen() {
             <>
               {unreadCount > 0 && (
                 <TouchableOpacity onPress={markAllAsRead} style={styles.headerButton}>
-                  <Text style={styles.headerButtonText}>Mark all read</Text>
+                  <Text style={[styles.headerButtonText, { color: colors.primary[600] }]}>
+                    Mark all read
+                  </Text>
                 </TouchableOpacity>
               )}
               <TouchableOpacity onPress={handleDeleteAll} style={styles.headerButton}>
-                <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+                <Ionicons name="trash-outline" size={20} color={colors.semantic.error} />
               </TouchableOpacity>
             </>
           )}
@@ -226,14 +265,20 @@ export default function NotificationsScreen() {
 
       {loading && notifications.length === 0 ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color={colors.primary[600]} />
         </View>
       ) : notifications.length === 0 ? (
-        <View style={styles.centerContainer}>
-          <Ionicons name="notifications-off-outline" size={64} color="#ccc" />
-          <Text style={styles.emptyText}>No notifications</Text>
-          <Text style={styles.emptySubtext}>You're all caught up!</Text>
-        </View>
+        <Card style={styles.emptyCard}>
+          <View style={styles.emptyState}>
+            <Ionicons 
+              name="notifications-off-outline" 
+              size={64} 
+              color={colors.text.tertiary} 
+            />
+            <Text style={styles.emptyText}>No notifications</Text>
+            <Text style={styles.emptySubtext}>You're all caught up!</Text>
+          </View>
+        </Card>
       ) : (
         <ScrollView
           style={styles.scrollView}
@@ -262,17 +307,25 @@ export default function NotificationsScreen() {
                 >
                   <Card style={StyleSheet.flatten([
                     styles.notificationCard,
-                    !notification.read && styles.unreadCard
-                  ]) as ViewStyle}>
+                    !notification.read && styles.unreadCard,
+                    !notification.read && { 
+                      backgroundColor: colors.primary[50],
+                      borderLeftColor: colors.primary[600] 
+                    }
+                  ])}>
                     <View style={styles.notificationContent}>
                       <View style={[
                         styles.iconContainer,
-                        !notification.read && styles.unreadIconContainer
+                        !notification.read && [styles.unreadIconContainer, { 
+                          backgroundColor: `${getNotificationIconColor(notification.type, colors)}15` 
+                        }]
                       ]}>
                         <Ionicons
                           name={getNotificationIcon(notification.type)}
                           size={24}
-                          color={notification.read ? '#666' : '#007AFF'}
+                          color={notification.read 
+                            ? colors.text.secondary 
+                            : getNotificationIconColor(notification.type, colors)}
                         />
                       </View>
                       <View style={styles.textContainer}>
@@ -283,7 +336,9 @@ export default function NotificationsScreen() {
                           ]}>
                             {notification.title}
                           </Text>
-                          {!notification.read && <View style={styles.unreadDot} />}
+                          {!notification.read && (
+                            <View style={[styles.unreadDot, { backgroundColor: colors.primary[600] }]} />
+                          )}
                         </View>
                         <Text style={styles.notificationBody} numberOfLines={2}>
                           {notification.body}
@@ -300,13 +355,13 @@ export default function NotificationsScreen() {
                   style={styles.deleteButton}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Ionicons name="trash-outline" size={18} color="#FF3B30" />
+                  <Ionicons name="trash-outline" size={18} color={colors.semantic.error} />
                 </TouchableOpacity>
               </View>
             ))}
             {loadingMore && (
               <View style={styles.loadingMore}>
-                <ActivityIndicator size="small" color="#007AFF" />
+                <ActivityIndicator size="small" color={colors.primary[600]} />
               </View>
             )}
           </View>
@@ -319,29 +374,28 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.background.secondary,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.sm,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#000',
+    color: Colors.text.primary,
   },
   badge: {
-    backgroundColor: '#007AFF',
-    borderRadius: 10,
+    borderRadius: BorderRadius.full,
     minWidth: 20,
     height: 20,
     paddingHorizontal: 6,
@@ -349,71 +403,75 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   badgeText: {
-    color: '#fff',
+    color: Colors.text.inverse,
     fontSize: 12,
     fontWeight: '600',
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: Spacing.md,
   },
   headerButton: {
     paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: Spacing.sm,
   },
   headerButtonText: {
     fontSize: 14,
-    color: '#007AFF',
     fontWeight: '600',
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    padding: 16,
-    paddingTop: 8,
+    padding: Spacing.lg,
+    paddingTop: Spacing.md,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    padding: Spacing['3xl'],
+  },
+  emptyCard: {
+    margin: Spacing.lg,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing['3xl'],
   },
   emptyText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
-    color: '#666',
-    marginTop: 16,
+    color: Colors.text.primary,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999',
-    marginTop: 8,
+    color: Colors.text.secondary,
   },
   notificationCard: {
-    marginBottom: 12,
-    padding: 16,
+    marginBottom: Spacing.md,
   },
   unreadCard: {
-    backgroundColor: '#F0F8FF',
     borderLeftWidth: 3,
-    borderLeftColor: '#007AFF',
   },
   notificationContent: {
     flexDirection: 'row',
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.neutral.gray100,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: Spacing.md,
   },
   unreadIconContainer: {
-    backgroundColor: '#E6F4FE',
+    // Background color set dynamically
   },
   textContainer: {
     flex: 1,
@@ -426,7 +484,7 @@ const styles = StyleSheet.create({
   notificationTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000',
+    color: Colors.text.primary,
     flex: 1,
   },
   unreadTitle: {
@@ -436,35 +494,34 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#007AFF',
-    marginLeft: 8,
+    marginLeft: Spacing.sm,
   },
   notificationBody: {
     fontSize: 14,
-    color: '#666',
+    color: Colors.text.secondary,
     lineHeight: 20,
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
   notificationTime: {
     fontSize: 12,
-    color: '#999',
+    color: Colors.text.tertiary,
   },
   notificationWrapper: {
     position: 'relative',
-    marginBottom: 12,
+    marginBottom: Spacing.md,
   },
   notificationTouchable: {
     flex: 1,
   },
   deleteButton: {
     position: 'absolute',
-    right: 16,
-    top: 16,
-    padding: 8,
+    right: Spacing.md,
+    top: Spacing.md,
+    padding: Spacing.xs,
     zIndex: 1,
   },
   loadingMore: {
-    paddingVertical: 20,
+    paddingVertical: Spacing.lg,
     alignItems: 'center',
   },
 });

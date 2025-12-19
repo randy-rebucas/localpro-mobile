@@ -26,7 +26,8 @@ export class CommunicationService {
 
   /**
    * Get user notifications (paginated)
-   * GET /api/notifications
+   * GET /api/communication/notifications
+   * Response: { success: true, count: number, total: number, page: number, pages: number, data: Notification[] }
    */
   static async getNotifications(params?: GetNotificationsParams): Promise<PaginatedResponse<Notification>> {
     const queryParams = new URLSearchParams();
@@ -38,15 +39,63 @@ export class CommunicationService {
     const queryString = queryParams.toString();
     const endpoint = `${API_ENDPOINTS.notifications.getNotifications}${queryString ? `?${queryString}` : ''}`;
     
-    return apiClient.get<PaginatedResponse<Notification>>(endpoint);
+    try {
+      const response = await apiClient.get<{
+        success: boolean;
+        count: number;
+        total: number;
+        page: number;
+        pages: number;
+        data: Notification[];
+      }>(endpoint);
+
+      console.log('Notifications API response:', response);
+
+      // Transform API response to PaginatedResponse format
+      const limit = params?.limit || 20;
+      const currentPage = response?.page ?? 1;
+      const totalPages = response?.pages ?? 0;
+      const data = Array.isArray(response?.data) ? response.data : [];
+      
+      return {
+        data,
+        pagination: {
+          page: currentPage,
+          limit: limit,
+          total: response?.total ?? 0,
+          totalPages: totalPages,
+          hasNext: currentPage < totalPages,
+          hasPrev: currentPage > 1,
+        },
+      };
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      // Return empty response on error
+      const limit = params?.limit || 20;
+      return {
+        data: [],
+        pagination: {
+          page: params?.page || 1,
+          limit: limit,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
+    }
   }
 
   /**
    * Get unread notification count
-   * GET /api/notifications/unread-count
+   * GET /api/communication/notifications/count?isRead=false
+   * Response: { success: true, data: { count: number } }
    */
   static async getUnreadCount(): Promise<{ count: number }> {
-    return apiClient.get<{ count: number }>(API_ENDPOINTS.notifications.getUnreadCount);
+    const endpoint = `${API_ENDPOINTS.notifications.getUnreadCount}?isRead=false`;
+    const response = await apiClient.get<{ success: boolean; data: { count: number } }>(endpoint);
+    // Extract count from wrapped response
+    return { count: response.data?.count ?? 0 };
   }
 
   /**
