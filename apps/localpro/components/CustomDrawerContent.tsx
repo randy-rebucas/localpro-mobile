@@ -213,7 +213,7 @@ export function CustomDrawerContent(props: any) {
           <View style={styles.section}>
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => router.push('/(app)/(tabs)/settings-comm')}
+              onPress={() => router.push('/(stack)/settings')}
             >
               <Ionicons name="settings-outline" size={24} color={Colors.text.tertiary} />
               <Text style={styles.menuItemText}>Settings</Text>
@@ -221,7 +221,7 @@ export function CustomDrawerContent(props: any) {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => router.push('/(app)/(tabs)/help-support')}
+              onPress={() => router.push('/(stack)/help-support')}
             >
               <Ionicons name="help-circle-outline" size={24} color={Colors.semantic.error} />
               <Text style={styles.menuItemText}>Help & Support</Text>

@@ -130,7 +130,7 @@ export default function HomeScreen() {
   }, [loading, hasMore]);
 
   const handleServicePress = (serviceId: string) => {
-    router.push(`/(app)/service/${serviceId}` as any);
+    router.push(`/(stack)/service/${serviceId}` as any);
   };
 
   const formatCurrency = (amount: number) => {

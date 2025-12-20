@@ -276,7 +276,7 @@ export default function BookingDetailScreen() {
           <Card style={styles.card}>
             <Text style={styles.sectionTitle}>Service Details</Text>
             <TouchableOpacity
-              onPress={() => router.push(`/(app)/service/${booking.service.id}` as any)}
+              onPress={() => router.push(`/(stack)/service/${booking.service.id}` as any)}
             >
               <View style={styles.serviceRow}>
                 {booking.service.images && booking.service.images.length > 0 && (
@@ -340,7 +340,7 @@ export default function BookingDetailScreen() {
                 </Text>
                 {!isProvider && (
                   <TouchableOpacity
-                    onPress={() => router.push(`/(app)/provider/${booking.service.providerId}` as any)}
+                    onPress={() => router.push(`/(stack)/provider/${booking.service.providerId}` as any)}
                     style={styles.viewProfileButton}
                   >
                     <Text style={[styles.viewProfileText, { color: colors.primary[600] }]}>

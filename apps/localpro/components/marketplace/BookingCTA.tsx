@@ -24,7 +24,7 @@ export function BookingCTA({ serviceId, price, onBook }: BookingCTAProps) {
       onBook();
     } else {
       // Navigate to booking screen
-      router.push(`/(app)/booking/create?serviceId=${serviceId}` as any);
+      router.push(`/(stack)/booking/create?serviceId=${serviceId}` as any);
     }
   };
 

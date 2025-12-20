@@ -115,7 +115,7 @@ export default function ServiceDetailScreen() {
 
   const handleBook = () => {
     if (!service) return;
-    router.push(`/(app)/booking/create?serviceId=${service.id}` as any);
+    router.push(`/(stack)/booking/create?serviceId=${service.id}` as any);
   };
 
   if (loading) {

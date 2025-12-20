@@ -458,7 +458,7 @@ export default function ProfileScreen() {
 
             <TouchableOpacity 
               style={styles.actionItem}
-              onPress={() => router.push('/(app)/(tabs)/help-support')}
+              onPress={() => router.push('/(stack)/help-support')}
             >
               <View style={styles.actionItemLeft}>
                 <View style={[styles.actionIcon, { backgroundColor: colors.secondary[100] }]}>
@@ -473,7 +473,7 @@ export default function ProfileScreen() {
 
             <TouchableOpacity 
               style={styles.actionItem}
-              onPress={() => router.push('/(app)/(tabs)/about')}
+              onPress={() => router.push('/(stack)/about')}
             >
               <View style={styles.actionItemLeft}>
                 <View style={[styles.actionIcon, { backgroundColor: colors.neutral.gray100 }]}>

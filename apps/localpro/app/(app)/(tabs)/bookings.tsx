@@ -64,7 +64,7 @@ export default function BookingsTabScreen() {
   };
 
   const handleViewDetails = (bookingId: string) => {
-    router.push(`/(app)/booking/${bookingId}` as any);
+    router.push(`/(stack)/booking/${bookingId}` as any);
   };
 
   const handleCancel = (bookingId: string) => {
@@ -112,7 +112,7 @@ export default function BookingsTabScreen() {
 
   const handleUploadPhotos = (bookingId: string) => {
     // Navigate to booking detail where photo upload is available
-    router.push(`/(app)/booking/${bookingId}` as any);
+    router.push(`/(stack)/booking/${bookingId}` as any);
   };
 
   const getPackageTitle = () => {

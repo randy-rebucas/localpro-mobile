@@ -155,7 +155,7 @@ export default function SearchScreen() {
   };
 
   const handleServicePress = (serviceId: string) => {
-    router.push(`/(app)/service/${serviceId}` as any);
+    router.push(`/(stack)/service/${serviceId}` as any);
   };
 
   const handleRefresh = useCallback(async () => {
