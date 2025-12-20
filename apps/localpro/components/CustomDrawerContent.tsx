@@ -20,6 +20,13 @@ export function CustomDrawerContent(props: any) {
     router.replace('/(auth)/phone');
   };
 
+  const toTitleCase = (str: string | undefined): string => {
+    if (!str) return '';
+    return str
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
 
   return (
     <View style={styles.container}>
@@ -66,22 +73,7 @@ export function CustomDrawerContent(props: any) {
             </View>
             <View style={styles.currentPackageContainer}>
               <Text style={styles.currentPackageText}>
-                {activePackage === 'marketplace' && 'Marketplace'}
-                {activePackage === 'job-board' && 'Job Board'}
-                {activePackage === 'finance' && 'Finance'}
-                {activePackage === 'academy' && 'Academy'}
-                {activePackage === 'referrals' && 'Referrals'}
-                {activePackage === 'agencies' && 'Agencies'}
-                {activePackage === 'supplies' && 'Supplies'}
-                {activePackage === 'rentals' && 'Rentals'}
-                {activePackage === 'ads' && 'Ads'}
-                {activePackage === 'facility-care' && 'FacilityCare'}
-                {activePackage === 'subscriptions' && 'Subscriptions'}
-                {activePackage === 'trust' && 'Trust Verification'}
-                {activePackage === 'communication' && 'Communication'}
-                {activePackage === 'partners' && 'Partners'}
-                {activePackage === 'search' && 'Search'}
-                {activePackage === 'analytics' && 'Analytics'}
+                {toTitleCase(activePackage)}
               </Text>
               <Ionicons name="checkmark-circle" size={20} color={Colors.secondary[600]} />
             </View>
