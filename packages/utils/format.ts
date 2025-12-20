@@ -11,3 +11,17 @@ export const truncateText = (text: string, maxLength: number): string => {
   return text.slice(0, maxLength) + '...';
 };
 
+/**
+ * Converts a string to title case, handling hyphenated words
+ * Example: "hello-world" -> "Hello World"
+ * @param str - The string to convert (can be undefined)
+ * @returns The title-cased string, or empty string if input is undefined
+ */
+export const toTitleCase = (str: string | undefined): string => {
+  if (!str) return '';
+  return str
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+

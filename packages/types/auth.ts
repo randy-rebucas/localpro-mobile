@@ -8,16 +8,69 @@ export type UserRole =
   | 'agency_admin' 
   | 'partner';
 
+export interface Avatar {
+  url: string;
+  publicId: string;
+  thumbnail: string;
+}
+
 export interface User {
-  id: string;
+  // MongoDB fields
+  _id: string;
+  __v?: number;
+  
+  // Basic user info
+  phoneNumber: string;
   email?: string;
-  name: string;
-  phone: string;
-  avatar?: string;
-  isOnboarded: boolean;
+  firstName: string;
+  lastName: string;
+
+  // Profile information
+  profile?: {
+    avatar?: Avatar;
+    address?: {
+      coordinates?: {
+        lat: number;
+        lng: number;
+      };
+      street?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+    };
+    bio?: string;
+  };
+  
+  // Roles and permissions
   roles?: UserRole[]; // User can have multiple roles
-  createdAt: Date;
-  updatedAt: Date;
+  
+  // Verification and status
+  isVerified?: boolean;
+  isActive?: boolean;
+  lastVerificationSent?: Date | string;
+  isOnboarded?: boolean; // For backward compatibility
+  
+  // Related entity IDs
+  activity?: string;
+  agency?: string;
+  management?: string;
+  referral?: string;
+  trust?: string;
+  wallet?: string;
+  settings?: string;
+  
+  // FCM tokens for push notifications
+  fcmTokens?: string[];
+  
+  // Timestamps
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  
+  // Computed/helper properties (not from API)
+  id?: string; // Alias for _id for backward compatibility
+  name?: string; // Computed from firstName + lastName
+  phone?: string; // Alias for phoneNumber for backward compatibility
 }
 
 export interface AuthState {
@@ -73,5 +126,14 @@ export interface OnboardingData {
   name: string;
   email?: string;
   avatar?: string;
+}
+
+export interface AvatarUploadResponse {
+  success: boolean;
+  message: string;
+  data: {
+    avatar: Avatar;
+  };
+  user?: User;
 }
 

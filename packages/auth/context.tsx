@@ -8,6 +8,7 @@ interface AuthContextType extends AuthState {
   sendOTP: (phone: string) => Promise<PhoneAuthResponse>;
   verifyOTP: (phone: string, code: string, sessionId: string) => Promise<OTPVerificationResponse>;
   completeOnboarding: (data: OnboardingData) => Promise<void>;
+  uploadAvatar: (imageUri: string, fileSize?: number) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
@@ -94,8 +95,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Store token securely (already stored in service, but ensure it's set)
         await SecureStorage.setToken(response.token);
         
+        // Normalize user data for backward compatibility
+        const normalizedUser: User = {
+          ...response.user,
+          id: response.user._id || response.user.id,
+          name: response.user.firstName && response.user.lastName 
+            ? `${response.user.firstName} ${response.user.lastName}`.trim()
+            : response.user.firstName || response.user.lastName || response.user.name,
+          phone: response.user.phoneNumber || response.user.phone,
+        };
+        
         // Update state with user and token
-        setUser(response.user);
+        setUser(normalizedUser);
         setToken(response.token);
         setIsAuthenticated(true);
         setIsOnboarding(response.isNewUser);
@@ -108,10 +119,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const completeOnboarding = async (data: OnboardingData) => {
     try {
-      const updatedUser = await AuthService.completeOnboarding(data, phoneNumber || user?.phone || '');
+      const updatedUser = await AuthService.completeOnboarding(data, phoneNumber || user?.phoneNumber || user?.phone || '');
       if (updatedUser) {
         setUser(updatedUser);
         setIsOnboarding(false);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const uploadAvatar = async (imageUri: string, fileSize?: number) => {
+    try {
+      const updatedUser = await AuthService.uploadAvatar(imageUri, fileSize);
+      if (updatedUser) {
+        setUser(updatedUser);
       }
     } catch (error) {
       throw error;
@@ -144,6 +166,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     sendOTP,
     verifyOTP,
     completeOnboarding,
+    uploadAvatar,
     logout,
     checkAuth,
   };

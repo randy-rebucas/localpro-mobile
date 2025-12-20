@@ -1,14 +1,20 @@
+export interface Coordinates {
+  lat: number;
+  lng: number;
+}
+
+export interface Address {
+  coordinates?: Coordinates;
+  street?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
+}
+
 export interface UserProfile {
-  id: string;
-  email: string;
-  name: string;
-  phone?: string;
-  avatar?: string;
+  address?: Address;
   bio?: string;
-  location?: string;
-  verified: boolean;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 export interface UserPreferences {

@@ -44,6 +44,12 @@
         {
           "locationAlwaysAndWhenInUsePermission": "We need your location to automatically format your phone number with the correct country code."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you upload your avatar."
+        }
       ]
     ],
     "experiments": {

@@ -10,8 +10,9 @@ export const API_CONFIG = {
 } as const;
 
 export const API_ENDPOINTS = {
-  root: '/', // Root endpoint health check
   // Health check endpoints
+  root: '/', // Root endpoint health check
+  // Health check endpoint
   health: '/health',
   // Base endpoints
   base: {

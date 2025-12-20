@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthContext } from '@localpro/auth';
+import { toTitleCase } from '@localpro/utils';
 import {
   DrawerContentScrollView,
 } from '@react-navigation/drawer';
@@ -9,31 +10,17 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BorderRadius, Colors, Spacing } from '../constants/theme';
 import { usePackageContext } from '../contexts/PackageContext';
+import { useAppHealth } from '../hooks/use-app-health';
 
 export function CustomDrawerContent(props: any) {
   const { user, logout } = useAuthContext();
   const { activePackage } = usePackageContext();
   const router = useRouter();
+  const { status: healthStatus, lastChecked } = useAppHealth(30000); // Check every 30 seconds
 
   const handleLogout = async () => {
     await logout();
     router.replace('/(auth)/phone');
-  };
-
-  const toTitleCase = (str: string | undefined): string => {
-    if (!str) return '';
-    return str
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-  };
-
-  const handleNavigation = (screenName: 'favorites' | 'notifications' | 'settings' | 'help-support' | 'about') => {
-    props.navigation.closeDrawer();
-    // Use router for drawer screens with correct paths
-    setTimeout(() => {
-      router.push(`/(app)/${screenName}` as any);
-    }, 100);
   };
 
   return (
@@ -47,8 +34,8 @@ export function CustomDrawerContent(props: any) {
           {/* Profile Section */}
           <View style={styles.profileSection}>
             <View style={styles.profileContainer}>
-              {user?.avatar ? (
-                <Image source={{ uri: user.avatar }} style={styles.profileAvatar} />
+              {user?.profile?.avatar?.thumbnail ? (
+                <Image source={{ uri: user?.profile?.avatar?.thumbnail }} style={styles.profileAvatar} />
               ) : (
                 <View style={styles.profileAvatarPlaceholder}>
                   <Text style={styles.profileAvatarText}>
@@ -69,6 +56,50 @@ export function CustomDrawerContent(props: any) {
               >
                 <Text style={styles.viewProfileText}>View Profile →</Text>
               </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Divider */}
+          <View style={styles.divider} />
+
+          {/* App Status Section */}
+          <View style={styles.section}>
+            <View style={styles.menuItem}>
+              <Ionicons name="pulse-outline" size={24} color={Colors.primary[600]} />
+              <Text style={styles.menuItemText}>App Status</Text>
+            </View>
+            <View style={styles.statusContainer}>
+              <View style={styles.statusIndicator}>
+                <View
+                  style={[
+                    styles.statusDot,
+                    {
+                      backgroundColor:
+                        healthStatus === 'healthy'
+                          ? Colors.semantic.success
+                          : healthStatus === 'unhealthy'
+                          ? Colors.semantic.error
+                          : healthStatus === 'checking'
+                          ? Colors.semantic.warning
+                          : Colors.text.tertiary,
+                    },
+                  ]}
+                />
+                <Text style={styles.statusText}>
+                  {healthStatus === 'healthy'
+                    ? 'All Systems Operational'
+                    : healthStatus === 'unhealthy'
+                    ? 'Service Unavailable'
+                    : healthStatus === 'checking'
+                    ? 'Checking Status...'
+                    : 'Unknown Status'}
+                </Text>
+              </View>
+              {lastChecked && (
+                <Text style={styles.lastCheckedText}>
+                  Last checked: {lastChecked.toLocaleTimeString()}
+                </Text>
+              )}
             </View>
           </View>
 
@@ -319,6 +350,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.text.primary,
     fontWeight: '600',
+  },
+  statusContainer: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginHorizontal: Spacing.md,
+    backgroundColor: Colors.background.secondary,
+    borderRadius: BorderRadius.md,
+    marginTop: 4,
+  },
+  statusIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  statusText: {
+    fontSize: 14,
+    color: Colors.text.primary,
+    fontWeight: '600',
+    flex: 1,
+  },
+  lastCheckedText: {
+    fontSize: 12,
+    color: Colors.text.tertiary,
+    marginTop: 4,
   },
 });
 

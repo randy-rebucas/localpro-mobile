@@ -72,9 +72,26 @@ export class ApiClient {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          message: response.statusText || 'An error occurred',
-        }));
+        let errorData: any = {};
+        const contentType = response.headers.get('content-type');
+        
+        // Try to parse JSON error response, but handle cases where it's not JSON
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            errorData = await response.json();
+          } catch (e) {
+            // If JSON parsing fails, use status text
+            errorData = { message: response.statusText || 'An error occurred' };
+          }
+        } else {
+          // If not JSON, try to get text or use status text
+          try {
+            const text = await response.text();
+            errorData = { message: text || response.statusText || 'An error occurred' };
+          } catch (e) {
+            errorData = { message: response.statusText || 'An error occurred' };
+          }
+        }
 
         const error: ApiError = {
           message: errorData.message || errorData.error || 'An error occurred',
@@ -85,8 +102,20 @@ export class ApiClient {
         throw error;
       }
 
-      const data = await response.json();
-      return data as T;
+      // Parse response as JSON
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        return data as T;
+      } else {
+        // If response is not JSON, try to parse as text or return empty object
+        const text = await response.text();
+        try {
+          return JSON.parse(text) as T;
+        } catch {
+          return {} as T;
+        }
+      }
     } catch (error: any) {
       clearTimeout(timeoutId);
 

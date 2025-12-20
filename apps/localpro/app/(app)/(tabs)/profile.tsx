@@ -1,43 +1,77 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAuthContext } from '@localpro/auth';
-import type { UserRole } from '@localpro/types';
-import { Button, Card } from '@localpro/ui';
+import { AuthService, useAuthContext } from '@localpro/auth';
+import type { User, UserRole } from '@localpro/types';
+import { Button, Card, Loading } from '@localpro/ui';
+import { formatDate, toTitleCase } from '@localpro/utils';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Image, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BorderRadius, Colors, Spacing } from '../../../constants/theme';
 import { useRoleContext } from '../../../contexts/RoleContext';
 import { useThemeColors } from '../../../hooks/use-theme';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuthContext();
+  const { user: contextUser, logout, checkAuth, uploadAvatar } = useAuthContext();
   const { activeRole, setActiveRole, availableRoles } = useRoleContext();
   const [roleModalVisible, setRoleModalVisible] = useState(false);
+  const [user, setUser] = useState<User | null>(contextUser);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const colors = useThemeColors();
   const router = useRouter();
 
-  const getRoleDisplayName = (role: UserRole): string => {
-    switch (role) {
-      case 'client':
-        return 'Client';
-      case 'provider':
-        return 'Provider';
-      case 'admin':
-        return 'Admin';
-      case 'supplier':
-        return 'Supplier';
-      case 'instructor':
-        return 'Instructor';
-      case 'agency_owner':
-        return 'Agency Owner';
-      case 'agency_admin':
-        return 'Agency Admin';
-      case 'partner':
-        return 'Partner';
-      default:
-        return role;
+  // Initialize with context user
+  useEffect(() => {
+    if (contextUser) {
+      setUser(contextUser);
     }
+  }, [contextUser]);
+
+  // Fetch fresh user data on mount
+  useEffect(() => {
+    fetchCurrentUser();
+  }, []); // Only run on mount
+
+  const fetchCurrentUser = async (showRefreshIndicator = false) => {
+    try {
+      if (showRefreshIndicator) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+
+      const currentUser = await AuthService.getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+        // Don't call checkAuth() here as it causes redirects
+        // The auth context already manages authentication state
+      } else {
+        // If no user is returned, use context user as fallback
+        setUser(contextUser);
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch user data:', error);
+      // On error, use context user as fallback
+      setUser(contextUser);
+      // Only show alert on manual refresh, not on initial load
+      if (showRefreshIndicator) {
+        Alert.alert(
+          'Error',
+          'Failed to refresh profile data. Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchCurrentUser(true);
   };
 
   const getRoleIcon = (role: UserRole): keyof typeof Ionicons.glyphMap => {
@@ -86,18 +120,6 @@ export default function ProfileScreen() {
     }
   };
 
-  const formatDate = (date: Date | string | undefined): string => {
-    if (!date) return 'N/A';
-    try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date;
-      return dateObj.toLocaleDateString('en-US', { 
-        month: 'long', 
-        year: 'numeric' 
-      });
-    } catch {
-      return 'N/A';
-    }
-  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -119,12 +141,97 @@ export default function ProfileScreen() {
 
   const handleEditProfile = () => {
     // Navigate to edit profile screen (can be created later)
-    router.push('/(app)/settings');
+    router.push('/(app)/(tabs)/settings-comm');
   };
+
+  const handleUploadAvatar = async () => {
+    try {
+      // Request permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'Permission to access media library is required'
+        );
+        return;
+      }
+
+      // Pick image
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1], // Square aspect ratio
+        quality: 0.8, // Compress to 80% quality
+        allowsMultipleSelection: false,
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      const image = result.assets[0];
+
+      // Validate file size (2MB limit)
+      if (image.fileSize && image.fileSize > 2 * 1024 * 1024) {
+        Alert.alert(
+          'File Too Large',
+          'Image size exceeds 2MB limit. Please choose a smaller image.'
+        );
+        return;
+      }
+
+      setIsUploadingAvatar(true);
+      try {
+        await uploadAvatar(image.uri, image.fileSize);
+        // Refresh user data to get updated avatar URL
+        await fetchCurrentUser();
+        Alert.alert('Success', 'Avatar updated successfully!');
+      } catch (error: any) {
+        console.error('Avatar upload error in profile:', error);
+        const errorMessage = error?.message || 
+                            (typeof error === 'string' ? error : 'Failed to upload avatar. Please try again.');
+        Alert.alert(
+          'Upload Failed',
+          errorMessage
+        );
+      } finally {
+        setIsUploadingAvatar(false);
+      }
+    } catch (error: any) {
+      console.error('Avatar upload error:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to pick image. Please try again.'
+      );
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  if (isLoading && !user) {
+    return (
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <View style={styles.loadingContainer}>
+          <Loading />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary[600]}
+            colors={[colors.primary[600]]}
+          />
+        }
+      >
         <View style={styles.content}>
           <Text style={styles.title}>Profile</Text>
 
@@ -132,8 +239,8 @@ export default function ProfileScreen() {
           <Card style={styles.profileHeaderCard}>
             <View style={styles.profileHeader}>
               <View style={styles.avatarContainer}>
-                {user?.avatar ? (
-                  <Image source={{ uri: user.avatar }} style={styles.avatar} />
+                {user?.profile?.avatar?.thumbnail ? (
+                  <Image source={{ uri: user?.profile?.avatar?.thumbnail }} style={styles.avatar} />
                 ) : (
                   <View style={styles.avatarPlaceholder}>
                     <Text style={styles.avatarText}>
@@ -143,17 +250,26 @@ export default function ProfileScreen() {
                 )}
                 <TouchableOpacity 
                   style={styles.editAvatarButton}
-                  onPress={handleEditProfile}
+                  onPress={handleUploadAvatar}
+                  disabled={isUploadingAvatar}
                 >
-                  <Ionicons name="camera" size={16} color={colors.text.inverse} />
+                  {isUploadingAvatar ? (
+                    <ActivityIndicator size="small" color={colors.text.inverse} />
+                  ) : (
+                    <Ionicons name="camera" size={16} color={colors.text.inverse} />
+                  )}
                 </TouchableOpacity>
               </View>
               <View style={styles.profileHeaderInfo}>
-                <Text style={styles.profileName}>{user?.name || 'User'}</Text>
+                <Text style={styles.profileName}>
+                  {user?.name || (user?.firstName && user?.lastName 
+                    ? `${user.firstName} ${user.lastName}`.trim()
+                    : user?.firstName || user?.lastName || 'User')}
+                </Text>
                 {user?.email && (
                   <Text style={styles.profileEmail}>{user.email}</Text>
                 )}
-                <Text style={styles.profilePhone}>{user?.phone || 'N/A'}</Text>
+                <Text style={styles.profilePhone}>{user?.phone || user?.phoneNumber || 'N/A'}</Text>
               </View>
             </View>
             <TouchableOpacity 
@@ -182,7 +298,7 @@ export default function ProfileScreen() {
                       style={styles.roleIcon}
                     />
                     <View>
-                      <Text style={styles.roleName}>{getRoleDisplayName(activeRole)}</Text>
+                      <Text style={styles.roleName}>{toTitleCase(activeRole)}</Text>
                       <Text style={styles.roleDescription}>{getRoleDescription(activeRole)}</Text>
                     </View>
                   </View>
@@ -239,6 +355,85 @@ export default function ProfileScreen() {
                 </View>
               </>
             )}
+
+            {user?.updatedAt && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.infoRow}>
+                  <View style={styles.infoRowLeft}>
+                    <Ionicons name="time-outline" size={20} color={colors.text.secondary} />
+                    <Text style={styles.infoLabel}>Last Updated</Text>
+                  </View>
+                  <Text style={styles.infoValue}>{formatDate(user.updatedAt)}</Text>
+                </View>
+              </>
+            )}
+
+            {user?.id && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.infoRow}>
+                  <View style={styles.infoRowLeft}>
+                    <Ionicons name="finger-print-outline" size={20} color={colors.text.secondary} />
+                    <Text style={styles.infoLabel}>User ID</Text>
+                  </View>
+                  <Text style={[styles.infoValue, styles.userIdText]} numberOfLines={1} ellipsizeMode="middle">
+                    {user.id}
+                  </Text>
+                </View>
+              </>
+            )}
+
+            {user?.isOnboarded !== undefined && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.infoRow}>
+                  <View style={styles.infoRowLeft}>
+                    <Ionicons 
+                      name={user.isOnboarded ? "checkmark-circle-outline" : "alert-circle-outline"} 
+                      size={20} 
+                      color={user.isOnboarded ? colors.secondary[600] : colors.semantic.warning} 
+                    />
+                    <Text style={styles.infoLabel}>Onboarding Status</Text>
+                  </View>
+                  <View style={styles.statusBadge}>
+                    <Text style={[
+                      styles.statusText,
+                      { color: user.isOnboarded ? colors.secondary[600] : colors.semantic.warning }
+                    ]}>
+                      {user.isOnboarded ? 'Completed' : 'Pending'}
+                    </Text>
+                  </View>
+                </View>
+              </>
+            )}
+
+            {user?.roles && user.roles.length > 0 && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.infoRow}>
+                  <View style={styles.infoRowLeft}>
+                    <Ionicons name="people-outline" size={20} color={colors.text.secondary} />
+                    <Text style={styles.infoLabel}>Roles</Text>
+                  </View>
+                  <View style={styles.rolesContainer}>
+                    {user.roles.map((role, index) => (
+                      <View key={role} style={[
+                        styles.roleBadge,
+                        role === activeRole && styles.roleBadgeActive
+                      ]}>
+                        <Text style={[
+                          styles.roleBadgeText,
+                          role === activeRole && styles.roleBadgeTextActive
+                        ]}>
+                          {toTitleCase(role)}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              </>
+            )}
           </Card>
 
           {/* Quick Actions */}
@@ -247,7 +442,7 @@ export default function ProfileScreen() {
             
             <TouchableOpacity 
               style={styles.actionItem}
-              onPress={() => router.push('/(app)/settings')}
+              onPress={() => router.push('/(app)/(tabs)/settings-comm')}
             >
               <View style={styles.actionItemLeft}>
                 <View style={[styles.actionIcon, { backgroundColor: colors.primary[100] }]}>
@@ -262,7 +457,7 @@ export default function ProfileScreen() {
 
             <TouchableOpacity 
               style={styles.actionItem}
-              onPress={() => router.push('/(app)/help-support')}
+              onPress={() => router.push('/(app)/(tabs)/help-support')}
             >
               <View style={styles.actionItemLeft}>
                 <View style={[styles.actionIcon, { backgroundColor: colors.secondary[100] }]}>
@@ -277,7 +472,7 @@ export default function ProfileScreen() {
 
             <TouchableOpacity 
               style={styles.actionItem}
-              onPress={() => router.push('/(app)/about')}
+              onPress={() => router.push('/(app)/(tabs)/about')}
             >
               <View style={styles.actionItemLeft}>
                 <View style={[styles.actionIcon, { backgroundColor: colors.neutral.gray100 }]}>
@@ -356,7 +551,7 @@ export default function ProfileScreen() {
                                 styles.roleItemName,
                                 isActive && styles.roleItemNameActive
                               ]}>
-                                {getRoleDisplayName(role)}
+                                {toTitleCase(role)}
                               </Text>
                               <Text style={styles.roleItemDescription}>
                                 {getRoleDescription(role)}
@@ -663,6 +858,59 @@ const styles = StyleSheet.create({
   roleItemDescription: {
     fontSize: 14,
     color: Colors.text.secondary,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  loadingText: {
+    marginTop: Spacing.md,
+    fontSize: 16,
+    color: Colors.text.secondary,
+  },
+  userIdText: {
+    fontSize: 12,
+    fontFamily: 'monospace',
+  },
+  statusBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.neutral.gray100,
+  },
+  statusText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  rolesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  roleBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.neutral.gray100,
+    borderWidth: 1,
+    borderColor: Colors.border.light,
+  },
+  roleBadgeActive: {
+    backgroundColor: Colors.primary[100],
+    borderColor: Colors.primary[600],
+  },
+  roleBadgeText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: Colors.text.secondary,
+  },
+  roleBadgeTextActive: {
+    color: Colors.primary[600],
+    fontWeight: '600',
   },
 });
 
