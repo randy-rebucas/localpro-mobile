@@ -107,7 +107,7 @@ export default function HelpSupportScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <Text style={styles.title}>Help & Support</Text>
-          <Text style={styles.subtitle}>We're here to help you</Text>
+          <Text style={styles.subtitle}>We&apos;re here to help you</Text>
 
           {/* Contact Support */}
           <Card style={styles.card}>

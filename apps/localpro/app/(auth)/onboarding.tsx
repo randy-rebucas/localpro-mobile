@@ -9,7 +9,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function OnboardingScreen() {
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
   const [avatar, setAvatar] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,7 +22,7 @@ export default function OnboardingScreen() {
       hasNavigated.current = true;
       router.replace('/(app)/(tabs)/index' as any);
     }
-  }, [isAuthenticated, isOnboarding, loading]);
+  }, [isAuthenticated, isOnboarding, loading, router]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -57,7 +56,6 @@ export default function OnboardingScreen() {
       setLoading(true);
       await completeOnboarding({
         name: name.trim(),
-        email: email.trim() || undefined,
         avatar: avatar || undefined,
       });
       // Navigation will be handled by useEffect when isOnboarding becomes false
@@ -91,7 +89,7 @@ export default function OnboardingScreen() {
         <View style={styles.content}>
           <Text style={styles.title}>Complete Your Profile</Text>
           <Text style={styles.subtitle}>
-            Let's set up your profile to get started
+            Let&apos;s set up your profile to get started
           </Text>
 
           <View style={styles.avatarContainer}>

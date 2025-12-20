@@ -129,7 +129,7 @@ export default function PhoneScreen() {
         <View style={styles.content}>
           <Text style={styles.title}>Enter Your Phone Number</Text>
           <Text style={styles.subtitle}>
-            We'll send you a verification code to confirm your number
+            We&apos;ll send you a verification code to confirm your number
           </Text>
 
           {detectingLocation && (

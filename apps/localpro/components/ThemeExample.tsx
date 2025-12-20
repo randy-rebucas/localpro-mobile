@@ -5,12 +5,10 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { useTheme, useThemeColors, useStylePresets } from '../hooks/use-theme';
-import { Button } from '@localpro/ui';
-import { Card } from '@localpro/ui';
+import { useThemeColors, useStylePresets } from '../hooks/use-theme';
+import { Button, Card } from '@localpro/ui';
 
 export function ThemeExample() {
-  const theme = useTheme();
   const colors = useThemeColors();
   const presets = useStylePresets();
 

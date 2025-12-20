@@ -13,7 +13,6 @@ export default function SettingsScreen() {
   const router = useRouter();
   const colors = useThemeColors();
 
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
 

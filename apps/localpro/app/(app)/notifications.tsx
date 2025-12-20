@@ -75,16 +75,6 @@ export default function NotificationsScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const limit = 20;
 
-  useEffect(() => {
-    if (user?.id) {
-      loadNotifications();
-      loadUnreadCount();
-    } else {
-      // If user is not available, stop loading
-      setLoading(false);
-    }
-  }, [user?.id]);
-
   const loadUnreadCount = async () => {
     try {
       const response = await CommunicationService.getUnreadCount();
@@ -94,7 +84,7 @@ export default function NotificationsScreen() {
     }
   };
 
-  const loadNotifications = async (pageNum: number = 1, append: boolean = false) => {
+  const loadNotifications = useCallback(async (pageNum: number = 1, append: boolean = false) => {
     if (!user?.id) {
       setLoading(false);
       return;
@@ -137,19 +127,29 @@ export default function NotificationsScreen() {
       setLoadingMore(false);
       setRefreshing(false);
     }
-  };
+  }, [user?.id, limit]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadNotifications();
+      loadUnreadCount();
+    } else {
+      // If user is not available, stop loading
+      setLoading(false);
+    }
+  }, [user?.id, loadNotifications]);
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
     loadNotifications(1, false);
     loadUnreadCount();
-  }, [user?.id]);
+  }, [loadNotifications]);
 
   const loadMore = useCallback(() => {
     if (!loadingMore && hasMore) {
       loadNotifications(page + 1, true);
     }
-  }, [page, hasMore, loadingMore]);
+  }, [page, hasMore, loadingMore, loadNotifications]);
 
   const handleNotificationPress = async (notification: Notification) => {
     if (!notification.read) {
@@ -276,7 +276,7 @@ export default function NotificationsScreen() {
               color={colors.text.tertiary} 
             />
             <Text style={styles.emptyText}>No notifications</Text>
-            <Text style={styles.emptySubtext}>You're all caught up!</Text>
+            <Text style={styles.emptySubtext}>You&apos;re all caught up!</Text>
           </View>
         </Card>
       ) : (

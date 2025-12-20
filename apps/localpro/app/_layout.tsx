@@ -9,15 +9,10 @@ import { RoleProvider } from '../contexts/RoleContext';
 import { Colors } from '../constants/theme';
 
 function RootLayoutNav() {
-  const { isAuthenticated, isLoading, user } = useAuthContext();
+  const { isAuthenticated, isLoading } = useAuthContext();
   const segments = useSegments();
   const router = useRouter();
   const hasNavigated = useRef(false);
-  
-  // Get available roles from user, default to client if none specified
-  const availableRoles = user?.roles && user.roles.length > 0 
-    ? user.roles 
-    : ['client' as const];
 
   useEffect(() => {
     if (isLoading) {
@@ -49,7 +44,7 @@ function RootLayoutNav() {
         hasNavigated.current = true;
         router.replace('/(app)/(tabs)');
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, router, segments]);
 
   if (isLoading) {
     return (

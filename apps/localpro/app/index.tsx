@@ -2,7 +2,7 @@ import { useAuthContext } from '@localpro/auth';
 import { Loading } from '@localpro/ui';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Index() {
@@ -17,7 +17,7 @@ export default function Index() {
     } else {
       router.replace('/(app)/(tabs)');
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, router]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>

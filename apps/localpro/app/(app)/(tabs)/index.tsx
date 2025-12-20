@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BorderRadius, Colors, Spacing } from '../../../constants/theme';
 import { usePackageContext } from '../../../contexts/PackageContext';
 import { useRoleContext } from '../../../contexts/RoleContext';
-import { useStylePresets, useThemeColors } from '../../../hooks/use-theme';
+import { useThemeColors } from '../../../hooks/use-theme';
 
 export default function HomeScreen() {
   const { user } = useAuthContext();
@@ -16,7 +16,6 @@ export default function HomeScreen() {
   const { activeRole } = useRoleContext();
   const router = useRouter();
   const colors = useThemeColors();
-  const presets = useStylePresets();
 
   const getPackageContent = () => {
     switch (activePackage) {

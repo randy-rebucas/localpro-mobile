@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@localpro/ui';
-import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,7 +18,6 @@ interface Chat {
 
 export default function MessagesTabScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const router = useRouter();
   const colors = useThemeColors();
 
   // Mock chats data - replace with actual API call

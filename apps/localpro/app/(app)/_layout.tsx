@@ -46,14 +46,6 @@ export default function AppLayout() {
         }}
       />
       <Drawer.Screen
-        name="bookings"
-        options={{
-          title: 'My Bookings',
-          headerTitle: 'My Bookings',
-          drawerItemStyle: { display: 'none' },
-        }}
-      />
-      <Drawer.Screen
         name="favorites"
         options={{
           title: 'Favorites',
@@ -62,34 +54,10 @@ export default function AppLayout() {
         }}
       />
       <Drawer.Screen
-        name="messages"
-        options={{
-          title: 'Messages',
-          headerTitle: 'Messages',
-          drawerItemStyle: { display: 'none' },
-        }}
-      />
-      <Drawer.Screen
         name="notifications"
         options={{
           title: 'Notifications',
           headerTitle: 'Notifications',
-          drawerItemStyle: { display: 'none' },
-        }}
-      />
-      <Drawer.Screen
-        name="finance"
-        options={{
-          title: 'Finance',
-          headerTitle: 'Finance',
-          drawerItemStyle: { display: 'none' },
-        }}
-      />
-      <Drawer.Screen
-        name="academy"
-        options={{
-          title: 'Academy',
-          headerTitle: 'Academy',
           drawerItemStyle: { display: 'none' },
         }}
       />

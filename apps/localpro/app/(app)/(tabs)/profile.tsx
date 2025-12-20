@@ -8,14 +8,13 @@ import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, Touchable
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BorderRadius, Colors, Spacing } from '../../../constants/theme';
 import { useRoleContext } from '../../../contexts/RoleContext';
-import { useStylePresets, useThemeColors } from '../../../hooks/use-theme';
+import { useThemeColors } from '../../../hooks/use-theme';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuthContext();
   const { activeRole, setActiveRole, availableRoles } = useRoleContext();
   const [roleModalVisible, setRoleModalVisible] = useState(false);
   const colors = useThemeColors();
-  const presets = useStylePresets();
   const router = useRouter();
 
   const getRoleDisplayName = (role: UserRole): string => {

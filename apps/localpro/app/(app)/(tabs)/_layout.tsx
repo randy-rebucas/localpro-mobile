@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { usePackageContext, type PackageType } from '../../../contexts/PackageContext';
 import { Colors } from '../../../constants/theme';
+import { usePackageContext, type PackageType } from '../../../contexts/PackageContext';
 
 // Tab configuration with package visibility mapping
 type TabConfig = {
@@ -17,6 +17,8 @@ const ALL_TABS: TabConfig[] = [
   { name: 'search', title: 'Search', icon: 'search', packages: ['marketplace', 'job-board', 'supplies', 'rentals', 'agencies'] },
   { name: 'bookings', title: 'Bookings', icon: 'calendar', packages: ['marketplace', 'rentals', 'facility-care'] },
   { name: 'messages', title: 'Messages', icon: 'chatbubbles', packages: ['marketplace'] },
+  
+  // Job Board tabs
   { name: 'applications', title: 'Applications', icon: 'document-text', packages: ['job-board'] },
   { name: 'post-job', title: 'Post Job', icon: 'add-circle', packages: ['job-board'] },
   

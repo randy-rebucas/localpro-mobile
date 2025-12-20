@@ -7,7 +7,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function OTPScreen() {
   const { phone, sessionId } = useLocalSearchParams<{ phone: string; sessionId: string }>();
-  const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
@@ -28,7 +27,7 @@ export default function OTPScreen() {
         router.replace('/(auth)/onboarding');
       }
     }
-  }, [isAuthenticated, isOnboarding, loading]);
+  }, [isAuthenticated, isOnboarding, loading, router]);
 
   useEffect(() => {
     if (resendTimer > 0) {
@@ -44,23 +43,16 @@ export default function OTPScreen() {
     }
 
     setError('');
-    setCode(otpCode);
 
     try {
       setLoading(true);
       const response = await verifyOTP(phone, otpCode, sessionId);
       
-      if (response.success) {
-        // Auth state will be updated by verifyOTP
-        // The useEffect hook will handle navigation based on auth state
-        // No need to navigate here - let the useEffect handle it
-      } else {
+      if (!response.success) {
         setError('Verification failed. Please try again.');
-        setCode('');
       }
     } catch (err: any) {
       setError(err.message || 'Invalid code. Please try again.');
-      setCode('');
     } finally {
       setLoading(false);
     }
@@ -94,7 +86,7 @@ export default function OTPScreen() {
         <View style={styles.content}>
           <Text style={styles.title}>Enter Verification Code</Text>
           <Text style={styles.subtitle}>
-            We've sent a 6-digit code to{'\n'}
+            We&apos;ve sent a 6-digit code to{'\n'}
             <Text style={styles.phone}>{phone}</Text>
           </Text>
 
@@ -105,7 +97,7 @@ export default function OTPScreen() {
           />
 
           <View style={styles.resendContainer}>
-            <Text style={styles.resendText}>Didn't receive the code? </Text>
+            <Text style={styles.resendText}>Didn&apos;t receive the code? </Text>
             {resendTimer > 0 ? (
               <Text style={styles.timerText}>Resend in {resendTimer}s</Text>
             ) : (

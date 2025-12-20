@@ -12,7 +12,7 @@ import { Colors, Spacing, BorderRadius } from '../constants/theme';
 
 export function CustomDrawerContent(props: any) {
   const { user, logout } = useAuthContext();
-  const { activePackage, setActivePackage } = usePackageContext();
+  const { activePackage } = usePackageContext();
   const router = useRouter();
 
   const handleLogout = async () => {
