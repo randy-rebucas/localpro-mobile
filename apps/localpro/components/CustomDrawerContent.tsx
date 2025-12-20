@@ -32,8 +32,18 @@ export function CustomDrawerContent(props: any) {
           showsVerticalScrollIndicator={true}
         >
           {/* Profile Section */}
-          <View style={styles.profileSection}>
+          <TouchableOpacity
+            style={styles.profileSection}
+            onPress={() => {
+              props.navigation.closeDrawer();
+              setTimeout(() => {
+                router.push('/(app)/(tabs)/profile');
+              }, 100);
+            }}
+            activeOpacity={0.7}
+          >
             <View style={styles.profileContainer}>
+              {/* Avatar on the left */}
               {user?.profile?.avatar?.thumbnail ? (
                 <Image source={{ uri: user?.profile?.avatar?.thumbnail }} style={styles.profileAvatar} />
               ) : (
@@ -43,21 +53,21 @@ export function CustomDrawerContent(props: any) {
                   </Text>
                 </View>
               )}
-              <Text style={styles.profileName}>{user?.name || 'John Doe'}</Text>
-              <Text style={styles.profileEmail}>{user?.email || 'john@example.com'}</Text>
-              <TouchableOpacity
-                style={styles.viewProfileButton}
-                onPress={() => {
-                  props.navigation.closeDrawer();
-                  setTimeout(() => {
-                    router.push('/(app)/(tabs)/profile');
-                  }, 100);
-                }}
-              >
-                <Text style={styles.viewProfileText}>View Profile →</Text>
-              </TouchableOpacity>
+
+              {/* Details on the right */}
+              <View style={styles.profileDetails}>
+                <Text style={styles.profileName} numberOfLines={1}>
+                  {user?.firstName + ' ' + user?.lastName || 'John Doe'}
+                </Text>
+                <Text style={styles.profileEmail} numberOfLines={1}>
+                  {user?.phoneNumber}
+                </Text>
+              </View>
+
+              {/* Chevron indicator */}
+              <Ionicons name="chevron-forward" size={20} color={Colors.text.tertiary} />
             </View>
-          </View>
+          </TouchableOpacity>
 
           {/* Divider */}
           <View style={styles.divider} />
@@ -78,10 +88,10 @@ export function CustomDrawerContent(props: any) {
                         healthStatus === 'healthy'
                           ? Colors.semantic.success
                           : healthStatus === 'unhealthy'
-                          ? Colors.semantic.error
-                          : healthStatus === 'checking'
-                          ? Colors.semantic.warning
-                          : Colors.text.tertiary,
+                            ? Colors.semantic.error
+                            : healthStatus === 'checking'
+                              ? Colors.semantic.warning
+                              : Colors.text.tertiary,
                     },
                   ]}
                 />
@@ -89,10 +99,10 @@ export function CustomDrawerContent(props: any) {
                   {healthStatus === 'healthy'
                     ? 'All Systems Operational'
                     : healthStatus === 'unhealthy'
-                    ? 'Service Unavailable'
-                    : healthStatus === 'checking'
-                    ? 'Checking Status...'
-                    : 'Unknown Status'}
+                      ? 'Service Unavailable'
+                      : healthStatus === 'checking'
+                        ? 'Checking Status...'
+                        : 'Unknown Status'}
                 </Text>
               </View>
               {lastChecked && (
@@ -253,22 +263,18 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.lg,
   },
   profileSection: {
-    padding: Spacing.md,
     margin: 12,
     marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border.light,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.background.primary,
   },
   profileContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.md,
   },
   profileAvatar: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    marginBottom: 12,
     borderWidth: 2,
     borderColor: Colors.border.light,
   },
@@ -279,7 +285,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.neutral.gray100,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
     borderWidth: 2,
     borderColor: Colors.border.light,
   },
@@ -288,27 +293,19 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '600',
   },
+  profileDetails: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   profileName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: Colors.text.primary,
     marginBottom: 4,
-    textAlign: 'center',
   },
   profileEmail: {
     fontSize: 14,
     color: Colors.text.secondary,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  viewProfileButton: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-  },
-  viewProfileText: {
-    fontSize: 14,
-    color: Colors.primary[600],
-    fontWeight: '500',
   },
   divider: {
     height: 1,

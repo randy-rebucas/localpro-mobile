@@ -24,6 +24,7 @@ export interface User {
   email?: string;
   firstName: string;
   lastName: string;
+  dateOfBirth?: Date | string;
 
   // Profile information
   profile?: {
@@ -40,6 +41,12 @@ export interface User {
       country?: string;
     };
     bio?: string;
+  };
+
+  // Location (GeoJSON Point format)
+  location?: {
+    type: 'Point';
+    coordinates: [number, number]; // [longitude, latitude]
   };
   
   // Roles and permissions

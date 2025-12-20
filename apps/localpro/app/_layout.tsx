@@ -22,11 +22,12 @@ function RootLayoutNav() {
 
     const inAuthGroup = segments[0] === '(auth)';
     const inAppGroup = segments[0] === '(app)';
+    const inStackGroup = segments[0] === '(stack)';
     const inTabsGroup = segments[1] === '(tabs)';
 
     // If already in correct location, reset flag and don't redirect
     if ((!isAuthenticated && inAuthGroup) || 
-        (isAuthenticated && inAppGroup && inTabsGroup)) {
+        (isAuthenticated && ((inAppGroup && inTabsGroup) || inStackGroup))) {
       hasNavigated.current = false;
       return;
     }
@@ -40,7 +41,7 @@ function RootLayoutNav() {
     if (!isAuthenticated && !inAuthGroup) {
       hasNavigated.current = true;
       router.replace('/(auth)/phone');
-    } else if (isAuthenticated && (!inAppGroup || !inTabsGroup)) {
+    } else if (isAuthenticated && !inStackGroup && (!inAppGroup || !inTabsGroup)) {
         hasNavigated.current = true;
         router.replace('/(app)/(tabs)');
     }
@@ -58,6 +59,7 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(app)" options={{ headerShown: false }} />
+      <Stack.Screen name="(stack)" options={{ headerShown: false }} />
       <Stack.Screen name="index" options={{ headerShown: false }} />
     </Stack>
   );

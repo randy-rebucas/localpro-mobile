@@ -121,6 +121,47 @@ export class AuthService {
   }
 
   /**
+   * Update user profile information
+   * @param data - Profile data to update
+   * @returns Updated user object
+   */
+  static async updateProfile(data: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    bio?: string;
+    dateOfBirth?: string;
+    address?: {
+      street?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+    };
+    location?: {
+      type: 'Point';
+      coordinates: [number, number]; // [longitude, latitude]
+    };
+  }): Promise<User | null> {
+    try {
+      const response = await apiClient.put<{ user: User }>(
+        API_ENDPOINTS.auth.updateProfile,
+        data
+      );
+      if (response.user) {
+        return normalizeUser(response.user);
+      }
+      return null;
+    } catch (error: any) {
+      // If unauthorized, clear token
+      if (error.status === 401) {
+        await SecureStorage.removeToken();
+      }
+      throw new Error(error.message || 'Failed to update profile. Please try again.');
+    }
+  }
+
+  /**
    * Upload user avatar image using FormData (multipart/form-data)
    * @param imageUri - Local URI of the image to upload
    * @param fileSize - File size in bytes (optional, for validation)

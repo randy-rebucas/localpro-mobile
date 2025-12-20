@@ -8,6 +8,24 @@ interface AuthContextType extends AuthState {
   sendOTP: (phone: string) => Promise<PhoneAuthResponse>;
   verifyOTP: (phone: string, code: string, sessionId: string) => Promise<OTPVerificationResponse>;
   completeOnboarding: (data: OnboardingData) => Promise<void>;
+  updateProfile: (data: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    bio?: string;
+    dateOfBirth?: string;
+    address?: {
+      street?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+    };
+    location?: {
+      type: 'Point';
+      coordinates: [number, number];
+    };
+  }) => Promise<void>;
   uploadAvatar: (imageUri: string, fileSize?: number) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
@@ -129,6 +147,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateProfile = async (data: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    bio?: string;
+    dateOfBirth?: string;
+    address?: {
+      street?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+    };
+    location?: {
+      type: 'Point';
+      coordinates: [number, number];
+    };
+  }) => {
+    try {
+      const updatedUser = await AuthService.updateProfile(data);
+      if (updatedUser) {
+        setUser(updatedUser);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const uploadAvatar = async (imageUri: string, fileSize?: number) => {
     try {
       const updatedUser = await AuthService.uploadAvatar(imageUri, fileSize);
@@ -166,6 +212,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     sendOTP,
     verifyOTP,
     completeOnboarding,
+    updateProfile,
     uploadAvatar,
     logout,
     checkAuth,
