@@ -10,6 +10,26 @@ export const API_CONFIG = {
 } as const;
 
 export const API_ENDPOINTS = {
+  root: '/', // Root endpoint health check
+  // Health check endpoints
+  health: '/health',
+  // Base endpoints
+  base: {
+    // Public endpoints
+    sendCode: '/api/auth/send-code',
+    verifyCode: '/api/auth/verify-code',
+    // Protected endpoints
+    register: '/api/auth/register',
+    getProfile: '/api/auth/profile',
+    completeOnboarding: '/api/auth/complete-onboarding',
+    getProfileCompletionStatus: '/api/auth/profile-completion-status',
+    getProfileCompleteness: '/api/auth/profile-completeness',
+    getCurrentUser: '/api/auth/me',
+    updateProfile: '/api/auth/profile',
+    uploadAvatar: '/api/auth/upload-avatar',
+    uploadPortfolio: '/api/auth/upload-portfolio',
+    logout: '/api/auth/logout',
+  },
   // Auth endpoints
   auth: {
     // Public endpoints

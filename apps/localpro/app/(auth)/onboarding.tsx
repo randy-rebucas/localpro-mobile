@@ -20,7 +20,18 @@ export default function OnboardingScreen() {
   useEffect(() => {
     if (!loading && isAuthenticated && !isOnboarding && !hasNavigated.current) {
       hasNavigated.current = true;
-      router.replace('/(app)/(tabs)/index' as any);
+      // Navigate to tabs - use a small delay to ensure routes are fully initialized
+      const timer = setTimeout(() => {
+        try {
+          // Navigate to tabs - the drawer will show the initial tab based on package
+          router.replace('/(app)/(tabs)');
+        } catch (error) {
+          console.error('Navigation error:', error);
+          // Fallback: try navigating to index tab if available
+          router.replace('/(app)/(tabs)/index');
+        }
+      }, 150);
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated, isOnboarding, loading, router]);
 

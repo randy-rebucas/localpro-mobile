@@ -5,8 +5,8 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Spacing } from '../../constants/theme';
-import { useThemeColors } from '../../hooks/use-theme';
+import { Colors, Spacing } from '../../../constants/theme';
+import { useThemeColors } from '../../../hooks/use-theme';
 
 export default function SettingsScreen() {
   const { user, logout } = useAuthContext();

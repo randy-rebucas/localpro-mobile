@@ -3,8 +3,8 @@ import { Card } from '@localpro/ui';
 import React, { useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Spacing } from '../../constants/theme';
-import { useThemeColors } from '../../hooks/use-theme';
+import { Colors, Spacing } from '../../../constants/theme';
+import { useThemeColors } from '../../../hooks/use-theme';
 
 interface FAQ {
   id: string;

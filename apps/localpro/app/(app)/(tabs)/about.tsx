@@ -4,8 +4,8 @@ import Constants from 'expo-constants';
 import React from 'react';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Spacing } from '../../constants/theme';
-import { useThemeColors } from '../../hooks/use-theme';
+import { Colors, Spacing } from '../../../constants/theme';
+import { useThemeColors } from '../../../hooks/use-theme';
 
 export default function AboutScreen() {
   const colors = useThemeColors();

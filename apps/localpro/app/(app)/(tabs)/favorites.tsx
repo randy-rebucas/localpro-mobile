@@ -3,8 +3,8 @@ import { Card } from '@localpro/ui';
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BorderRadius, Colors, Spacing } from '../../constants/theme';
-import { useThemeColors } from '../../hooks/use-theme';
+import { BorderRadius, Colors, Spacing } from '../../../constants/theme';
+import { useThemeColors } from '../../../hooks/use-theme';
 
 type FavoriteType = 'all' | 'services' | 'products' | 'jobs' | 'rentals' | 'courses' | 'agencies' | 'partners';
 

@@ -4,9 +4,9 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Colors } from '../constants/theme';
 import { PackageProvider } from '../contexts/PackageContext';
 import { RoleProvider } from '../contexts/RoleContext';
-import { Colors } from '../constants/theme';
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuthContext();
@@ -40,7 +40,7 @@ function RootLayoutNav() {
     if (!isAuthenticated && !inAuthGroup) {
       hasNavigated.current = true;
       router.replace('/(auth)/phone');
-    } else if (isAuthenticated) {
+    } else if (isAuthenticated && (!inAppGroup || !inTabsGroup)) {
         hasNavigated.current = true;
         router.replace('/(app)/(tabs)');
     }

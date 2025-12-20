@@ -28,6 +28,14 @@ export function CustomDrawerContent(props: any) {
       .join(' ');
   };
 
+  const handleNavigation = (screenName: 'favorites' | 'notifications' | 'settings' | 'help-support' | 'about') => {
+    props.navigation.closeDrawer();
+    // Use router for drawer screens with correct paths
+    setTimeout(() => {
+      router.push(`/(app)/${screenName}` as any);
+    }, 100);
+  };
+
   return (
     <View style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -53,8 +61,10 @@ export function CustomDrawerContent(props: any) {
               <TouchableOpacity
                 style={styles.viewProfileButton}
                 onPress={() => {
-                  router.push('/(app)/(tabs)/profile');
                   props.navigation.closeDrawer();
+                  setTimeout(() => {
+                    router.push('/(app)/(tabs)/profile');
+                  }, 100);
                 }}
               >
                 <Text style={styles.viewProfileText}>View Profile →</Text>
@@ -87,8 +97,10 @@ export function CustomDrawerContent(props: any) {
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
-                router.push('/(app)/(tabs)');
                 props.navigation.closeDrawer();
+                setTimeout(() => {
+                  router.push('/(app)/(tabs)');
+                }, 100);
               }}
             >
               <Ionicons name="home-outline" size={24} color={Colors.primary[500]} />
@@ -98,8 +110,10 @@ export function CustomDrawerContent(props: any) {
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
-                router.push('/(app)/search');
                 props.navigation.closeDrawer();
+                setTimeout(() => {
+                  router.push('/(app)/(tabs)/search');
+                }, 100);
               }}
             >
               <Ionicons name="search-outline" size={24} color={Colors.primary[400]} />
@@ -109,8 +123,10 @@ export function CustomDrawerContent(props: any) {
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
-                router.push('/(app)/(tabs)/bookings');
                 props.navigation.closeDrawer();
+                setTimeout(() => {
+                  router.push('/(app)/(tabs)/bookings');
+                }, 100);
               }}
             >
               <Ionicons name="calendar-outline" size={24} color={Colors.secondary[600]} />
@@ -119,10 +135,7 @@ export function CustomDrawerContent(props: any) {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => {
-                router.push('/(app)/favorites');
-                props.navigation.closeDrawer();
-              }}
+              onPress={() => router.push('/(app)/(tabs)/favorites')}
             >
               <Ionicons name="star-outline" size={24} color={Colors.semantic.warning} />
               <Text style={styles.menuItemText}>Favorites</Text>
@@ -131,8 +144,10 @@ export function CustomDrawerContent(props: any) {
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
-                router.push('/(app)/(tabs)/messages');
                 props.navigation.closeDrawer();
+                setTimeout(() => {
+                  router.push('/(app)/(tabs)/messages-comm');
+                }, 100);
               }}
             >
               <Ionicons name="chatbubble-outline" size={24} color={Colors.primary[600]} />
@@ -141,10 +156,7 @@ export function CustomDrawerContent(props: any) {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => {
-                router.push('/(app)/notifications');
-                props.navigation.closeDrawer();
-              }}
+              onPress={() => router.push('/(app)/(tabs)/notifications-comm')}
             >
               <Ionicons name="notifications-outline" size={24} color={Colors.semantic.warning} />
               <Text style={styles.menuItemText}>Notifications</Text>
@@ -158,10 +170,7 @@ export function CustomDrawerContent(props: any) {
           <View style={styles.section}>
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => {
-                router.push('/(app)/settings');
-                props.navigation.closeDrawer();
-              }}
+              onPress={() => router.push('/(app)/(tabs)/settings-comm')}
             >
               <Ionicons name="settings-outline" size={24} color={Colors.text.tertiary} />
               <Text style={styles.menuItemText}>Settings</Text>
@@ -169,10 +178,7 @@ export function CustomDrawerContent(props: any) {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => {
-                router.push('/(app)/help-support');
-                props.navigation.closeDrawer();
-              }}
+              onPress={() => router.push('/(app)/(tabs)/help-support')}
             >
               <Ionicons name="help-circle-outline" size={24} color={Colors.semantic.error} />
               <Text style={styles.menuItemText}>Help & Support</Text>
@@ -180,10 +186,7 @@ export function CustomDrawerContent(props: any) {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => {
-                router.push('/(app)/about');
-                props.navigation.closeDrawer();
-              }}
+              onPress={() => router.push('/(app)/(tabs)/about')}
             >
               <Ionicons name="document-text-outline" size={24} color={Colors.text.tertiary} />
               <Text style={styles.menuItemText}>About</Text>

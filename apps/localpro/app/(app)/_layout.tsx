@@ -37,54 +37,6 @@ export default function AppLayout() {
           drawerItemStyle: { display: 'none' },
         }}
       />
-      <Drawer.Screen
-        name="search"
-        options={{
-          title: 'Search',
-          headerTitle: 'Search',
-          drawerItemStyle: { display: 'none' },
-        }}
-      />
-      <Drawer.Screen
-        name="favorites"
-        options={{
-          title: 'Favorites',
-          headerTitle: 'Favorites',
-          drawerItemStyle: { display: 'none' },
-        }}
-      />
-      <Drawer.Screen
-        name="notifications"
-        options={{
-          title: 'Notifications',
-          headerTitle: 'Notifications',
-          drawerItemStyle: { display: 'none' },
-        }}
-      />
-      <Drawer.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          headerTitle: 'Settings',
-          drawerItemStyle: { display: 'none' },
-        }}
-      />
-      <Drawer.Screen
-        name="help-support"
-        options={{
-          title: 'Help & Support',
-          headerTitle: 'Help & Support',
-          drawerItemStyle: { display: 'none' },
-        }}
-      />
-      <Drawer.Screen
-        name="about"
-        options={{
-          title: 'About',
-          headerTitle: 'About',
-          drawerItemStyle: { display: 'none' },
-        }}
-      />
     </Drawer>
   );
 }

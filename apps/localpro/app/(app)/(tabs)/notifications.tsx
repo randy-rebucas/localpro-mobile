@@ -7,8 +7,8 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BorderRadius, Colors, Spacing } from '../../constants/theme';
-import { useThemeColors } from '../../hooks/use-theme';
+import { BorderRadius, Colors, Spacing } from '../../../constants/theme';
+import { useThemeColors } from '../../../hooks/use-theme';
 
 const getNotificationIcon = (type: string): keyof typeof Ionicons.glyphMap => {
   switch (type) {
