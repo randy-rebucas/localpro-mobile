@@ -59,8 +59,7 @@
         {
           "photosPermission": "The app accesses your photos to let you upload your avatar."
         }
-      ],
-      "@react-native-community/datetimepicker"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

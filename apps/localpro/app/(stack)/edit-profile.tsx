@@ -5,18 +5,10 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BorderRadius, Colors, Spacing } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
-
-// Conditional import for DateTimePicker (requires native code)
-let DateTimePicker: any;
-try {
-  DateTimePicker = require('@react-native-community/datetimepicker').default;
-} catch (error) {
-  DateTimePicker = null;
-}
 
 export default function EditProfileScreen() {
   const { user, updateProfile, uploadAvatar, checkAuth } = useAuthContext();
@@ -24,8 +16,6 @@ export default function EditProfileScreen() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
   const colors = useThemeColors();
   const router = useRouter();
 
@@ -62,13 +52,10 @@ export default function EditProfileScreen() {
     if (user) {
       // Format dateOfBirth if it exists
       let dateOfBirthStr = '';
-      let dobDate: Date | null = null;
       if (user.dateOfBirth) {
-        dobDate = typeof user.dateOfBirth === 'string' ? new Date(user.dateOfBirth) : new Date(user.dateOfBirth);
+        const dobDate = typeof user.dateOfBirth === 'string' ? new Date(user.dateOfBirth) : new Date(user.dateOfBirth);
         if (!isNaN(dobDate.getTime())) {
           dateOfBirthStr = dobDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-        } else {
-          dobDate = null;
         }
       }
 
@@ -80,7 +67,6 @@ export default function EditProfileScreen() {
         latitude = user.location.coordinates[1]?.toString() || '';
       }
 
-      setDateOfBirth(dobDate);
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
@@ -117,9 +103,17 @@ export default function EditProfileScreen() {
       newErrors.email = 'Please enter a valid email address';
     }
 
-    // Validate date of birth (should be valid if dateOfBirth state exists)
-    if (dateOfBirth && isNaN(dateOfBirth.getTime())) {
-      newErrors.dateOfBirth = 'Please select a valid date';
+    // Validate date of birth format (YYYY-MM-DD)
+    if (formData.dateOfBirth && formData.dateOfBirth.trim()) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(formData.dateOfBirth.trim())) {
+        newErrors.dateOfBirth = 'Please enter a valid date (YYYY-MM-DD)';
+      } else {
+        const date = new Date(formData.dateOfBirth.trim());
+        if (isNaN(date.getTime())) {
+          newErrors.dateOfBirth = 'Please enter a valid date';
+        }
+      }
     }
 
     // Validate location coordinates if provided (coordinates are captured automatically)
@@ -272,45 +266,6 @@ export default function EditProfileScreen() {
     return null;
   };
 
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    // On Android, the picker closes automatically after selection
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-      if (event.type === 'set' && selectedDate) {
-        setDateOfBirth(selectedDate);
-        // Format as YYYY-MM-DD for formData
-        const formattedDate = selectedDate.toISOString().split('T')[0];
-        setFormData({ ...formData, dateOfBirth: formattedDate });
-        if (errors.dateOfBirth) {
-          setErrors({ ...errors, dateOfBirth: undefined });
-        }
-      }
-    } else {
-      // On iOS, update date as user scrolls
-      if (selectedDate) {
-        setDateOfBirth(selectedDate);
-        // Format as YYYY-MM-DD for formData
-        const formattedDate = selectedDate.toISOString().split('T')[0];
-        setFormData({ ...formData, dateOfBirth: formattedDate });
-        if (errors.dateOfBirth) {
-          setErrors({ ...errors, dateOfBirth: undefined });
-        }
-      }
-      // Close picker when dismissed
-      if (event.type === 'dismissed') {
-        setShowDatePicker(false);
-      }
-    }
-  };
-
-  const formatDateForDisplay = (date: Date | null): string => {
-    if (!date) return '';
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
 
   const handleUseCurrentLocation = async () => {
     setIsFetchingLocation(true);
@@ -564,56 +519,22 @@ export default function EditProfileScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Date of Birth</Text>
-              <TouchableOpacity
-                onPress={() => setShowDatePicker(true)}
-                style={[styles.input, styles.dateInput, errors.dateOfBirth && styles.inputError]}
-              >
-                <Text style={[
-                  styles.dateInputText,
-                  !dateOfBirth && { color: colors.text.tertiary }
-                ]}>
-                  {dateOfBirth ? formatDateForDisplay(dateOfBirth) : 'Select date of birth'}
-                </Text>
-                <Ionicons name="calendar-outline" size={20} color={colors.text.secondary} />
-              </TouchableOpacity>
+              <TextInput
+                style={[styles.input, errors.dateOfBirth && styles.inputError]}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor={colors.text.tertiary}
+                value={formData.dateOfBirth}
+                onChangeText={(text) => {
+                  setFormData({ ...formData, dateOfBirth: text });
+                  if (errors.dateOfBirth) {
+                    setErrors({ ...errors, dateOfBirth: undefined });
+                  }
+                }}
+                keyboardType="default"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
               {errors.dateOfBirth && <Text style={styles.errorText}>{errors.dateOfBirth}</Text>}
-              
-              {showDatePicker && DateTimePicker && (
-                <>
-                  {Platform.OS === 'ios' && (
-                    <View style={styles.datePickerActions}>
-                      <TouchableOpacity
-                        onPress={() => setShowDatePicker(false)}
-                        style={styles.datePickerButton}
-                      >
-                        <Text style={styles.datePickerButtonText}>Cancel</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => setShowDatePicker(false)}
-                        style={[styles.datePickerButton, styles.datePickerButtonPrimary]}
-                      >
-                        <Text style={[styles.datePickerButtonText, styles.datePickerButtonTextPrimary]}>Done</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                  <DateTimePicker
-                    value={dateOfBirth || new Date()}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={handleDateChange}
-                    maximumDate={new Date()}
-                    minimumDate={new Date(1900, 0, 1)}
-                  />
-                </>
-              )}
-              {showDatePicker && !DateTimePicker && (
-                <View style={styles.errorContainer}>
-                  <Text style={styles.errorText}>
-                    Date picker requires native code. Please rebuild the app:
-                    {'\n'}npx expo run:ios or npx expo run:android
-                  </Text>
-                </View>
-              )}
             </View>
           </Card>
 
@@ -907,41 +828,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.semantic.error + '10',
     borderRadius: BorderRadius.md,
     marginTop: Spacing.xs,
-  },
-  dateInput: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dateInputText: {
-    fontSize: 16,
-    color: Colors.text.primary,
-  },
-  datePickerActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border.light,
-    backgroundColor: Colors.background.primary,
-  },
-  datePickerButton: {
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    marginLeft: Spacing.sm,
-  },
-  datePickerButtonPrimary: {
-    backgroundColor: Colors.primary[600],
-    borderRadius: BorderRadius.md,
-  },
-  datePickerButtonText: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-  },
-  datePickerButtonTextPrimary: {
-    color: Colors.text.inverse,
-    fontWeight: '600',
   },
   buttonContainer: {
     marginTop: Spacing.md,
