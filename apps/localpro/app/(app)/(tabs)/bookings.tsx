@@ -1,23 +1,47 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Card } from '@localpro/ui';
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useAuthContext } from '@localpro/auth';
+import { useBookings } from '@localpro/marketplace';
+import type { Booking } from '@localpro/types';
+import { useRouter } from 'expo-router';
+import React, { useMemo, useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  BookingCard,
+  EmptyState,
+  LoadingSkeleton,
+  ReviewFormModal,
+  type BookingStatus,
+} from '../../../components/marketplace';
 import { BorderRadius, Colors, Spacing } from '../../../constants/theme';
 import { usePackageContext } from '../../../contexts/PackageContext';
 import { useThemeColors } from '../../../hooks/use-theme';
 
-type BookingStatus = 'all' | 'pending' | 'confirmed' | 'in-progress' | 'completed' | 'cancelled';
+type FilterStatus = 'all' | BookingStatus;
 
 export default function BookingsTabScreen() {
-  const [activeFilter, setActiveFilter] = useState<BookingStatus>('all');
+  const { user } = useAuthContext();
   const { activePackage } = usePackageContext();
   const colors = useThemeColors();
+  const router = useRouter();
+  const [activeFilter, setActiveFilter] = useState<FilterStatus>('all');
+  const [refreshing, setRefreshing] = useState(false);
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
+  const [selectedBookingForReview, setSelectedBookingForReview] = useState<Booking | null>(null);
 
-  // Mock bookings data - replace with actual API call
-  const bookings: any[] = [];
+  // Fetch bookings
+  const { bookings, loading } = useBookings(user?.id || '');
 
-  const filters: { key: BookingStatus; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  const filters: { key: FilterStatus; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
     { key: 'all', label: 'All', icon: 'list-outline' },
     { key: 'pending', label: 'Pending', icon: 'time-outline' },
     { key: 'confirmed', label: 'Confirmed', icon: 'checkmark-circle-outline' },
@@ -26,57 +50,69 @@ export default function BookingsTabScreen() {
     { key: 'cancelled', label: 'Cancelled', icon: 'close-circle-outline' },
   ];
 
-  const filteredBookings = activeFilter === 'all' 
-    ? bookings 
-    : bookings.filter(booking => booking.status === activeFilter);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return colors.semantic.warning;
-      case 'confirmed':
-        return colors.primary[600];
-      case 'in-progress':
-        return colors.secondary[600];
-      case 'completed':
-        return colors.secondary[600];
-      case 'cancelled':
-        return colors.semantic.error;
-      default:
-        return colors.text.secondary;
+  const filteredBookings = useMemo(() => {
+    if (activeFilter === 'all') {
+      return bookings;
     }
+    return bookings.filter((booking) => booking.status === activeFilter);
+  }, [bookings, activeFilter]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    // Wait a bit for the refresh animation
+    setTimeout(() => setRefreshing(false), 1000);
   };
 
-  const getStatusIcon = (status: string): keyof typeof Ionicons.glyphMap => {
-    switch (status) {
-      case 'pending':
-        return 'time-outline';
-      case 'confirmed':
-        return 'checkmark-circle-outline';
-      case 'in-progress':
-        return 'play-circle-outline';
-      case 'completed':
-        return 'checkmark-done-outline';
-      case 'cancelled':
-        return 'close-circle-outline';
-      default:
-        return 'help-circle-outline';
-    }
+  const handleViewDetails = (bookingId: string) => {
+    router.push(`/(app)/booking/${bookingId}` as any);
   };
 
-  const formatDate = (date: Date | string): string => {
+  const handleCancel = (bookingId: string) => {
+    const booking = bookings.find((b) => b.id === bookingId);
+    Alert.alert(
+      'Cancel Booking',
+      `Are you sure you want to cancel this booking?${booking ? `\n\nService: ${booking.service.title}` : ''}`,
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: 'Yes, Cancel',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // TODO: Implement API call to cancel booking
+              // await MarketplaceService.cancelBooking(bookingId);
+              Alert.alert('Success', 'Booking cancelled successfully.');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to cancel booking. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleReview = (booking: Booking) => {
+    setSelectedBookingForReview(booking);
+    setReviewModalVisible(true);
+  };
+
+  const handleSubmitReview = async (rating: number, comment: string) => {
+    if (!selectedBookingForReview) return;
+
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date;
-      return dateObj.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return 'N/A';
+      // TODO: Implement API call to submit review
+      // await MarketplaceService.submitReview(selectedBookingForReview.id, { rating, comment });
+      Alert.alert('Success', 'Thank you for your review!');
+      setReviewModalVisible(false);
+      setSelectedBookingForReview(null);
+    } catch (error) {
+      throw error;
     }
+  };
+
+  const handleUploadPhotos = (bookingId: string) => {
+    // Navigate to booking detail where photo upload is available
+    router.push(`/(app)/booking/${bookingId}` as any);
   };
 
   const getPackageTitle = () => {
@@ -105,136 +141,143 @@ export default function BookingsTabScreen() {
     }
   };
 
+  const renderBookingCard = ({ item }: { item: Booking }) => (
+    <BookingCard
+      booking={item}
+      onViewDetails={handleViewDetails}
+      onCancel={handleCancel}
+    />
+  );
+
+  // If not marketplace package, show default bookings
+  if (activePackage !== 'marketplace') {
+    return (
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <Text style={styles.title}>{getPackageTitle()}</Text>
+              <Text style={styles.subtitle}>{getPackageSubtitle()}</Text>
+            </View>
+            <EmptyState
+              icon="calendar-outline"
+              title="No bookings yet"
+              subtitle="Your bookings will appear here"
+            />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // Marketplace-specific bookings UI
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>{getPackageTitle()}</Text>
-            <Text style={styles.subtitle}>{getPackageSubtitle()}</Text>
-          </View>
+      <ReviewFormModal
+        visible={reviewModalVisible}
+        onClose={() => {
+          setReviewModalVisible(false);
+          setSelectedBookingForReview(null);
+        }}
+        onSubmit={handleSubmitReview}
+        serviceTitle={selectedBookingForReview?.service.title}
+      />
 
-          {/* Filter Tabs */}
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.filtersContainer}
-            contentContainerStyle={styles.filtersContent}
-          >
-            {filters.map((filter) => {
-              const isActive = activeFilter === filter.key;
-              return (
-                <TouchableOpacity
-                  key={filter.key}
-                  style={[
-                    styles.filterTab,
-                    isActive && { backgroundColor: colors.primary[600] },
-                  ]}
-                  onPress={() => setActiveFilter(filter.key)}
-                >
-                  <Ionicons
-                    name={filter.icon}
-                    size={16}
-                    color={isActive ? colors.text.inverse : colors.text.secondary}
-                  />
-                  <Text
-                    style={[
-                      styles.filterText,
-                      isActive && styles.filterTextActive,
-                    ]}
-                  >
-                    {filter.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-
-          {/* Bookings List */}
-          {filteredBookings.length > 0 ? (
-            <View style={styles.bookingsList}>
-              {filteredBookings.map((booking) => (
-                <Card key={booking.id} style={styles.bookingCard}>
-                  <View style={styles.bookingHeader}>
-                    <View style={styles.bookingHeaderLeft}>
-                      <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(booking.status)}15` }]}>
-                        <Ionicons
-                          name={getStatusIcon(booking.status)}
-                          size={16}
-                          color={getStatusColor(booking.status)}
-                        />
-                        <Text style={[styles.statusText, { color: getStatusColor(booking.status) }]}>
-                          {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text style={styles.bookingAmount}>
-                      ${booking.totalAmount?.toFixed(2) || '0.00'}
-                    </Text>
-                  </View>
-
-                  <View style={styles.bookingContent}>
-                    <Text style={styles.bookingTitle}>
-                      {booking.service?.name || booking.rental?.name || 'Service'}
-                    </Text>
-                    <View style={styles.bookingInfo}>
-                      <Ionicons name="calendar-outline" size={16} color={colors.text.secondary} />
-                      <Text style={styles.bookingInfoText}>
-                        {formatDate(booking.scheduledDate || booking.startDate || booking.createdAt)}
-                      </Text>
-                    </View>
-                    {booking.service?.provider?.name && (
-                      <View style={styles.bookingInfo}>
-                        <Ionicons name="person-outline" size={16} color={colors.text.secondary} />
-                        <Text style={styles.bookingInfoText}>
-                          {booking.service.provider.name}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-
-                  <View style={styles.bookingActions}>
-                    <TouchableOpacity style={styles.actionButton}>
-                      <Text style={styles.actionButtonText}>View Details</Text>
-                    </TouchableOpacity>
-                    {booking.status === 'pending' && (
-                      <TouchableOpacity 
-                        style={[styles.actionButton, styles.cancelButton]}
-                      >
-                        <Text style={[styles.actionButtonText, styles.cancelButtonText]}>Cancel</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </Card>
-              ))}
+      <FlatList
+        data={filteredBookings}
+        keyExtractor={(item) => item.id}
+        renderItem={renderBookingCard}
+        ListHeaderComponent={
+          <View style={styles.marketplaceHeader}>
+            {/* Header */}
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.title}>{getPackageTitle()}</Text>
+                <Text style={styles.subtitle}>{getPackageSubtitle()}</Text>
+              </View>
             </View>
+
+            {/* Filter Tabs */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.filtersContainer}
+              contentContainerStyle={styles.filtersContent}
+            >
+              {filters.map((filter) => {
+                const isActive = activeFilter === filter.key;
+                return (
+                  <TouchableOpacity
+                    key={filter.key}
+                    style={[
+                      styles.filterTab,
+                      isActive && { backgroundColor: colors.primary[600] },
+                    ]}
+                    onPress={() => setActiveFilter(filter.key)}
+                  >
+                    <Ionicons
+                      name={filter.icon}
+                      size={16}
+                      color={isActive ? Colors.text.inverse : colors.text.secondary}
+                    />
+                    <Text
+                      style={[
+                        styles.filterText,
+                        isActive && styles.filterTextActive,
+                      ]}
+                    >
+                      {filter.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        }
+        ListEmptyComponent={
+          loading ? (
+            <LoadingSkeleton viewMode="list" count={3} />
           ) : (
-            <Card style={styles.emptyCard}>
-              <View style={styles.emptyState}>
-                <Ionicons 
-                  name={activeFilter === 'all' ? 'calendar-outline' : getStatusIcon(activeFilter)} 
-                  size={64} 
-                  color={colors.text.tertiary} 
-                />
-                <Text style={styles.emptyStateTitle}>
-                  {activeFilter === 'all' ? 'No Bookings Yet' : `No ${filters.find(f => f.key === activeFilter)?.label} Bookings`}
-                </Text>
-                <Text style={styles.emptyStateText}>
-                  {activeFilter === 'all' 
+            <View style={styles.emptyContainer}>
+              <EmptyState
+                icon={
+                  activeFilter === 'all'
+                    ? 'calendar-outline'
+                    : activeFilter === 'pending'
+                    ? 'time-outline'
+                    : activeFilter === 'completed'
+                    ? 'checkmark-done-outline'
+                    : activeFilter === 'cancelled'
+                    ? 'close-circle-outline'
+                    : 'play-circle-outline'
+                }
+                title={
+                  activeFilter === 'all'
+                    ? 'No Bookings Yet'
+                    : `No ${filters.find((f) => f.key === activeFilter)?.label} Bookings`
+                }
+                subtitle={
+                  activeFilter === 'all'
                     ? 'Your bookings will appear here when you make a reservation'
-                    : `You don't have any ${filters.find(f => f.key === activeFilter)?.label.toLowerCase()} bookings at the moment`}
-                </Text>
-                <TouchableOpacity 
+                    : `You don't have any ${filters.find((f) => f.key === activeFilter)?.label.toLowerCase()} bookings at the moment`
+                }
+              />
+              {activeFilter === 'all' && (
+                <TouchableOpacity
                   style={[styles.exploreButton, { backgroundColor: colors.primary[600] }]}
+                  onPress={() => router.push('/(app)/(tabs)/index' as any)}
                 >
                   <Text style={styles.exploreButtonText}>Explore Services</Text>
                 </TouchableOpacity>
-              </View>
-            </Card>
-          )}
-        </View>
-      </ScrollView>
+              )}
+            </View>
+          )
+        }
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+        contentContainerStyle={styles.listContent}
+      />
     </SafeAreaView>
   );
 }
@@ -251,8 +294,16 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     paddingTop: Spacing.md,
   },
+  marketplaceHeader: {
+    paddingBottom: Spacing.md,
+  },
   header: {
-    marginBottom: Spacing.lg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
   },
   title: {
     fontSize: 28,
@@ -266,141 +317,45 @@ const styles = StyleSheet.create({
   },
   filtersContainer: {
     marginBottom: Spacing.md,
-    marginHorizontal: -Spacing.lg,
-    paddingHorizontal: Spacing.lg,
   },
   filtersContent: {
-    paddingRight: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    gap: Spacing.sm,
   },
   filterTab: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.neutral.gray100,
-    marginRight: Spacing.sm,
+    backgroundColor: Colors.background.primary,
     borderWidth: 1,
     borderColor: Colors.border.light,
+    gap: Spacing.xs,
+    marginRight: Spacing.sm,
   },
   filterText: {
     fontSize: 14,
     fontWeight: '500',
     color: Colors.text.secondary,
-    marginLeft: Spacing.xs,
   },
   filterTextActive: {
     color: Colors.text.inverse,
     fontWeight: '600',
   },
-  bookingsList: {
-    gap: Spacing.md,
+  listContent: {
+    paddingBottom: Spacing.xl,
   },
-  bookingCard: {
-    marginBottom: Spacing.md,
-  },
-  bookingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  bookingHeaderLeft: {
-    flex: 1,
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingVertical: 4,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: BorderRadius.full,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 4,
-    textTransform: 'capitalize',
-  },
-  bookingAmount: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-  },
-  bookingContent: {
-    marginBottom: Spacing.md,
-  },
-  bookingTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: Spacing.sm,
-  },
-  bookingInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.xs,
-  },
-  bookingInfoText: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    marginLeft: Spacing.xs,
-  },
-  bookingActions: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border.light,
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.primary[50],
-    borderWidth: 1,
-    borderColor: Colors.primary[200],
-    alignItems: 'center',
-  },
-  actionButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.primary[600],
-  },
-  cancelButton: {
-    backgroundColor: Colors.neutral.gray100,
-    borderColor: Colors.border.light,
-  },
-  cancelButtonText: {
-    color: Colors.semantic.error,
-  },
-  emptyCard: {
-    marginTop: Spacing.md,
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing['3xl'],
-  },
-  emptyStateTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.sm,
-  },
-  emptyStateText: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-    marginBottom: Spacing.lg,
-    paddingHorizontal: Spacing.lg,
+  emptyContainer: {
+    paddingTop: Spacing['2xl'],
   },
   exploreButton: {
+    alignSelf: 'center',
     paddingVertical: Spacing.sm + 2,
     paddingHorizontal: Spacing.xl,
     borderRadius: BorderRadius.md,
+    marginTop: Spacing.lg,
   },
   exploreButtonText: {
     color: Colors.text.inverse,

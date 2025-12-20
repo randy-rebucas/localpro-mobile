@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@localpro/ui';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Spacing } from '../../../constants/theme';
-import { useThemeColors } from '../../../hooks/use-theme';
+import { Colors, Spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/use-theme';
 
 interface FAQ {
   id: string;
@@ -14,6 +15,7 @@ interface FAQ {
 
 export default function HelpSupportScreen() {
   const colors = useThemeColors();
+  const router = useRouter();
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
 
   const faqs: FAQ[] = [
@@ -104,11 +106,16 @@ export default function HelpSupportScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Help & Support</Text>
+        <View style={styles.placeholder} />
+      </View>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          <Text style={styles.title}>Help & Support</Text>
-          <Text style={styles.subtitle}>We&apos;re here to help you</Text>
-
           {/* Contact Support */}
           <Card style={styles.card}>
             <Text style={styles.sectionTitle}>Contact Support</Text>
@@ -223,12 +230,40 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background.secondary,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.light,
+    backgroundColor: Colors.background.primary,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.text.primary,
+    flex: 1,
+    textAlign: 'center',
+  },
+  placeholder: {
+    width: 40,
+  },
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: Spacing.xl,
+  },
   content: {
     padding: Spacing.lg,
-    paddingTop: Spacing.md,
   },
   title: {
     fontSize: 28,

@@ -15,9 +15,6 @@ const ALL_TABS: TabConfig[] = [
   // Drawer tabs
   { name: 'favorites', title: 'Favorites', icon: 'star', packages: [] },
   { name: 'notifications', title: 'Notifications', icon: 'notifications', packages: [] },
-  { name: 'settings', title: 'Settings', icon: 'settings', packages: [] },
-  { name: 'help-support', title: 'Help & Support', icon: 'help-circle', packages: [] },
-  { name: 'about', title: 'About', icon: 'information-circle', packages: [] },
 
   // Marketplace & Job Board tabs
   { name: 'index', title: 'Home', icon: 'home', packages: ['marketplace', 'job-board'] },

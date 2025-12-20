@@ -1,14 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@localpro/ui';
 import Constants from 'expo-constants';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Spacing } from '../../../constants/theme';
-import { useThemeColors } from '../../../hooks/use-theme';
+import { Colors, Spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/use-theme';
 
 export default function AboutScreen() {
   const colors = useThemeColors();
+  const router = useRouter();
 
   const appInfo = {
     name: 'LocalPro',
@@ -51,10 +53,21 @@ export default function AboutScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>About LocalPro</Text>
+        <View style={styles.placeholder} />
+      </View>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.content}>
-          <Text style={styles.title}>About</Text>
 
           {/* App Info Card */}
           <Card style={styles.card}>
@@ -71,7 +84,7 @@ export default function AboutScreen() {
           {/* App Details */}
           <Card style={styles.card}>
             <Text style={styles.sectionTitle}>App Information</Text>
-            
+
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Version</Text>
               <Text style={styles.infoValue}>{appInfo.version}</Text>
@@ -115,7 +128,7 @@ export default function AboutScreen() {
           {/* Legal */}
           <Card style={styles.card}>
             <Text style={styles.sectionTitle}>Legal</Text>
-            
+
             <TouchableOpacity style={styles.legalItem}>
               <View style={styles.legalItemLeft}>
                 <Ionicons name="document-text-outline" size={20} color={colors.text.secondary} />
@@ -167,9 +180,38 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.light,
+    backgroundColor: Colors.background.primary,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.text.primary,
+    flex: 1,
+    textAlign: 'center',
+  },
+  placeholder: {
+    width: 40,
+  },
   content: {
     padding: Spacing.lg,
     paddingTop: Spacing.md,
+  },
+  scrollContent: {
+    paddingBottom: Spacing.xl,
   },
   title: {
     fontSize: 28,

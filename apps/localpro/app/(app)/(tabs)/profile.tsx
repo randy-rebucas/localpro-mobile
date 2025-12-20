@@ -142,7 +142,7 @@ export default function ProfileScreen() {
   const handleEditProfile = () => {
     console.log('Navigating to edit profile...');
     // Use the full path with the stack group
-    router.push('/(stack)/edit-profile');
+    router.push('/(stack)/profile/edit');
   };
 
   const handleUploadAvatar = async () => {

@@ -37,7 +37,7 @@ export function CustomDrawerContent(props: any) {
             onPress={() => {
               props.navigation.closeDrawer();
               setTimeout(() => {
-                router.push('/(app)/(tabs)/profile');
+                router.push('/(stack)/profile/edit');
               }, 100);
             }}
             activeOpacity={0.7}
@@ -229,7 +229,7 @@ export function CustomDrawerContent(props: any) {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => router.push('/(app)/(tabs)/about')}
+              onPress={() => router.push('/(stack)/about')}
             >
               <Ionicons name="document-text-outline" size={24} color={Colors.text.tertiary} />
               <Text style={styles.menuItemText}>About</Text>

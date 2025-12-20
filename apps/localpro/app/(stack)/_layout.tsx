@@ -1,4 +1,3 @@
-import { Colors } from "@/constants/theme";
 import { Stack } from "expo-router";
 
 export default function StackLayout() {
@@ -8,19 +7,20 @@ export default function StackLayout() {
                 headerShown: false,
             }}
         >
-            <Stack.Screen 
-                name="edit-profile" 
-                options={{ 
-                    title: "Edit Profile",
-                    headerStyle: {
-                        backgroundColor: Colors.background.primary,
-                    },
-                    headerTintColor: Colors.text.primary,
-                    headerTitleStyle: {
-                        fontWeight: "700",
-                    },
-                }} 
+            <Stack.Screen
+                name="profile/edit"
+                options={{
+                    headerShown: false
+                }}
             />
+            <Stack.Screen name="settings" options={{
+                headerShown: false
+            }} />
+            <Stack.Screen name="help-support" options={{ headerShown: false }} />
+            <Stack.Screen name="about" options={{ headerShown: false }} />
+            <Stack.Screen name="booking" options={{ headerShown: false }} />
+            <Stack.Screen name="provider" options={{ headerShown: false }} />
+            <Stack.Screen name="service" options={{ headerShown: false }} />
         </Stack>
     );
 }

@@ -1,15 +1,37 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthContext } from '@localpro/auth';
+import { useServices } from '@localpro/marketplace';
+import type { Service } from '@localpro/types';
 import { Card } from '@localpro/ui';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  CategoryFilter,
+  EmptyState,
+  LoadingSkeleton,
+  SearchInput,
+  ServiceCard,
+  type Category,
+} from '../../../components/marketplace';
 import PackageSelectionModal from '../../../components/PackageSelectionModal';
-import { BorderRadius, Colors, Spacing } from '../../../constants/theme';
+import { BorderRadius, Colors, Shadows, Spacing } from '../../../constants/theme';
 import { PackageType, usePackageContext } from '../../../contexts/PackageContext';
 import { useRoleContext } from '../../../contexts/RoleContext';
 import { useThemeColors } from '../../../hooks/use-theme';
+
+type ViewMode = 'grid' | 'list';
 
 export default function HomeScreen() {
   const { user } = useAuthContext();
@@ -18,11 +40,24 @@ export default function HomeScreen() {
   const router = useRouter();
   const colors = useThemeColors();
   const [showPackageModal, setShowPackageModal] = useState(false);
+  
+  // Marketplace-specific state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
+  // Fetch services
+  const { services, loading } = useServices({
+    category: selectedCategory === 'all' ? undefined : selectedCategory,
+    search: searchQuery || undefined,
+    page,
+  });
 
   // Detect if a package is selected and show modal if not
-  // The PackageContext automatically loads the stored package from SecureStorage
   useEffect(() => {
-    // Show modal when no package is selected (stored in PackageContext)
     if (!activePackage) {
       setShowPackageModal(true);
     } else {
@@ -30,65 +65,210 @@ export default function HomeScreen() {
     }
   }, [activePackage]);
 
-  const getPackageContent = () => {
-    switch (activePackage) {
-      case 'marketplace':
-        return {
-          title: 'Browse Services',
-          subtitle: 'Find and book services',
-          quickActions: [
-            { icon: 'search', label: 'Search Services', route: '/(app)/(tabs)/search' },
-            { icon: 'calendar', label: 'My Bookings', route: '/(app)/(tabs)/bookings' },
-            { icon: 'chatbubbles', label: 'Messages', route: '/(app)/(tabs)/messages' },
-          ],
-        };
-      case 'job-board':
-        return {
-          title: 'Browse Jobs',
-          subtitle: 'Find your next opportunity',
-          quickActions: [
-            { icon: 'search', label: 'Search Jobs', route: '/(app)/(tabs)/search' },
-            { icon: 'document-text', label: 'Applications', route: '/(app)/(tabs)/applications' },
-            { icon: 'add-circle', label: 'Post Job', route: '/(app)/(tabs)/post-job' },
-          ],
-        };
-      default:
-        return {
-          title: `Welcome back, ${user?.name?.split(' ')[0] || 'User'}!`,
-          subtitle: 'Your LocalPro Dashboard',
-          quickActions: [
-            { icon: 'search', label: 'Search', route: '/(app)/(tabs)/search' },
-            { icon: 'calendar', label: 'Bookings', route: '/(app)/(tabs)/bookings' },
-            { icon: 'person', label: 'Profile', route: '/(app)/(tabs)/profile' },
-          ],
-        };
+  // Mock categories - replace with actual API call
+  const categories: Category[] = [
+    { id: 'all', name: 'All', icon: 'apps-outline' },
+    { id: 'cleaning', name: 'Cleaning', icon: 'sparkles-outline' },
+    { id: 'plumbing', name: 'Plumbing', icon: 'water-outline' },
+    { id: 'electrical', name: 'Electrical', icon: 'flash-outline' },
+    { id: 'carpentry', name: 'Carpentry', icon: 'hammer-outline' },
+    { id: 'landscaping', name: 'Landscaping', icon: 'leaf-outline' },
+    { id: 'painting', name: 'Painting', icon: 'brush-outline' },
+    { id: 'handyman', name: 'Handyman', icon: 'construct-outline' },
+  ];
+
+  // Filter and categorize services
+  const filteredServices = useMemo(() => {
+    let filtered = services;
+    
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (service) =>
+          service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          service.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     }
-  };
+    
+    return filtered;
+  }, [services, searchQuery]);
 
-  const content = getPackageContent();
+  const featuredServices = useMemo(
+    () => filteredServices.filter((s) => s.rating && s.rating >= 4.5).slice(0, 5),
+    [filteredServices]
+  );
 
-  const getRoleDisplayName = (role: string): string => {
-    const roleMap: Record<string, string> = {
-      client: 'Client',
-      provider: 'Provider',
-      admin: 'Admin',
-      supplier: 'Supplier',
-      instructor: 'Instructor',
-      agency_owner: 'Agency Owner',
-      agency_admin: 'Agency Admin',
-      partner: 'Partner',
-    };
-    return roleMap[role] || role;
-  };
+  const popularServices = useMemo(
+    () => filteredServices
+      .filter((s) => s.reviewCount && s.reviewCount > 10)
+      .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
+      .slice(0, 5),
+    [filteredServices]
+  );
 
-  // Handle package selection - stores in PackageContext which persists to SecureStorage
+  const nearbyServices = useMemo(
+    () => filteredServices.slice(0, 5), // TODO: Implement actual location-based filtering
+    [filteredServices]
+  );
+
   const handlePackageSelect = async (pkg: PackageType) => {
-    // setActivePackage stores the package in PackageContext and SecureStorage
     await setActivePackage(pkg);
-    // The modal will automatically close when activePackage updates
     setShowPackageModal(false);
   };
 
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setPage(1);
+    setHasMore(true);
+    // Wait a bit for the refresh animation
+    setTimeout(() => setRefreshing(false), 1000);
+  }, []);
+
+  const handleLoadMore = useCallback(() => {
+    if (!loading && hasMore) {
+      setPage((prev) => prev + 1);
+    }
+  }, [loading, hasMore]);
+
+  const handleServicePress = (serviceId: string) => {
+    router.push(`/(app)/service/${serviceId}` as any);
+  };
+
+  const formatCurrency = (amount: number) => {
+    return `$${amount.toFixed(2)}`;
+  };
+
+  // Render service card
+  const renderServiceCard = ({ item }: { item: Service }) => (
+    <ServiceCard
+      service={item}
+      viewMode={viewMode}
+      onPress={handleServicePress}
+    />
+  );
+
+  // Render section header
+  const renderSectionHeader = (title: string, subtitle?: string) => (
+    <View style={styles.sectionHeader}>
+      <View>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        {subtitle && <Text style={styles.sectionSubtitle}>{subtitle}</Text>}
+      </View>
+    </View>
+  );
+
+  // Render horizontal service list
+  const renderHorizontalServiceList = (services: Service[]) => (
+    <FlatList
+      horizontal
+      data={services}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+        <TouchableOpacity
+          style={styles.horizontalServiceCard}
+          onPress={() => handleServicePress(item.id)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.horizontalServiceImageContainer}>
+            {item.images && item.images.length > 0 ? (
+              <Image
+                source={{ uri: item.images[0] }}
+                style={styles.horizontalServiceImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.serviceImagePlaceholder, styles.horizontalServiceImage, { backgroundColor: colors.primary[100] }]}>
+                <Ionicons name="image-outline" size={24} color={colors.primary[400]} />
+              </View>
+            )}
+            {item.rating && (
+              <View style={styles.ratingBadgeSmall}>
+                <Ionicons name="star" size={10} color={colors.semantic.warning} />
+                <Text style={styles.ratingTextSmall}>{item.rating.toFixed(1)}</Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.horizontalServiceContent}>
+            <Text style={styles.horizontalServiceTitle} numberOfLines={2}>
+              {item.title}
+            </Text>
+            <Text style={styles.horizontalServicePrice}>{formatCurrency(item.price)}</Text>
+          </View>
+        </TouchableOpacity>
+      )}
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.horizontalListContent}
+    />
+  );
+
+  // If not marketplace package, show default dashboard
+  if (activePackage !== 'marketplace') {
+    const getPackageContent = () => {
+      switch (activePackage) {
+        case 'job-board':
+          return {
+            title: 'Browse Jobs',
+            subtitle: 'Find your next opportunity',
+            quickActions: [
+              { icon: 'search', label: 'Search Jobs', route: '/(app)/(tabs)/search' },
+              { icon: 'document-text', label: 'Applications', route: '/(app)/(tabs)/applications' },
+              { icon: 'add-circle', label: 'Post Job', route: '/(app)/(tabs)/post-job' },
+            ],
+          };
+        default:
+          return {
+            title: `Welcome back, ${user?.name?.split(' ')[0] || 'User'}!`,
+            subtitle: 'Your LocalPro Dashboard',
+            quickActions: [
+              { icon: 'search', label: 'Search', route: '/(app)/(tabs)/search' },
+              { icon: 'calendar', label: 'Bookings', route: '/(app)/(tabs)/bookings' },
+              { icon: 'person', label: 'Profile', route: '/(app)/(tabs)/profile' },
+            ],
+          };
+      }
+    };
+
+    const content = getPackageContent();
+
+    return (
+      <>
+        <PackageSelectionModal
+          visible={showPackageModal}
+          onSelectPackage={handlePackageSelect}
+        />
+        <SafeAreaView style={styles.container} edges={['bottom']}>
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <View style={styles.content}>
+              <View style={styles.header}>
+                <View>
+                  <Text style={styles.title}>{content.title}</Text>
+                  <Text style={styles.subtitle}>{content.subtitle}</Text>
+                </View>
+              </View>
+              <Card style={styles.card}>
+                <Text style={styles.sectionTitle}>Quick Actions</Text>
+                <View style={styles.quickActionsGrid}>
+                  {content.quickActions.map((action, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.quickActionItem}
+                      onPress={() => router.push(action.route as any)}
+                    >
+                      <View style={[styles.quickActionIcon, { backgroundColor: colors.primary[100] }]}>
+                        <Ionicons name={action.icon as any} size={24} color={colors.primary[600]} />
+                      </View>
+                      <Text style={styles.quickActionLabel}>{action.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </Card>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </>
+    );
+  }
+
+  // Marketplace-specific UI
   return (
     <>
       <PackageSelectionModal
@@ -96,87 +276,131 @@ export default function HomeScreen() {
         onSelectPackage={handlePackageSelect}
       />
       <SafeAreaView style={styles.container} edges={['bottom']}>
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          <View style={styles.content}>
-            {/* Header */}
-            <View style={styles.header}>
-              <View>
-                <Text style={styles.title}>{content.title}</Text>
-                <Text style={styles.subtitle}>{content.subtitle}</Text>
+        <FlatList
+          data={filteredServices}
+          key={viewMode}
+          numColumns={viewMode === 'grid' ? 2 : 1}
+          keyExtractor={(item) => item.id}
+          renderItem={renderServiceCard}
+          ListHeaderComponent={
+            <View style={styles.marketplaceHeader}>
+              {/* Header */}
+              <View style={styles.header}>
+                <View>
+                  <Text style={styles.title}>Browse Services</Text>
+                  <Text style={styles.subtitle}>Find and book services near you</Text>
+                </View>
+                {activeRole && (
+                  <View style={styles.roleBadge}>
+                    <Ionicons name="briefcase-outline" size={14} color={colors.primary[600]} />
+                    <Text style={styles.roleText}>{activeRole}</Text>
+                  </View>
+                )}
               </View>
-              {activeRole && (
-                <View style={styles.roleBadge}>
-                  <Ionicons 
-                    name="briefcase-outline" 
-                    size={14} 
-                    color={colors.primary[600]} 
-                  />
-                  <Text style={styles.roleText}>{getRoleDisplayName(activeRole)}</Text>
+
+              {/* Search Bar */}
+              <SearchInput
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Search services..."
+              />
+
+              {/* Category Filter Chips */}
+              <CategoryFilter
+                categories={categories}
+                selectedCategory={selectedCategory}
+                onCategorySelect={setSelectedCategory}
+              />
+
+              {/* View Mode Toggle */}
+              <View style={styles.viewModeContainer}>
+                <Text style={styles.viewModeLabel}>View:</Text>
+                <View style={styles.viewModeToggle}>
+                  <TouchableOpacity
+                    style={[
+                      styles.viewModeButton,
+                      viewMode === 'grid' && { backgroundColor: colors.primary[600] },
+                    ]}
+                    onPress={() => setViewMode('grid')}
+                  >
+                    <Ionicons
+                      name="grid-outline"
+                      size={18}
+                      color={viewMode === 'grid' ? Colors.text.inverse : colors.text.secondary}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.viewModeButton,
+                      viewMode === 'list' && { backgroundColor: colors.primary[600] },
+                    ]}
+                    onPress={() => setViewMode('list')}
+                  >
+                    <Ionicons
+                      name="list-outline"
+                      size={18}
+                      color={viewMode === 'list' ? Colors.text.inverse : colors.text.secondary}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Featured Services Section */}
+              {featuredServices.length > 0 && (
+                <View style={styles.section}>
+                  {renderSectionHeader('Featured Services', 'Top-rated services')}
+                  {renderHorizontalServiceList(featuredServices)}
                 </View>
               )}
-            </View>
 
-            {/* Quick Actions */}
-            <Card style={styles.card}>
-              <Text style={styles.sectionTitle}>Quick Actions</Text>
-              <View style={styles.quickActionsGrid}>
-                {content.quickActions.map((action, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.quickActionItem}
-                    onPress={() => router.push(action.route as any)}
-                  >
-                    <View style={[styles.quickActionIcon, { backgroundColor: colors.primary[100] }]}>
-                      <Ionicons 
-                        name={action.icon as any} 
-                        size={24} 
-                        color={colors.primary[600]} 
-                      />
-                    </View>
-                    <Text style={styles.quickActionLabel}>{action.label}</Text>
-                  </TouchableOpacity>
-                ))}
+              {/* Popular Services Section */}
+              {popularServices.length > 0 && (
+                <View style={styles.section}>
+                  {renderSectionHeader('Popular Services', 'Most reviewed')}
+                  {renderHorizontalServiceList(popularServices)}
+                </View>
+              )}
+
+              {/* Nearby Services Section */}
+              {nearbyServices.length > 0 && (
+                <View style={styles.section}>
+                  {renderSectionHeader('Nearby Services', 'Services near you')}
+                  {renderHorizontalServiceList(nearbyServices)}
+                </View>
+              )}
+
+              {/* All Services Header */}
+              <View style={styles.section}>
+                {renderSectionHeader('All Services', `${filteredServices.length} services available`)}
               </View>
-            </Card>
-
-            {/* Stats Cards */}
-            <View style={styles.statsRow}>
-              <Card style={styles.statCard}>
-                <View style={[styles.statIcon, { backgroundColor: colors.secondary[100] }]}>
-                  <Ionicons name="checkmark-circle" size={24} color={colors.secondary[600]} />
-                </View>
-                <Text style={styles.statValue}>0</Text>
-                <Text style={styles.statLabel}>Active</Text>
-              </Card>
-              <Card style={styles.statCard}>
-                <View style={[styles.statIcon, { backgroundColor: colors.primary[100] }]}>
-                  <Ionicons name="time-outline" size={24} color={colors.primary[600]} />
-                </View>
-                <Text style={styles.statValue}>0</Text>
-                <Text style={styles.statLabel}>Pending</Text>
-              </Card>
-              <Card style={styles.statCard}>
-                <View style={[styles.statIcon, { backgroundColor: colors.neutral.gray100 }]}>
-                  <Ionicons name="checkmark-done" size={24} color={colors.text.secondary} />
-                </View>
-                <Text style={styles.statValue}>0</Text>
-                <Text style={styles.statLabel}>Completed</Text>
-              </Card>
             </View>
-
-            {/* Recent Activity */}
-            <Card style={styles.card}>
-              <Text style={styles.sectionTitle}>Recent Activity</Text>
-              <View style={styles.emptyState}>
-                <Ionicons name="time-outline" size={48} color={colors.text.tertiary} />
-                <Text style={styles.emptyStateText}>No recent activity</Text>
-                <Text style={styles.emptyStateSubtext}>
-                  Your recent actions will appear here
-                </Text>
+          }
+          ListEmptyComponent={
+            loading ? (
+              <LoadingSkeleton viewMode={viewMode} count={6} />
+            ) : (
+              <EmptyState
+                icon="search-outline"
+                title="No services found"
+                subtitle="Try adjusting your search or filters"
+              />
+            )
+          }
+          ListFooterComponent={
+            loading && filteredServices.length > 0 ? (
+              <View style={styles.loadingFooter}>
+                <ActivityIndicator size="small" color={colors.primary[600]} />
               </View>
-            </Card>
-          </View>
-        </ScrollView>
+            ) : null
+          }
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          contentContainerStyle={styles.listContent}
+          columnWrapperStyle={viewMode === 'grid' ? styles.gridRow : undefined}
+        />
       </SafeAreaView>
     </>
   );
@@ -198,7 +422,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
   },
   title: {
     fontSize: 28,
@@ -260,51 +486,282 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
     textAlign: 'center',
   },
-  statsRow: {
+  // Marketplace-specific styles
+  marketplaceHeader: {
+    paddingBottom: Spacing.md,
+  },
+  searchContainer: {
     flexDirection: 'row',
-    marginHorizontal: -Spacing.xs,
+    paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
+    gap: Spacing.sm,
   },
-  statCard: {
+  searchInput: {
     flex: 1,
-    marginHorizontal: Spacing.xs,
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.sm,
+    ...Shadows.sm,
   },
-  statIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  searchInputText: {
+    flex: 1,
+    fontSize: 14,
+    color: Colors.text.primary,
+  },
+  filterButton: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
+    ...Shadows.sm,
+  },
+  categoryContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    gap: Spacing.sm,
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.background.primary,
+    borderWidth: 1,
+    borderColor: Colors.border.light,
+    gap: Spacing.xs,
+    marginRight: Spacing.sm,
+  },
+  categoryChipText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.text.secondary,
+  },
+  viewModeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  viewModeLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.text.secondary,
+  },
+  viewModeToggle: {
+    flexDirection: 'row',
+    backgroundColor: Colors.background.primary,
+    borderRadius: BorderRadius.md,
+    padding: 2,
+    gap: 2,
+    ...Shadows.sm,
+  },
+  viewModeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  section: {
+    marginBottom: Spacing.lg,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    color: Colors.text.tertiary,
+    marginTop: 2,
+  },
+  horizontalListContent: {
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.md,
+  },
+  horizontalServiceCard: {
+    width: 160,
+    marginRight: Spacing.md,
+    backgroundColor: Colors.background.primary,
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+    ...Shadows.sm,
+  },
+  horizontalServiceImageContainer: {
+    width: '100%',
+    height: 120,
+    position: 'relative',
+  },
+  horizontalServiceImage: {
+    width: '100%',
+    height: '100%',
+  },
+  horizontalServiceContent: {
+    padding: Spacing.sm,
+  },
+  horizontalServiceTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: Spacing.xs,
+  },
+  horizontalServicePrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.primary[600],
+  },
+  serviceCardGrid: {
+    flex: 1,
+    margin: Spacing.xs,
+    backgroundColor: Colors.background.primary,
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+    ...Shadows.sm,
+  },
+  serviceCardList: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  serviceCardListContent: {
+    flexDirection: 'row',
+  },
+  serviceImageContainer: {
+    width: '100%',
+    height: 160,
+    position: 'relative',
+  },
+  serviceImage: {
+    width: '100%',
+    height: '100%',
+  },
+  serviceImageList: {
+    width: 120,
+    height: 120,
+    borderRadius: BorderRadius.md,
+  },
+  serviceImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.neutral.gray100,
+  },
+  serviceCardContent: {
+    padding: Spacing.sm,
+  },
+  serviceCardListInfo: {
+    flex: 1,
+    padding: Spacing.sm,
+    paddingLeft: Spacing.md,
+  },
+  serviceTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: Spacing.xs,
+  },
+  serviceDescription: {
+    fontSize: 14,
+    color: Colors.text.secondary,
     marginBottom: Spacing.sm,
   },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 4,
-  },
-  statLabel: {
+  serviceProvider: {
     fontSize: 12,
-    color: Colors.text.secondary,
-    textAlign: 'center',
+    color: Colors.text.tertiary,
+    marginBottom: Spacing.xs,
+  },
+  servicePrice: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.primary[600],
+  },
+  serviceCardListFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: Spacing.xs,
+  },
+  serviceCardListRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  ratingBadge: {
+    position: 'absolute',
+    top: Spacing.xs,
+    right: Spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.background.primary,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.full,
+    gap: 2,
+    ...Shadows.sm,
+  },
+  ratingBadgeSmall: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.background.primary,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.full,
+    gap: 2,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  ratingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.text.primary,
+  },
+  ratingTextSmall: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: Colors.text.primary,
+  },
+  listContent: {
+    paddingBottom: Spacing.xl,
+  },
+  gridRow: {
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.xl,
+    paddingVertical: Spacing['3xl'],
+    paddingHorizontal: Spacing.lg,
   },
   emptyStateText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: Colors.text.secondary,
     marginTop: Spacing.md,
-    marginBottom: 4,
+    marginBottom: Spacing.xs,
   },
   emptyStateSubtext: {
     fontSize: 14,
     color: Colors.text.tertiary,
     textAlign: 'center',
+  },
+  loadingFooter: {
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
   },
 });

@@ -5,8 +5,8 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Spacing } from '../../../constants/theme';
-import { useThemeColors } from '../../../hooks/use-theme';
+import { Colors, Spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/use-theme';
 
 export default function SettingsScreen() {
   const { user, logout } = useAuthContext();
@@ -49,17 +49,23 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Settings</Text>
+        <View style={styles.placeholder} />
+      </View>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          <Text style={styles.title}>Settings</Text>
-
           {/* Account Section */}
           <Card style={styles.card}>
             <Text style={styles.sectionTitle}>Account</Text>
             
             <TouchableOpacity 
               style={styles.settingItem}
-              onPress={() => router.push('/(app)/(tabs)/profile')}
+              onPress={() => router.push('/(stack)/profile/edit')}
             >
               <View style={styles.settingItemLeft}>
                 <Ionicons name="person-outline" size={20} color={colors.text.secondary} />
@@ -144,7 +150,7 @@ export default function SettingsScreen() {
 
             <TouchableOpacity 
               style={styles.settingItem}
-              onPress={() => router.push('/(app)/notifications')}
+              onPress={() => router.push('/(app)/(tabs)/notifications-comm')}
             >
               <View style={styles.settingItemLeft}>
                 <Ionicons name="settings-outline" size={20} color={colors.text.secondary} />
@@ -160,7 +166,7 @@ export default function SettingsScreen() {
             
             <TouchableOpacity 
               style={styles.settingItem}
-              onPress={() => router.push('/(app)/help-support')}
+              onPress={() => router.push('/(stack)/help-support')}
             >
               <View style={styles.settingItemLeft}>
                 <Ionicons name="help-circle-outline" size={20} color={colors.text.secondary} />
@@ -173,7 +179,7 @@ export default function SettingsScreen() {
 
             <TouchableOpacity 
               style={styles.settingItem}
-              onPress={() => router.push('/(app)/about')}
+              onPress={() => router.push('/(stack)/about')}
             >
               <View style={styles.settingItemLeft}>
                 <Ionicons name="information-circle-outline" size={20} color={colors.text.secondary} />
@@ -235,9 +241,37 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.light,
+    backgroundColor: Colors.background.primary,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.text.primary,
+    flex: 1,
+    textAlign: 'center',
+  },
+  placeholder: {
+    width: 40,
+  },
+  scrollContent: {
+    paddingBottom: Spacing.xl,
+  },
   content: {
     padding: Spacing.lg,
-    paddingTop: Spacing.md,
   },
   title: {
     fontSize: 28,
