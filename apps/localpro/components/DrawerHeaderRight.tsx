@@ -4,8 +4,7 @@ import { CommunicationService } from '@localpro/communication';
 import type { UserRole } from '@localpro/types';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BorderRadius, Colors, Spacing } from '../constants/theme';
 import { usePackageContext, type PackageType } from '../contexts/PackageContext';
 import { useRoleContext } from '../contexts/RoleContext';
@@ -28,7 +27,7 @@ export function DrawerHeaderRight() {
   };
 
   const handleNotifications = () => {
-    router.push('/(app)/notifications');
+    router.push('/(app)/(tabs)/notifications');
   };
 
   // Load unread notification count
@@ -156,23 +155,24 @@ export function DrawerHeaderRight() {
     return packageType !== null && packageType === activePackage;
   };
 
+  // Package definitions matching PackageSelectionModal styling
   const packages = [
-    { id: 'marketplace', name: 'Marketplace', icon: 'storefront' },
-    { id: 'jobs', name: 'Job Board', icon: 'briefcase' },
-    { id: 'referrals', name: 'Referrals', icon: 'people' },
-    { id: 'agencies', name: 'Agencies', icon: 'business' },
-    { id: 'supplies', name: 'Supplies', icon: 'cube' },
-    { id: 'academy', name: 'Academy', icon: 'school' },
-    { id: 'finance', name: 'Finance', icon: 'wallet' },
-    { id: 'rentals', name: 'Rentals', icon: 'home' },
-    { id: 'ads', name: 'Ads', icon: 'megaphone' },
-    { id: 'facility-care', name: 'FacilityCare', icon: 'medical' },
-    { id: 'subscriptions', name: 'Subscriptions', icon: 'card' },
-    { id: 'trust', name: 'Trust Verification', icon: 'shield-checkmark' },
-    { id: 'communication', name: 'Communication', icon: 'chatbubbles' },
-    { id: 'partners', name: 'Partners', icon: 'people' },
-    { id: 'search', name: 'Search', icon: 'search' },
-    { id: 'analytics', name: 'Analytics', icon: 'stats-chart' },
+    { id: 'marketplace', name: 'Marketplace', icon: 'storefront-outline', description: 'Browse and book services', color: '#3B82F6' },
+    { id: 'jobs', name: 'Job Board', icon: 'briefcase-outline', description: 'Find your next opportunity', color: '#10B981' },
+    { id: 'finance', name: 'Finance', icon: 'wallet-outline', description: 'Manage your wallet', color: '#F59E0B' },
+    { id: 'academy', name: 'Academy', icon: 'school-outline', description: 'Learn new skills', color: '#8B5CF6' },
+    { id: 'supplies', name: 'Supplies', icon: 'cube-outline', description: 'Order supplies', color: '#EC4899' },
+    { id: 'rentals', name: 'Rentals', icon: 'home-outline', description: 'Rent equipment', color: '#06B6D4' },
+    { id: 'referrals', name: 'Referrals', icon: 'people-outline', description: 'Refer and earn', color: '#14B8A6' },
+    { id: 'agencies', name: 'Agencies', icon: 'business-outline', description: 'Manage agencies', color: '#6366F1' },
+    { id: 'communication', name: 'Communication', icon: 'chatbubbles-outline', description: 'Messages & notifications', color: '#F97316' },
+    { id: 'facility-care', name: 'Facility Care', icon: 'medical-outline', description: 'Healthcare services', color: '#EF4444' },
+    { id: 'ads', name: 'Ads', icon: 'megaphone-outline', description: 'Advertise your services', color: '#84CC16' },
+    { id: 'subscriptions', name: 'Subscriptions', icon: 'star-outline', description: 'LocalPro Plus', color: '#F59E0B' },
+    { id: 'trust', name: 'Trust', icon: 'shield-checkmark-outline', description: 'Verification & trust', color: '#10B981' },
+    { id: 'partners', name: 'Partners', icon: 'people-circle-outline', description: 'Partner network', color: '#3B82F6' },
+    { id: 'search', name: 'Search', icon: 'search-outline', description: 'Advanced search', color: '#8B5CF6' },
+    { id: 'analytics', name: 'Analytics', icon: 'stats-chart-outline', description: 'Insights & reports', color: '#6366F1' },
   ];
 
   return (
@@ -221,182 +221,192 @@ export function DrawerHeaderRight() {
       {availableRoles.length > 1 && (
         <Modal
           visible={roleModalVisible}
-          transparent
           animationType="slide"
+          presentationStyle="pageSheet"
           onRequestClose={() => setRoleModalVisible(false)}
         >
-          <Pressable
-            style={styles.modalOverlay}
-            onPress={() => setRoleModalVisible(false)}
-          >
-            <SafeAreaView edges={['top']} style={styles.modalContent}>
-              <Pressable onPress={(e) => e.stopPropagation()}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Switch Role</Text>
-                  <TouchableOpacity
-                    onPress={() => setRoleModalVisible(false)}
-                    style={styles.closeButton}
-                  >
-                    <Ionicons name="close" size={24} color={Colors.text.primary} />
-                  </TouchableOpacity>
-                </View>
+          <View style={styles.roleModalContainer}>
+            {/* Header */}
+            <View style={styles.roleModalHeader}>
+              <View>
+                <Text style={styles.roleModalTitle}>Switch Role</Text>
+                <Text style={styles.roleModalSubtitle}>Choose a role to switch to</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.roleModalCloseButton}
+                onPress={() => setRoleModalVisible(false)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close" size={24} color={Colors.text.primary} />
+              </TouchableOpacity>
+            </View>
 
-                <ScrollView style={styles.rolesList} showsVerticalScrollIndicator={false}>
-                  {availableRoles.map((role) => {
-                    const isActive = role === activeRole;
-                    return (
-                      <TouchableOpacity
-                        key={role}
-                        style={[
-                          styles.roleItem,
-                          isActive && styles.roleItemActive,
-                        ]}
-                        onPress={async () => {
-                          await setActiveRole(role);
-                          setRoleModalVisible(false);
-                        }}
-                      >
-                        <View style={styles.roleItemContent}>
-                          <View style={styles.roleItemLeft}>
-                            <View style={[
-                              styles.roleItemIcon,
-                              isActive && styles.roleItemIconActive
-                            ]}>
-                              <Ionicons
-                                name={getRoleIcon(role)}
-                                size={24}
-                                color={isActive ? Colors.primary[600] : Colors.text.secondary}
-                              />
-                            </View>
-                            <View style={styles.roleItemText}>
-                              <Text style={[
-                                styles.roleItemName,
-                                isActive && styles.roleItemNameActive
-                              ]}>
-                                {getRoleDisplayName(role)}
-                              </Text>
-                              <Text style={styles.roleItemDescription}>
-                                {getRoleDescription(role)}
-                              </Text>
-                            </View>
-                          </View>
-                          {isActive && (
-                            <Ionicons name="checkmark-circle" size={24} color={Colors.secondary[600]} />
-                          )}
+            {/* Roles List */}
+            <ScrollView
+              style={styles.roleModalScrollView}
+              contentContainerStyle={styles.roleModalScrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {availableRoles.map((role) => {
+                const isActive = role === activeRole;
+                return (
+                  <TouchableOpacity
+                    key={role}
+                    style={[
+                      styles.roleModalItem,
+                      isActive && styles.roleModalItemActive,
+                    ]}
+                    onPress={async () => {
+                      await setActiveRole(role);
+                      setRoleModalVisible(false);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.roleModalItemContent}>
+                      <View style={styles.roleModalItemLeft}>
+                        <View style={[
+                          styles.roleModalItemIcon,
+                          isActive && styles.roleModalItemIconActive
+                        ]}>
+                          <Ionicons
+                            name={getRoleIcon(role)}
+                            size={28}
+                            color={isActive ? Colors.primary[600] : Colors.text.secondary}
+                          />
                         </View>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </Pressable>
-            </SafeAreaView>
-          </Pressable>
+                        <View style={styles.roleModalItemText}>
+                          <Text style={[
+                            styles.roleModalItemName,
+                            isActive && styles.roleModalItemNameActive
+                          ]}>
+                            {getRoleDisplayName(role)}
+                          </Text>
+                          <Text style={styles.roleModalItemDescription}>
+                            {getRoleDescription(role)}
+                          </Text>
+                        </View>
+                      </View>
+                      {isActive && (
+                        <View style={styles.roleModalActiveBadge}>
+                          <Ionicons name="checkmark-circle" size={24} color={Colors.primary[600]} />
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
         </Modal>
       )}
 
       {/* Package Switcher Modal */}
-
-      {/* Package Switcher Modal */}
       <Modal
         visible={packageModalVisible}
-        transparent
         animationType="slide"
+        presentationStyle="pageSheet"
         onRequestClose={() => setPackageModalVisible(false)}
       >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setPackageModalVisible(false)}
-        >
-          <SafeAreaView edges={['top']} style={styles.modalContent}>
-            <Pressable onPress={(e) => e.stopPropagation()}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Switch Package</Text>
-                  <TouchableOpacity
-                    onPress={() => setPackageModalVisible(false)}
-                    style={styles.closeButton}
-                  >
-                    <Ionicons name="close" size={24} color={Colors.text.primary} />
-                  </TouchableOpacity>
-              </View>
+        <View style={styles.packageModalContainer}>
+          {/* Header */}
+          <View style={styles.packageModalHeader}>
+            <View>
+              <Text style={styles.packageModalTitle}>Switch Package</Text>
+              <Text style={styles.packageModalSubtitle}>Choose a package to switch to</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.packageModalCloseButton}
+              onPress={() => setPackageModalVisible(false)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="close" size={24} color={Colors.text.primary} />
+            </TouchableOpacity>
+          </View>
 
-              <ScrollView style={styles.packagesList} showsVerticalScrollIndicator={false}>
-                <View style={styles.packagesGrid}>
-                  {packages.map((pkg) => {
-                    const isActive = isPackageActive(pkg.id);
-                    return (
-                      <TouchableOpacity
-                        key={pkg.id}
-                        style={[
-                          styles.packageBlock,
-                          isActive && styles.packageBlockActive,
-                        ]}
-                        onPress={async () => {
-                          const packageType = mapPackageIdToType(pkg.id);
-                          if (packageType) {
-                            await setActivePackage(packageType);
-                            // Navigate to initial tab based on package type
-                            if (packageType === 'marketplace') {
-                              router.push('/(app)/(tabs)');
-                            } else if (packageType === 'job-board') {
-                              router.push('/(app)/(tabs)');
-                            } else if (packageType === 'finance') {
-                              router.push('/(app)/(tabs)/wallet');
-                            } else if (packageType === 'academy') {
-                              router.push('/(app)/(tabs)/courses');
-                            } else if (packageType === 'referrals') {
-                              router.push('/(app)/(tabs)/refer');
-                            } else if (packageType === 'agencies') {
-                              router.push('/(app)/(tabs)/browse-agencies');
-                            } else if (packageType === 'supplies') {
-                              router.push('/(app)/(tabs)/shop');
-                            } else if (packageType === 'rentals') {
-                              router.push('/(app)/(tabs)/browse-rentals');
-                            } else if (packageType === 'ads') {
-                              router.push('/(app)/(tabs)/browse-ads');
-                            } else if (packageType === 'facility-care') {
-                              router.push('/(app)/(tabs)/services-fc');
-                            } else if (packageType === 'subscriptions') {
-                              router.push('/(app)/(tabs)/browse-subscriptions');
-                            } else if (packageType === 'trust') {
-                              router.push('/(app)/(tabs)/verify');
-                            } else if (packageType === 'communication') {
-                              router.push('/(app)/(tabs)/messages-comm');
-                            } else if (packageType === 'partners') {
-                              router.push('/(app)/(tabs)/browse-partners');
-                            } else if (packageType === 'search') {
-                              router.push('/(app)/(tabs)/global-search');
-                            } else if (packageType === 'analytics') {
-                              router.push('/(app)/(tabs)/dashboard');
-                            }
-                          }
-                          setPackageModalVisible(false);
-                        }}
-                      >
-                        <View style={styles.packageBlockHeader}>
-                          <View style={styles.packageBlockIcon}>
-                            <Ionicons
-                              name={pkg.icon as any}
-                              size={28}
-                              color={Colors.primary[600]}
-                            />
-                          </View>
-                          {isActive && (
-                            <View style={styles.activeIndicator}>
-                              <Ionicons name="checkmark-circle" size={20} color={Colors.secondary[600]} />
-                            </View>
-                          )}
+          {/* Packages Grid */}
+          <ScrollView
+            style={styles.packageModalScrollView}
+            contentContainerStyle={styles.packageModalScrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.packageModalGrid}>
+              {packages.map((pkg) => {
+                const isActive = isPackageActive(pkg.id);
+                return (
+                  <TouchableOpacity
+                    key={pkg.id}
+                    style={styles.packageModalCard}
+                    onPress={async () => {
+                      const packageType = mapPackageIdToType(pkg.id);
+                      if (packageType) {
+                        await setActivePackage(packageType);
+                        // Navigate to initial tab based on package type
+                        if (packageType === 'marketplace') {
+                          router.push('/(app)/(tabs)');
+                        } else if (packageType === 'job-board') {
+                          router.push('/(app)/(tabs)');
+                        } else if (packageType === 'finance') {
+                          router.push('/(app)/(tabs)/wallet');
+                        } else if (packageType === 'academy') {
+                          router.push('/(app)/(tabs)/courses');
+                        } else if (packageType === 'referrals') {
+                          router.push('/(app)/(tabs)/refer');
+                        } else if (packageType === 'agencies') {
+                          router.push('/(app)/(tabs)/browse-agencies');
+                        } else if (packageType === 'supplies') {
+                          router.push('/(app)/(tabs)/shop');
+                        } else if (packageType === 'rentals') {
+                          router.push('/(app)/(tabs)/browse-rentals');
+                        } else if (packageType === 'ads') {
+                          router.push('/(app)/(tabs)/browse-ads');
+                        } else if (packageType === 'facility-care') {
+                          router.push('/(app)/(tabs)/services-fc');
+                        } else if (packageType === 'subscriptions') {
+                          router.push('/(app)/(tabs)/browse-subscriptions');
+                        } else if (packageType === 'trust') {
+                          router.push('/(app)/(tabs)/verify');
+                        } else if (packageType === 'communication') {
+                          router.push('/(app)/(tabs)/messages-comm');
+                        } else if (packageType === 'partners') {
+                          router.push('/(app)/(tabs)/browse-partners');
+                        } else if (packageType === 'search') {
+                          router.push('/(app)/(tabs)/global-search');
+                        } else if (packageType === 'analytics') {
+                          router.push('/(app)/(tabs)/dashboard');
+                        }
+                      }
+                      setPackageModalVisible(false);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[
+                      styles.packageModalIconContainer,
+                      { backgroundColor: pkg.color + '15' },
+                      isActive && { backgroundColor: pkg.color + '25' }
+                    ]}>
+                      <Ionicons 
+                        name={pkg.icon as any} 
+                        size={32} 
+                        color={pkg.color} 
+                      />
+                      {isActive && (
+                        <View style={styles.packageModalActiveBadge}>
+                          <Ionicons name="checkmark-circle" size={20} color={pkg.color} />
                         </View>
-                        <Text style={styles.packageBlockName} numberOfLines={2}>
-                          {pkg.name}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </ScrollView>
-            </Pressable>
-          </SafeAreaView>
-        </Pressable>
+                      )}
+                    </View>
+                    <Text style={styles.packageModalName} numberOfLines={1}>
+                      {pkg.name}
+                    </Text>
+                    <Text style={styles.packageModalDescription} numberOfLines={2}>
+                      {pkg.description}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </ScrollView>
+        </View>
       </Modal>
     </>
   );
@@ -512,6 +522,80 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 16,
   },
+  // Package Modal Styles (matching PackageSelectionModal)
+  packageModalContainer: {
+    flex: 1,
+    backgroundColor: Colors.background.secondary,
+  },
+  packageModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    padding: Spacing.lg,
+    paddingTop: Spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.light,
+    backgroundColor: Colors.background.primary,
+  },
+  packageModalTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 4,
+    color: Colors.text.primary,
+  },
+  packageModalSubtitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  packageModalCloseButton: {
+    padding: Spacing.xs,
+  },
+  packageModalScrollView: {
+    flex: 1,
+  },
+  packageModalScrollContent: {
+    padding: Spacing.lg,
+  },
+  packageModalGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -Spacing.xs,
+  },
+  packageModalCard: {
+    width: '33.33%',
+    padding: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+    alignItems: 'center',
+  },
+  packageModalIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+    position: 'relative',
+  },
+  packageModalActiveBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: Colors.background.primary,
+    borderRadius: 10,
+  },
+  packageModalName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  packageModalDescription: {
+    fontSize: 11,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 14,
+  },
   rolesList: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.lg,
@@ -566,6 +650,106 @@ const styles = StyleSheet.create({
   roleItemDescription: {
     fontSize: 14,
     color: Colors.text.secondary,
+  },
+  // Role Modal Styles (matching PackageSelectionModal)
+  roleModalContainer: {
+    flex: 1,
+    backgroundColor: Colors.background.secondary,
+  },
+  roleModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    padding: Spacing.lg,
+    paddingTop: Spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.light,
+    backgroundColor: Colors.background.primary,
+  },
+  roleModalTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 4,
+    color: Colors.text.primary,
+  },
+  roleModalSubtitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  roleModalCloseButton: {
+    padding: Spacing.xs,
+  },
+  roleModalScrollView: {
+    flex: 1,
+  },
+  roleModalScrollContent: {
+    padding: Spacing.lg,
+  },
+  roleModalItem: {
+    backgroundColor: Colors.background.primary,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border.light,
+    shadowColor: Colors.text.primary,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  roleModalItemActive: {
+    backgroundColor: Colors.primary[50],
+    borderColor: Colors.primary[600],
+    borderWidth: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  roleModalItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  roleModalItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  roleModalItemIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.primary[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing.md,
+  },
+  roleModalItemIconActive: {
+    backgroundColor: Colors.primary[200],
+  },
+  roleModalItemText: {
+    flex: 1,
+  },
+  roleModalItemName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  roleModalItemNameActive: {
+    color: Colors.primary[600],
+  },
+  roleModalItemDescription: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    lineHeight: 20,
+  },
+  roleModalActiveBadge: {
+    marginLeft: Spacing.sm,
   },
   badge: {
     position: 'absolute',

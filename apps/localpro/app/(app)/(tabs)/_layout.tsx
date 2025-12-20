@@ -114,11 +114,14 @@ export default function TabsLayout() {
   const { activePackage } = usePackageContext();
 
   // Get visible tabs for current package
-  const visibleTabs = ALL_TABS.filter(tab => tab.packages.includes(activePackage));
+  const visibleTabs = activePackage 
+    ? ALL_TABS.filter(tab => tab.packages.includes(activePackage))
+    : [];
   const initialRouteName = visibleTabs[0]?.name || 'index';
 
   // Helper to check if a tab should be visible
   const isTabVisible = (tabName: string): boolean => {
+    if (!activePackage) return false;
     const tab = ALL_TABS.find(t => t.name === tabName);
     return tab ? tab.packages.includes(activePackage) : false;
   };

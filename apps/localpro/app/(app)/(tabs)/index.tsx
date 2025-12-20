@@ -2,20 +2,33 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthContext } from '@localpro/auth';
 import { Card } from '@localpro/ui';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import PackageSelectionModal from '../../../components/PackageSelectionModal';
 import { BorderRadius, Colors, Spacing } from '../../../constants/theme';
-import { usePackageContext } from '../../../contexts/PackageContext';
+import { PackageType, usePackageContext } from '../../../contexts/PackageContext';
 import { useRoleContext } from '../../../contexts/RoleContext';
 import { useThemeColors } from '../../../hooks/use-theme';
 
 export default function HomeScreen() {
   const { user } = useAuthContext();
-  const { activePackage } = usePackageContext();
+  const { activePackage, setActivePackage } = usePackageContext();
   const { activeRole } = useRoleContext();
   const router = useRouter();
   const colors = useThemeColors();
+  const [showPackageModal, setShowPackageModal] = useState(false);
+
+  // Detect if a package is selected and show modal if not
+  // The PackageContext automatically loads the stored package from SecureStorage
+  useEffect(() => {
+    // Show modal when no package is selected (stored in PackageContext)
+    if (!activePackage) {
+      setShowPackageModal(true);
+    } else {
+      setShowPackageModal(false);
+    }
+  }, [activePackage]);
 
   const getPackageContent = () => {
     switch (activePackage) {
@@ -68,90 +81,104 @@ export default function HomeScreen() {
     return roleMap[role] || role;
   };
 
+  // Handle package selection - stores in PackageContext which persists to SecureStorage
+  const handlePackageSelect = async (pkg: PackageType) => {
+    // setActivePackage stores the package in PackageContext and SecureStorage
+    await setActivePackage(pkg);
+    // The modal will automatically close when activePackage updates
+    setShowPackageModal(false);
+  };
+
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.title}>{content.title}</Text>
-              <Text style={styles.subtitle}>{content.subtitle}</Text>
-            </View>
-            {activeRole && (
-              <View style={styles.roleBadge}>
-                <Ionicons 
-                  name="briefcase-outline" 
-                  size={14} 
-                  color={colors.primary[600]} 
-                />
-                <Text style={styles.roleText}>{getRoleDisplayName(activeRole)}</Text>
+    <>
+      <PackageSelectionModal
+        visible={showPackageModal}
+        onSelectPackage={handlePackageSelect}
+      />
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <View style={styles.content}>
+            {/* Header */}
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.title}>{content.title}</Text>
+                <Text style={styles.subtitle}>{content.subtitle}</Text>
               </View>
-            )}
+              {activeRole && (
+                <View style={styles.roleBadge}>
+                  <Ionicons 
+                    name="briefcase-outline" 
+                    size={14} 
+                    color={colors.primary[600]} 
+                  />
+                  <Text style={styles.roleText}>{getRoleDisplayName(activeRole)}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Quick Actions */}
+            <Card style={styles.card}>
+              <Text style={styles.sectionTitle}>Quick Actions</Text>
+              <View style={styles.quickActionsGrid}>
+                {content.quickActions.map((action, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.quickActionItem}
+                    onPress={() => router.push(action.route as any)}
+                  >
+                    <View style={[styles.quickActionIcon, { backgroundColor: colors.primary[100] }]}>
+                      <Ionicons 
+                        name={action.icon as any} 
+                        size={24} 
+                        color={colors.primary[600]} 
+                      />
+                    </View>
+                    <Text style={styles.quickActionLabel}>{action.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </Card>
+
+            {/* Stats Cards */}
+            <View style={styles.statsRow}>
+              <Card style={styles.statCard}>
+                <View style={[styles.statIcon, { backgroundColor: colors.secondary[100] }]}>
+                  <Ionicons name="checkmark-circle" size={24} color={colors.secondary[600]} />
+                </View>
+                <Text style={styles.statValue}>0</Text>
+                <Text style={styles.statLabel}>Active</Text>
+              </Card>
+              <Card style={styles.statCard}>
+                <View style={[styles.statIcon, { backgroundColor: colors.primary[100] }]}>
+                  <Ionicons name="time-outline" size={24} color={colors.primary[600]} />
+                </View>
+                <Text style={styles.statValue}>0</Text>
+                <Text style={styles.statLabel}>Pending</Text>
+              </Card>
+              <Card style={styles.statCard}>
+                <View style={[styles.statIcon, { backgroundColor: colors.neutral.gray100 }]}>
+                  <Ionicons name="checkmark-done" size={24} color={colors.text.secondary} />
+                </View>
+                <Text style={styles.statValue}>0</Text>
+                <Text style={styles.statLabel}>Completed</Text>
+              </Card>
+            </View>
+
+            {/* Recent Activity */}
+            <Card style={styles.card}>
+              <Text style={styles.sectionTitle}>Recent Activity</Text>
+              <View style={styles.emptyState}>
+                <Ionicons name="time-outline" size={48} color={colors.text.tertiary} />
+                <Text style={styles.emptyStateText}>No recent activity</Text>
+                <Text style={styles.emptyStateSubtext}>
+                  Your recent actions will appear here
+                </Text>
+              </View>
+            </Card>
           </View>
-
-          {/* Quick Actions */}
-          <Card style={styles.card}>
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
-            <View style={styles.quickActionsGrid}>
-              {content.quickActions.map((action, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.quickActionItem}
-                  onPress={() => router.push(action.route as any)}
-                >
-                  <View style={[styles.quickActionIcon, { backgroundColor: colors.primary[100] }]}>
-                    <Ionicons 
-                      name={action.icon as any} 
-                      size={24} 
-                      color={colors.primary[600]} 
-                    />
-                  </View>
-                  <Text style={styles.quickActionLabel}>{action.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </Card>
-
-          {/* Stats Cards */}
-          <View style={styles.statsRow}>
-            <Card style={styles.statCard}>
-              <View style={[styles.statIcon, { backgroundColor: colors.secondary[100] }]}>
-                <Ionicons name="checkmark-circle" size={24} color={colors.secondary[600]} />
-              </View>
-              <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>Active</Text>
-            </Card>
-            <Card style={styles.statCard}>
-              <View style={[styles.statIcon, { backgroundColor: colors.primary[100] }]}>
-                <Ionicons name="time-outline" size={24} color={colors.primary[600]} />
-              </View>
-              <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>Pending</Text>
-            </Card>
-            <Card style={styles.statCard}>
-              <View style={[styles.statIcon, { backgroundColor: colors.neutral.gray100 }]}>
-                <Ionicons name="checkmark-done" size={24} color={colors.text.secondary} />
-              </View>
-              <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>Completed</Text>
-            </Card>
-          </View>
-
-          {/* Recent Activity */}
-          <Card style={styles.card}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
-            <View style={styles.emptyState}>
-              <Ionicons name="time-outline" size={48} color={colors.text.tertiary} />
-              <Text style={styles.emptyStateText}>No recent activity</Text>
-              <Text style={styles.emptyStateSubtext}>
-                Your recent actions will appear here
-              </Text>
-            </View>
-          </Card>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </>
   );
 }
 
@@ -281,4 +308,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

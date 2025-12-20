@@ -20,14 +20,14 @@ export type PackageType =
   | 'analytics';
 
 interface PackageContextType {
-  activePackage: PackageType;
-  setActivePackage: (pkg: PackageType) => Promise<void>;
+  activePackage: PackageType | null;
+  setActivePackage: (pkg: PackageType | null) => Promise<void>;
+  resetActivePackage: () => Promise<void>;
 }
 
 const PackageContext = createContext<PackageContextType | undefined>(undefined);
 
 const ACTIVE_PACKAGE_KEY = 'active_package';
-const DEFAULT_PACKAGE: PackageType = 'marketplace';
 
 export const usePackageContext = () => {
   const context = useContext(PackageContext);
@@ -42,7 +42,7 @@ interface PackageProviderProps {
 }
 
 export const PackageProvider: React.FC<PackageProviderProps> = ({ children }) => {
-  const [activePackage, setActivePackageState] = useState<PackageType>(DEFAULT_PACKAGE);
+  const [activePackage, setActivePackageState] = useState<PackageType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -56,28 +56,37 @@ export const PackageProvider: React.FC<PackageProviderProps> = ({ children }) =>
       if (stored && validPackages.includes(stored)) {
         setActivePackageState(stored as PackageType);
       } else {
-        setActivePackageState(DEFAULT_PACKAGE);
+        setActivePackageState(null);
       }
     } catch (error) {
       console.error('Error loading active package:', error);
-      setActivePackageState(DEFAULT_PACKAGE);
+      setActivePackageState(null);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const setActivePackage = async (pkg: PackageType) => {
+  const setActivePackage = async (pkg: PackageType | null) => {
     try {
-      await SecureStorage.setItem(ACTIVE_PACKAGE_KEY, pkg);
+      if (pkg) {
+        await SecureStorage.setItem(ACTIVE_PACKAGE_KEY, pkg);
+      } else {
+        await SecureStorage.removeItem(ACTIVE_PACKAGE_KEY);
+      }
       setActivePackageState(pkg);
     } catch (error) {
       console.error('Error setting active package:', error);
     }
   };
 
+  const resetActivePackage = async () => {
+    await setActivePackage(null);
+  };
+
   const value: PackageContextType = {
     activePackage,
     setActivePackage,
+    resetActivePackage,
   };
 
   if (isLoading) {

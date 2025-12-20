@@ -124,9 +124,11 @@ export function CustomDrawerContent(props: any) {
             </View>
             <View style={styles.currentPackageContainer}>
               <Text style={styles.currentPackageText}>
-                {toTitleCase(activePackage)}
+                {activePackage ? toTitleCase(activePackage) : 'No Package Selected'}
               </Text>
-              <Ionicons name="checkmark-circle" size={20} color={Colors.secondary[600]} />
+              {activePackage && (
+                <Ionicons name="checkmark-circle" size={20} color={Colors.secondary[600]} />
+              )}
             </View>
           </View>
 
