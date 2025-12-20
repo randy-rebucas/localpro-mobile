@@ -7,8 +7,8 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BorderRadius, Colors, Spacing } from '../constants/theme';
 import { usePackageContext } from '../contexts/PackageContext';
-import { Colors, Spacing, BorderRadius } from '../constants/theme';
 
 export function CustomDrawerContent(props: any) {
   const { user, logout } = useAuthContext();
@@ -117,7 +117,7 @@ export function CustomDrawerContent(props: any) {
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
-                router.push('/(app)/bookings');
+                router.push('/(app)/(tabs)/bookings');
                 props.navigation.closeDrawer();
               }}
             >
@@ -139,7 +139,7 @@ export function CustomDrawerContent(props: any) {
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
-                router.push('/(app)/messages');
+                router.push('/(app)/(tabs)/messages');
                 props.navigation.closeDrawer();
               }}
             >
