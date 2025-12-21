@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { BorderRadius, Colors, Spacing } from '../../constants/theme';
+import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { BorderRadius, Colors, Spacing, Typography } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
 
 export interface Category {
@@ -39,6 +39,7 @@ export function CategoryFilter({
             },
           ]}
           onPress={() => onCategorySelect(category.id)}
+          activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
         >
           <Ionicons
             name={category.icon}
@@ -69,18 +70,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
     borderRadius: BorderRadius.full,
     backgroundColor: Colors.background.primary,
-    borderWidth: 1,
+    borderWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderColor: Colors.border.light,
     gap: Spacing.xs,
     marginRight: Spacing.sm,
+    minHeight: Platform.select({ ios: 36, android: 40 }),
   },
   categoryChipText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: Typography.fontWeight.medium,
+    lineHeight: 20,
     color: Colors.text.secondary,
+    fontFamily: Typography.fontFamily?.medium || 'System',
   },
 });
 

@@ -1,14 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as Location from 'expo-location';
 import { safeReverseGeocode } from '@localpro/utils/location';
+import * as Location from 'expo-location';
+import React, { useEffect, useState } from 'react';
+import { Alert, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/use-theme';
 import type { Category } from './CategoryFilter';
 import { CategoryMultiSelect } from './CategoryMultiSelect';
 import { PriceRangeSlider } from './PriceRangeSlider';
 import { SortDropdown, type SortOption } from './SortDropdown';
-import React, { useEffect, useState } from 'react';
-import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { BorderRadius, Colors, Shadows, Spacing } from '../../constants/theme';
-import { useThemeColors } from '../../hooks/use-theme';
 
 export interface FilterState {
   categories: string[];
@@ -183,6 +183,7 @@ export function FilterSheet({
                 },
               ]}
               onPress={() => setMinRating(star === minRating ? 0 : star)}
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
             >
               <Ionicons
                 name={minRating >= star ? 'star' : 'star-outline'}
@@ -217,13 +218,19 @@ export function FilterSheet({
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <Text style={styles.title}>Filters</Text>
-              <TouchableOpacity onPress={handleReset}>
+              <TouchableOpacity 
+                onPress={handleReset}
+                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+              >
                 <Text style={[styles.resetText, { color: colors.primary[600] }]}>
                   Reset
                 </Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity 
+              onPress={onClose}
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+            >
               <Ionicons name="close" size={24} color={colors.text.primary} />
             </TouchableOpacity>
           </View>
@@ -231,7 +238,9 @@ export function FilterSheet({
           {/* Content */}
           <ScrollView
             style={styles.content}
-            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
           >
             {/* Sort */}
             <View style={styles.section}>
@@ -288,6 +297,7 @@ export function FilterSheet({
                 style={[styles.locationButton, { backgroundColor: colors.background.secondary }]}
                 onPress={handleUseCurrentLocation}
                 disabled={isGettingLocation}
+                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
               >
                 <Ionicons
                   name={isGettingLocation ? 'hourglass-outline' : 'location-outline'}
@@ -302,11 +312,14 @@ export function FilterSheet({
                 <View style={styles.locationInfo}>
                   <Ionicons name="checkmark-circle" size={16} color={colors.semantic.success} />
                   <Text style={styles.locationName}>{locationName}</Text>
-                  <TouchableOpacity onPress={() => {
-                    setLocationName('');
-                    setLatitude(undefined);
-                    setLongitude(undefined);
-                  }}>
+                  <TouchableOpacity 
+                    onPress={() => {
+                      setLocationName('');
+                      setLatitude(undefined);
+                      setLongitude(undefined);
+                    }}
+                    activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+                  >
                     <Ionicons name="close-circle" size={16} color={colors.text.tertiary} />
                   </TouchableOpacity>
                 </View>
@@ -323,6 +336,7 @@ export function FilterSheet({
                         { borderColor: colors.border.medium },
                       ]}
                       onPress={() => setRadius(r)}
+                      activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                     >
                       <Text
                         style={[
@@ -343,6 +357,7 @@ export function FilterSheet({
               <TouchableOpacity
                 style={[styles.checkboxContainer, { backgroundColor: colors.background.secondary }]}
                 onPress={() => setGroupByCategory(!groupByCategory)}
+                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
               >
                 <View style={[
                   styles.checkbox,
@@ -365,12 +380,14 @@ export function FilterSheet({
             <TouchableOpacity
               style={[styles.cancelButton, { borderColor: Colors.border.medium }]}
               onPress={onClose}
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
             >
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.applyButton, { backgroundColor: colors.primary[600] }]}
               onPress={handleApply}
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
             >
               <Text style={styles.applyText}>Apply Filters</Text>
             </TouchableOpacity>
@@ -384,23 +401,30 @@ export function FilterSheet({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
+    justifyContent: 'flex-end',
   },
   backdrop: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   sheet: {
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
-    maxHeight: '90%',
+    height: '90%',
+    flexDirection: 'column',
     ...Shadows.xl,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.xl.elevation,
+      },
+    }),
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: Spacing.lg,
-    borderBottomWidth: 1,
+    borderBottomWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderBottomColor: Colors.border.light,
   },
   headerLeft: {
@@ -410,31 +434,42 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: Typography.fontWeight.bold,
+    lineHeight: 28,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.bold || 'System',
   },
   resetText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: Typography.fontWeight.medium,
+    lineHeight: 20,
+    fontFamily: Typography.fontFamily?.medium || 'System',
   },
   content: {
     flex: 1,
+  },
+  contentContainer: {
     padding: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
   section: {
     marginBottom: Spacing.lg,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 22,
     color: Colors.text.primary,
     marginBottom: Spacing.md,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 22,
     color: Colors.text.primary,
     marginBottom: Spacing.md,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   ratingSection: {
     marginVertical: Spacing.md,
@@ -452,41 +487,47 @@ const styles = StyleSheet.create({
   ratingText: {
     marginLeft: Spacing.sm,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: Typography.fontWeight.medium,
+    lineHeight: 20,
     color: Colors.text.secondary,
+    fontFamily: Typography.fontFamily?.medium || 'System',
   },
   footer: {
     flexDirection: 'row',
     padding: Spacing.lg,
     gap: Spacing.md,
-    borderTopWidth: 1,
+    borderTopWidth: Platform.select({ ios: 1, android: 1.5 }),
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: Spacing.md,
+    paddingVertical: Platform.select({ ios: Spacing.md, android: Spacing.md + 2 }),
     borderRadius: BorderRadius.md,
-    borderWidth: 1,
+    borderWidth: Platform.select({ ios: 1, android: 1.5 }),
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,
+    minHeight: Platform.select({ ios: 44, android: 48 }),
   },
   cancelText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 22,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   applyButton: {
     flex: 1,
-    paddingVertical: Spacing.md,
+    paddingVertical: Platform.select({ ios: Spacing.md, android: Spacing.md + 2 }),
     borderRadius: BorderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,
+    minHeight: Platform.select({ ios: 44, android: 48 }),
   },
   applyText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 22,
     color: Colors.text.inverse,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   locationButton: {
     flexDirection: 'row',
@@ -495,10 +536,13 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     gap: Spacing.sm,
     marginBottom: Spacing.md,
+    minHeight: Platform.select({ ios: 44, android: 48 }),
   },
   locationButtonText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: Typography.fontWeight.medium,
+    lineHeight: 20,
+    fontFamily: Typography.fontFamily?.medium || 'System',
   },
   locationInfo: {
     flexDirection: 'row',
@@ -512,7 +556,9 @@ const styles = StyleSheet.create({
   locationName: {
     flex: 1,
     fontSize: 14,
+    lineHeight: 20,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
   radiusContainer: {
     marginTop: Spacing.sm,
@@ -525,27 +571,40 @@ const styles = StyleSheet.create({
   },
   radiusButton: {
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
     borderRadius: BorderRadius.full,
-    borderWidth: 1,
+    borderWidth: Platform.select({ ios: 1, android: 1.5 }),
     minWidth: 60,
     alignItems: 'center',
+    minHeight: Platform.select({ ios: 36, android: 40 }),
   },
   radiusButtonText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: Typography.fontWeight.medium,
+    lineHeight: 16,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.medium || 'System',
   },
   textInput: {
-    borderWidth: 1,
+    borderWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: 14,
+    lineHeight: 20,
     marginBottom: Spacing.xs,
+    minHeight: Platform.select({ ios: 44, android: 48 }),
+    fontFamily: Typography.fontFamily?.regular || 'System',
+    ...Platform.select({
+      android: {
+        paddingVertical: Spacing.sm + 2,
+      },
+    }),
   },
   hintText: {
     fontSize: 12,
+    lineHeight: 16,
     marginTop: Spacing.xs,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -564,7 +623,9 @@ const styles = StyleSheet.create({
   },
   checkboxLabel: {
     fontSize: 14,
+    lineHeight: 20,
     flex: 1,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
 });
 

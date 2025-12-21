@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Colors, Spacing } from '../../constants/theme';
+import { Colors, Spacing, Typography } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
 
 interface EmptyStateProps {
@@ -47,15 +47,19 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 24,
     color: Colors.text.secondary,
     marginTop: Spacing.md,
     marginBottom: Spacing.xs,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   emptyStateSubtext: {
     fontSize: 14,
+    lineHeight: 20,
     color: Colors.text.tertiary,
     textAlign: 'center',
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
 });
 

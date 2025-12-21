@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { BorderRadius, Colors, Shadows, Spacing } from '../../constants/theme';
+import { Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
 
 export type SortOption = 'price-asc' | 'price-desc' | 'rating' | 'distance' | 'newest';
@@ -41,7 +41,7 @@ export function SortDropdown({ selectedSort, onSortChange }: SortDropdownProps) 
       <TouchableOpacity
         style={[styles.dropdown, { backgroundColor: colors.background.primary }]}
         onPress={() => setModalVisible(true)}
-        activeOpacity={0.7}
+        activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
       >
         <View style={styles.dropdownContent}>
           <Ionicons name="swap-vertical-outline" size={20} color={colors.text.secondary} />
@@ -62,11 +62,15 @@ export function SortDropdown({ selectedSort, onSortChange }: SortDropdownProps) 
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setModalVisible(false)}
+          activeOpacity={1}
         >
           <View style={[styles.modalContent, { backgroundColor: colors.background.primary }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Sort By</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <TouchableOpacity 
+                onPress={() => setModalVisible(false)}
+                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+              >
                 <Ionicons name="close" size={24} color={colors.text.primary} />
               </TouchableOpacity>
             </View>
@@ -81,6 +85,7 @@ export function SortDropdown({ selectedSort, onSortChange }: SortDropdownProps) 
                     isSelected && { backgroundColor: colors.primary[50] },
                   ]}
                   onPress={() => handleSelect(option.value)}
+                  activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                 >
                   <Ionicons
                     name={option.icon}
@@ -90,7 +95,11 @@ export function SortDropdown({ selectedSort, onSortChange }: SortDropdownProps) 
                   <Text
                     style={[
                       styles.optionText,
-                      isSelected && { color: colors.primary[600], fontWeight: '600' },
+                      isSelected && { 
+                        color: colors.primary[600], 
+                        fontWeight: Typography.fontWeight.semibold,
+                        fontFamily: Typography.fontFamily?.semibold || 'System',
+                      },
                     ]}
                   >
                     {option.label}
@@ -118,11 +127,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
     borderRadius: BorderRadius.md,
-    borderWidth: 1,
+    borderWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderColor: Colors.border.light,
     ...Shadows.sm,
+    minHeight: Platform.select({ ios: 44, android: 48 }),
+    ...Platform.select({
+      android: {
+        elevation: Shadows.sm.elevation,
+      },
+    }),
   },
   dropdownContent: {
     flexDirection: 'row',
@@ -132,8 +147,10 @@ const styles = StyleSheet.create({
   },
   dropdownText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: Typography.fontWeight.medium,
+    lineHeight: 20,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.medium || 'System',
   },
   modalOverlay: {
     flex: 1,
@@ -155,8 +172,10 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: Typography.fontWeight.bold,
+    lineHeight: 28,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.bold || 'System',
   },
   optionItem: {
     flexDirection: 'row',
@@ -169,7 +188,9 @@ const styles = StyleSheet.create({
   optionText: {
     flex: 1,
     fontSize: 16,
+    lineHeight: 22,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
 });
 

@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import type { Service } from '@localpro/types';
 import { Card } from '@localpro/ui';
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { BorderRadius, Colors, Shadows, Spacing } from '../../constants/theme';
+import { Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
 
 interface ServiceCardProps {
@@ -31,7 +31,7 @@ export function ServiceCard({ service, viewMode, onPress, onProviderPress }: Ser
       <TouchableOpacity
         style={styles.serviceCardGrid}
         onPress={() => onPress(service.id)}
-        activeOpacity={0.7}
+        activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
       >
         <View style={styles.serviceImageContainer}>
           {service.images && service.images.length > 0 ? (
@@ -59,7 +59,10 @@ export function ServiceCard({ service, viewMode, onPress, onProviderPress }: Ser
             {service.title || 'Untitled Service'}
           </Text>
           {onProviderPress && service.providerId ? (
-            <TouchableOpacity onPress={handleProviderPress} activeOpacity={0.7}>
+            <TouchableOpacity 
+              onPress={handleProviderPress} 
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+            >
               <Text style={[styles.serviceProvider, styles.serviceProviderLink]} numberOfLines={1}>
                 {service.providerName || 'Unknown Provider'}
               </Text>
@@ -81,7 +84,7 @@ export function ServiceCard({ service, viewMode, onPress, onProviderPress }: Ser
     <Card style={styles.serviceCardList}>
       <TouchableOpacity
         onPress={() => onPress(service.id)}
-        activeOpacity={0.7}
+        activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
         style={styles.serviceCardListContent}
       >
         <View style={styles.serviceImageContainerList}>
@@ -162,6 +165,11 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
     ...Shadows.sm,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.sm.elevation,
+      },
+    }),
   },
   serviceCardList: {
     marginHorizontal: Spacing.lg,
@@ -216,10 +224,12 @@ const styles = StyleSheet.create({
   },
   serviceTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 22,
     color: Colors.text.primary,
     flex: 1,
     marginRight: Spacing.xs,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   categoryBadgeList: {
     flexDirection: 'row',
@@ -234,19 +244,24 @@ const styles = StyleSheet.create({
   },
   categoryTextList: {
     fontSize: 10,
-    fontWeight: '500',
+    fontWeight: Typography.fontWeight.medium,
+    lineHeight: 14,
     color: Colors.text.secondary,
+    fontFamily: Typography.fontFamily?.medium || 'System',
   },
   serviceDescription: {
     fontSize: 13,
-    color: Colors.text.secondary,
     lineHeight: 18,
+    color: Colors.text.secondary,
     marginBottom: Spacing.sm,
     flex: 1,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
   serviceProvider: {
     fontSize: 12,
+    lineHeight: 16,
     color: Colors.text.tertiary,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
   serviceProviderLink: {
     color: Colors.primary[600],
@@ -260,9 +275,11 @@ const styles = StyleSheet.create({
   },
   servicePrice: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: Typography.fontWeight.bold,
+    lineHeight: 24,
     color: Colors.primary[600],
     flexShrink: 0,
+    fontFamily: Typography.fontFamily?.bold || 'System',
   },
   serviceCardListFooter: {
     flexDirection: 'row',
@@ -293,6 +310,11 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
     gap: 2,
     ...Shadows.sm,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.sm.elevation,
+      },
+    }),
   },
   ratingBadge: {
     position: 'absolute',
@@ -306,6 +328,11 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
     gap: 2,
     ...Shadows.sm,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.sm.elevation,
+      },
+    }),
   },
   ratingRow: {
     flexDirection: 'row',
@@ -314,13 +341,17 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 16,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   ratingTextSmall: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 14,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
 });
 

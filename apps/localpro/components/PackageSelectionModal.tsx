@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { BorderRadius, Colors, Spacing } from '../constants/theme';
+import { Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { BorderRadius, Colors, Spacing, Typography } from '../constants/theme';
 import { PackageType } from '../contexts/PackageContext';
 import { useThemeColors } from '../hooks/use-theme';
 
@@ -66,7 +66,7 @@ export default function PackageSelectionModal({
             <TouchableOpacity
               style={styles.closeButton}
               onPress={onClose}
-              activeOpacity={0.7}
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
             >
               <Ionicons name="close" size={24} color={colors.text.primary} />
             </TouchableOpacity>
@@ -85,7 +85,7 @@ export default function PackageSelectionModal({
                 key={pkg.id}
                 style={styles.packageCard}
                 onPress={() => handlePackageSelect(pkg.id)}
-                activeOpacity={0.7}
+                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
               >
                 <View style={[styles.packageIconContainer, { backgroundColor: pkg.color + '15' }]}>
                   <Ionicons 
@@ -119,20 +119,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     padding: Spacing.lg,
-    paddingTop: Spacing.xl,
-    borderBottomWidth: 1,
+    paddingTop: Platform.select({ ios: Spacing.xl, android: Spacing.lg }),
+    borderBottomWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderBottomColor: Colors.border.light,
     backgroundColor: Colors.background.primary,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: Typography.fontWeight.bold,
+    lineHeight: 34,
     marginBottom: 4,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.bold || 'System',
   },
   subtitle: {
     fontSize: 14,
+    lineHeight: 20,
     color: Colors.text.secondary,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
   closeButton: {
     padding: Spacing.xs,
@@ -164,16 +168,19 @@ const styles = StyleSheet.create({
   },
   packageName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 20,
     color: Colors.text.primary,
     marginBottom: 4,
     textAlign: 'center',
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   packageDescription: {
     fontSize: 11,
+    lineHeight: 16,
     color: Colors.text.secondary,
     textAlign: 'center',
-    lineHeight: 14,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
 });
 

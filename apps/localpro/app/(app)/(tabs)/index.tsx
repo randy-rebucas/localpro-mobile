@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -29,7 +30,7 @@ import {
   type FilterState
 } from '../../../components/marketplace';
 import PackageSelectionModal from '../../../components/PackageSelectionModal';
-import { BorderRadius, Colors, Shadows, Spacing } from '../../../constants/theme';
+import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../../constants/theme';
 import { PackageType, usePackageContext } from '../../../contexts/PackageContext';
 import { useRoleContext } from '../../../contexts/RoleContext';
 import { useThemeColors } from '../../../hooks/use-theme';
@@ -443,7 +444,7 @@ export default function HomeScreen() {
         <TouchableOpacity
           style={styles.horizontalServiceCard}
           onPress={() => handleServicePress(item.id)}
-          activeOpacity={0.7}
+          activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
         >
           <View style={styles.horizontalServiceImageContainer}>
             {item.images && item.images.length > 0 ? (
@@ -516,7 +517,10 @@ export default function HomeScreen() {
           visible={showPackageModal}
           onSelectPackage={handlePackageSelect}
         />
-        <SafeAreaView style={styles.container} edges={['bottom']}>
+        <SafeAreaView 
+          style={styles.container} 
+          edges={Platform.select({ ios: ['bottom'], android: ['bottom', 'top'] })}
+        >
           <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
             <View style={styles.content}>
               <View style={styles.header}>
@@ -533,6 +537,7 @@ export default function HomeScreen() {
                       key={index}
                       style={styles.quickActionItem}
                       onPress={() => router.push(action.route as any)}
+                      activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                     >
                       <View style={[styles.quickActionIcon, { backgroundColor: colors.primary[100] }]}>
                         <Ionicons name={action.icon as any} size={24} color={colors.primary[600]} />
@@ -565,7 +570,10 @@ export default function HomeScreen() {
         minPrice={0}
         maxPrice={1000}
       />
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView 
+        style={styles.container} 
+        edges={Platform.select({ ios: ['bottom'], android: ['bottom', 'top'] })}
+      >
         <FlatList
           key={viewMode}
           data={filteredServices}
@@ -589,6 +597,7 @@ export default function HomeScreen() {
                     <TouchableOpacity
                       style={[styles.createServiceButton, { backgroundColor: colors.primary[600] }]}
                       onPress={() => router.push('/(stack)/service/create' as any)}
+                      activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                     >
                       <Ionicons name="add" size={20} color={Colors.text.inverse} />
                       <Text style={styles.createServiceText}>Create</Text>
@@ -620,6 +629,7 @@ export default function HomeScreen() {
                         setSelectedCategory('all');
                         setSearchQuery('');
                       }}
+                      activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                     >
                       <Text style={[styles.viewAllText, { color: colors.primary[600] }]}>View All</Text>
                       <Ionicons name="chevron-forward" size={16} color={colors.primary[600]} />
@@ -643,6 +653,7 @@ export default function HomeScreen() {
                   <TouchableOpacity
                     style={styles.activeFiltersBadge}
                     onPress={() => setFilterSheetVisible(true)}
+                    activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                   >
                     <Ionicons name="filter" size={14} color={colors.primary[600]} />
                     <Text style={styles.activeFiltersText}>Filters</Text>
@@ -672,6 +683,7 @@ export default function HomeScreen() {
                       viewMode === 'grid' && { backgroundColor: colors.primary[600] },
                     ]}
                     onPress={() => setViewMode('grid')}
+                    activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                   >
                     <Ionicons
                       name="grid-outline"
@@ -685,6 +697,7 @@ export default function HomeScreen() {
                       viewMode === 'list' && { backgroundColor: colors.primary[600] },
                     ]}
                     onPress={() => setViewMode('list')}
+                    activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                   >
                     <Ionicons
                       name="list-outline"
@@ -779,44 +792,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.sm }),
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: Typography.fontWeight.bold,
+    lineHeight: 34,
     marginBottom: 4,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.bold || 'System',
   },
   subtitle: {
     fontSize: 14,
+    lineHeight: 20,
     color: Colors.text.secondary,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
   roleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.primary[50],
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
+    paddingVertical: Platform.select({ ios: 4, android: 6 }),
     borderRadius: BorderRadius.full,
-    borderWidth: 1,
+    borderWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderColor: Colors.primary[200],
   },
   roleText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 16,
     color: Colors.primary[600],
     marginLeft: 4,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   card: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 24,
     color: Colors.text.primary,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   quickActionsGrid: {
     flexDirection: 'row',
@@ -830,8 +851,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
   },
   quickActionIcon: {
-    width: 56,
-    height: 56,
+    width: Platform.select({ ios: 56, android: 56 }),
+    height: Platform.select({ ios: 56, android: 56 }),
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
@@ -839,9 +860,11 @@ const styles = StyleSheet.create({
   },
   quickActionLabel: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: Typography.fontWeight.medium,
+    lineHeight: 16,
     color: Colors.text.primary,
     textAlign: 'center',
+    fontFamily: Typography.fontFamily?.medium || 'System',
   },
   // Marketplace-specific styles
   marketplaceHeader: {
@@ -850,7 +873,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
+    // marginBottom: Spacing.md,
     gap: Spacing.sm,
   },
   searchInput: {
@@ -858,19 +881,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
     borderRadius: BorderRadius.lg,
     gap: Spacing.sm,
     ...Shadows.sm,
+    minHeight: Platform.select({ ios: 44, android: 48 }),
   },
   searchInputText: {
     flex: 1,
     fontSize: 14,
+    lineHeight: 20,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
   filterButton: {
-    width: 44,
-    height: 44,
+    width: Platform.select({ ios: 44, android: 48 }),
+    height: Platform.select({ ios: 44, android: 48 }),
     borderRadius: BorderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
@@ -904,7 +930,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   viewModeLabel: {
     fontSize: 14,
@@ -920,26 +946,28 @@ const styles = StyleSheet.create({
     ...Shadows.sm,
   },
   viewModeButton: {
-    width: 36,
-    height: 36,
+    width: Platform.select({ ios: 36, android: 40 }),
+    height: Platform.select({ ios: 36, android: 40 }),
     borderRadius: BorderRadius.sm,
     justifyContent: 'center',
     alignItems: 'center',
   },
   section: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xs,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   sectionSubtitle: {
     fontSize: 12,
+    lineHeight: 16,
     color: Colors.text.tertiary,
     marginTop: 2,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
   horizontalListContent: {
     paddingHorizontal: Spacing.lg,
@@ -947,11 +975,16 @@ const styles = StyleSheet.create({
   },
   horizontalServiceCard: {
     width: 160,
-    marginRight: Spacing.md,
+    marginRight: Spacing.xs,
     backgroundColor: Colors.background.primary,
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
     ...Shadows.sm,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.sm.elevation,
+      },
+    }),
   },
   horizontalServiceImageContainer: {
     width: '100%',
@@ -967,14 +1000,18 @@ const styles = StyleSheet.create({
   },
   horizontalServiceTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 20,
     color: Colors.text.primary,
     marginBottom: Spacing.xs,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   horizontalServicePrice: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: Typography.fontWeight.bold,
+    lineHeight: 22,
     color: Colors.primary[600],
+    fontFamily: Typography.fontFamily?.bold || 'System',
   },
   serviceCardGrid: {
     flex: 1,
@@ -983,10 +1020,15 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
     ...Shadows.sm,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.sm.elevation,
+      },
+    }),
   },
   serviceCardList: {
     marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   serviceCardListContent: {
     flexDirection: 'row',
@@ -1022,24 +1064,32 @@ const styles = StyleSheet.create({
   },
   serviceTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 22,
     color: Colors.text.primary,
     marginBottom: Spacing.xs,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   serviceDescription: {
     fontSize: 14,
+    lineHeight: 20,
     color: Colors.text.secondary,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
   serviceProvider: {
     fontSize: 12,
+    lineHeight: 16,
     color: Colors.text.tertiary,
     marginBottom: Spacing.xs,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
   servicePrice: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: Typography.fontWeight.bold,
+    lineHeight: 24,
     color: Colors.primary[600],
+    fontFamily: Typography.fontFamily?.bold || 'System',
   },
   serviceCardListFooter: {
     flexDirection: 'row',
@@ -1084,13 +1134,17 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 16,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   ratingTextSmall: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 14,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   listContent: {
     paddingBottom: Spacing.xl,
@@ -1107,15 +1161,19 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 24,
     color: Colors.text.secondary,
     marginTop: Spacing.md,
     marginBottom: Spacing.xs,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   emptyStateSubtext: {
     fontSize: 14,
+    lineHeight: 20,
     color: Colors.text.tertiary,
     textAlign: 'center',
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
   loadingFooter: {
     paddingVertical: Spacing.lg,
@@ -1131,17 +1189,19 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
     marginLeft: Spacing.lg,
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
+    paddingVertical: Platform.select({ ios: 4, android: 6 }),
     borderRadius: BorderRadius.full,
     backgroundColor: Colors.primary[50],
-    borderWidth: 1,
+    borderWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderColor: Colors.primary[200],
     gap: 4,
   },
   activeFiltersText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 16,
     color: Colors.primary[600],
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   sortContainer: {
     flex: 1,
@@ -1156,21 +1216,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
     borderRadius: BorderRadius.full,
     gap: Spacing.xs,
+    minHeight: Platform.select({ ios: 36, android: 40 }),
   },
   createServiceText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 20,
     color: Colors.text.inverse,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   myServicesHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   viewAllButton: {
     flexDirection: 'row',
@@ -1179,6 +1242,8 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 20,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
 });

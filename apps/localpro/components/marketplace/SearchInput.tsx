@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { BorderRadius, Colors, Shadows, Spacing } from '../../constants/theme';
+import { FlatList, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
 
 interface SearchInputProps {
@@ -63,7 +63,10 @@ export function SearchInput({
             onBlur={() => setTimeout(() => setIsFocused(false), 200)}
           />
           {value.length > 0 && (
-            <TouchableOpacity onPress={() => onChangeText('')}>
+            <TouchableOpacity 
+              onPress={() => onChangeText('')}
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+            >
               <Ionicons name="close-circle" size={20} color={colors.text.tertiary} />
             </TouchableOpacity>
           )}
@@ -77,6 +80,7 @@ export function SearchInput({
                 <TouchableOpacity
                   style={styles.suggestionItem}
                   onPress={() => handleSuggestionPress(item)}
+                  activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                 >
                   <Ionicons name="search-outline" size={16} color={colors.text.tertiary} />
                   <Text style={styles.suggestionText}>{item}</Text>
@@ -91,6 +95,7 @@ export function SearchInput({
         <TouchableOpacity
           style={[styles.filterButton, { backgroundColor: colors.background.primary }]}
           onPress={handleFilterPress}
+          activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
         >
           <Ionicons name="options-outline" size={20} color={colors.primary[600]} />
         </TouchableOpacity>
@@ -111,23 +116,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
     borderRadius: BorderRadius.lg,
     gap: Spacing.sm,
     ...Shadows.sm,
+    minHeight: Platform.select({ ios: 44, android: 48 }),
+    ...Platform.select({
+      android: {
+        elevation: Shadows.sm.elevation,
+      },
+    }),
   },
   searchInputText: {
     flex: 1,
     fontSize: 14,
+    lineHeight: 20,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.regular || 'System',
+    ...Platform.select({
+      android: {
+        paddingVertical: 0,
+      },
+    }),
   },
   filterButton: {
-    width: 44,
-    height: 44,
+    width: Platform.select({ ios: 44, android: 48 }),
+    height: Platform.select({ ios: 44, android: 48 }),
     borderRadius: BorderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
     ...Shadows.sm,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.sm.elevation,
+      },
+    }),
   },
   searchInputWrapper: {
     flex: 1,
@@ -143,8 +166,13 @@ const styles = StyleSheet.create({
     maxHeight: 200,
     ...Shadows.md,
     zIndex: 1000,
-    borderWidth: 1,
+    borderWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderColor: Colors.border.light,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
   },
   suggestionItem: {
     flexDirection: 'row',
@@ -157,7 +185,9 @@ const styles = StyleSheet.create({
   suggestionText: {
     flex: 1,
     fontSize: 14,
+    lineHeight: 20,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
 });
 
