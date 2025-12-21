@@ -792,7 +792,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
     paddingHorizontal: Spacing.lg,
     paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.sm }),
   },
@@ -874,7 +874,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: Spacing.lg,
     // marginBottom: Spacing.md,
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
   searchInput: {
     flex: 1,
@@ -883,7 +883,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
     borderRadius: BorderRadius.lg,
-    gap: Spacing.sm,
+    gap: Spacing.xs,
     ...Shadows.sm,
     minHeight: Platform.select({ ios: 44, android: 48 }),
   },
@@ -905,7 +905,7 @@ const styles = StyleSheet.create({
   categoryContainer: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
   categoryChip: {
     flexDirection: 'row',
@@ -942,7 +942,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background.primary,
     borderRadius: BorderRadius.md,
     padding: 2,
-    gap: 2,
+    gap: Spacing.xs,
     ...Shadows.sm,
   },
   viewModeButton: {
@@ -960,7 +960,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
   sectionSubtitle: {
     fontSize: 12,
@@ -971,7 +971,9 @@ const styles = StyleSheet.create({
   },
   horizontalListContent: {
     paddingHorizontal: Spacing.lg,
-    gap: Spacing.md,
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.md,
+    gap: Spacing.xs,
   },
   horizontalServiceCard: {
     width: 160,
@@ -1100,7 +1102,7 @@ const styles = StyleSheet.create({
   serviceCardListRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
   ratingBadge: {
     position: 'absolute',
@@ -1112,7 +1114,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
     paddingVertical: 2,
     borderRadius: BorderRadius.full,
-    gap: 2,
+    gap: Spacing.xs,
     ...Shadows.sm,
   },
   ratingBadgeSmall: {
@@ -1125,12 +1127,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingVertical: 2,
     borderRadius: BorderRadius.full,
-    gap: 2,
+    gap: Spacing.xs,
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: Spacing.xs,
   },
   ratingText: {
     fontSize: 12,
@@ -1147,7 +1149,8 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   listContent: {
-    paddingBottom: Spacing.xl,
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.md,
   },
   gridRow: {
     justifyContent: 'space-between',
@@ -1194,7 +1197,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary[50],
     borderWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderColor: Colors.primary[200],
-    gap: 4,
+    gap: Spacing.xs,
   },
   activeFiltersText: {
     fontSize: 12,
@@ -1210,7 +1213,7 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
   createServiceButton: {
     flexDirection: 'row',

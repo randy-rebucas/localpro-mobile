@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
     paddingVertical: 2,
     borderRadius: BorderRadius.full,
-    gap: 4,
+    gap: Spacing.xs,
     marginTop: Spacing.xs,
   },
   categoryTextList: {
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   providerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: Spacing.xs,
     flex: 1,
     minWidth: 0,
   },
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 'auto',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
   serviceCardListFooterLeft: {
     flex: 1,
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
     paddingVertical: 2,
     borderRadius: BorderRadius.full,
-    gap: 2,
+    gap: Spacing.xs,
     ...Shadows.sm,
     ...Platform.select({
       android: {
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
     paddingVertical: 2,
     borderRadius: BorderRadius.full,
-    gap: 2,
+    gap: Spacing.xs,
     ...Shadows.sm,
     ...Platform.select({
       android: {
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: Spacing.xs,
   },
   ratingText: {
     fontSize: 12,

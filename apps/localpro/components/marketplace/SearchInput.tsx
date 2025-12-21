@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
   searchInput: {
     flex: 1,
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
     borderRadius: BorderRadius.lg,
-    gap: Spacing.sm,
+    gap: Spacing.xs,
     ...Shadows.sm,
     minHeight: Platform.select({ ios: 44, android: 48 }),
     ...Platform.select({
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.md,
-    gap: Spacing.sm,
+    gap: Spacing.xs,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border.light,
   },

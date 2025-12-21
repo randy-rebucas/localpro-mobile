@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   dropdownContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
     flex: 1,
   },
   dropdownText: {
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   modalTitle: {
     fontSize: 20,
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
     marginBottom: Spacing.sm,
-    gap: Spacing.md,
+    gap: Spacing.xs,
   },
   optionText: {
     flex: 1,

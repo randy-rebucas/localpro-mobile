@@ -88,7 +88,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   categoriesContainer: {
-    gap: Spacing.sm,
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.md,
+    gap: Spacing.xs,
   },
   categoryChip: {
     flexDirection: 'row',

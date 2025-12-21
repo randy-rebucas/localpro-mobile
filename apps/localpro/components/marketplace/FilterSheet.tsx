@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: Spacing.xs,
   },
   title: {
     fontSize: 20,
@@ -450,7 +450,8 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: Spacing.lg,
-    paddingBottom: Spacing.xl,
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.md,
   },
   section: {
     marginBottom: Spacing.lg,
@@ -477,7 +478,7 @@ const styles = StyleSheet.create({
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
   ratingButton: {
     padding: Spacing.xs,
@@ -495,7 +496,7 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     padding: Spacing.lg,
-    gap: Spacing.md,
+    gap: Spacing.xs,
     borderTopWidth: Platform.select({ ios: 1, android: 1.5 }),
   },
   cancelButton: {
@@ -534,7 +535,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
-    gap: Spacing.sm,
+    gap: Spacing.xs,
     marginBottom: Spacing.md,
     minHeight: Platform.select({ ios: 44, android: 48 }),
   },
@@ -550,7 +551,7 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
     backgroundColor: Colors.background.secondary,
     borderRadius: BorderRadius.md,
-    gap: Spacing.sm,
+    gap: Spacing.xs,
     marginBottom: Spacing.md,
   },
   locationName: {
@@ -566,7 +567,7 @@ const styles = StyleSheet.create({
   radiusButtons: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
     marginTop: Spacing.sm,
   },
   radiusButton: {
@@ -611,7 +612,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
-    gap: Spacing.md,
+    gap: Spacing.xs,
   },
   checkbox: {
     width: 24,

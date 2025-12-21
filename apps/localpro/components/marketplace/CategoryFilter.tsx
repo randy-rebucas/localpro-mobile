@@ -63,8 +63,9 @@ export function CategoryFilter({
 const styles = StyleSheet.create({
   categoryContainer: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    gap: Spacing.sm,
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.md,
+    gap: Spacing.xs,
   },
   categoryChip: {
     flexDirection: 'row',
