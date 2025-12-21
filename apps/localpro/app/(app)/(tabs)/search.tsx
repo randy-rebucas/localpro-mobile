@@ -18,6 +18,7 @@ import {
   EmptyState,
   FilterSheet,
   LoadingSkeleton,
+  NaturalLanguageSearch,
   SearchHistory,
   SearchInput,
   ServiceCard,
@@ -68,6 +69,7 @@ export default function SearchScreen() {
   // Search history (stored in state, should be persisted)
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [useAISearch, setUseAISearch] = useState(false);
 
   // Fetch services with filters
   const { services, loading } = useServices({
@@ -265,15 +267,61 @@ export default function SearchScreen() {
 
             {/* Search Input */}
             <View style={styles.searchSection}>
-              <View style={styles.searchInputWrapper}>
-                <SearchInput
-                  value={searchQuery}
-                  onChangeText={handleSearch}
-                  placeholder="Search services, providers..."
-                  showFilterButton={true}
-                  onFilterPress={() => setFilterSheetVisible(true)}
-                />
+              <View style={styles.searchModeToggle}>
+                <TouchableOpacity
+                  style={[
+                    styles.searchModeButton,
+                    !useAISearch && { backgroundColor: colors.primary[600] },
+                  ]}
+                  onPress={() => setUseAISearch(false)}
+                >
+                  <Text
+                    style={[
+                      styles.searchModeText,
+                      !useAISearch && { color: Colors.text.inverse },
+                    ]}
+                  >
+                    Standard
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.searchModeButton,
+                    useAISearch && { backgroundColor: colors.primary[600] },
+                  ]}
+                  onPress={() => setUseAISearch(true)}
+                >
+                  <Ionicons
+                    name="sparkles"
+                    size={16}
+                    color={useAISearch ? Colors.text.inverse : colors.text.secondary}
+                  />
+                  <Text
+                    style={[
+                      styles.searchModeText,
+                      useAISearch && { color: Colors.text.inverse },
+                    ]}
+                  >
+                    AI Search
+                  </Text>
+                </TouchableOpacity>
               </View>
+
+              {useAISearch ? (
+                <NaturalLanguageSearch
+                  onServiceSelect={(service) => handleServicePress(service.id)}
+                />
+              ) : (
+                <View style={styles.searchInputWrapper}>
+                  <SearchInput
+                    value={searchQuery}
+                    onChangeText={handleSearch}
+                    placeholder="Search services, providers..."
+                    showFilterButton={true}
+                    onFilterPress={() => setFilterSheetVisible(true)}
+                  />
+                </View>
+              )}
               
               {/* Filter Badge */}
               {hasActiveFilters && (
@@ -537,5 +585,28 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     marginTop: Spacing.xl,
+  },
+  searchModeToggle: {
+    flexDirection: 'row',
+    backgroundColor: Colors.background.primary,
+    borderRadius: BorderRadius.md,
+    padding: 2,
+    marginBottom: Spacing.md,
+    gap: 2,
+  },
+  searchModeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    gap: Spacing.xs,
+  },
+  searchModeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.secondary,
   },
 });

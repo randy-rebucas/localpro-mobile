@@ -52,16 +52,18 @@ export function ProviderCard({
         
         <View style={styles.info}>
           <View style={styles.nameRow}>
-            <Text style={styles.name}>{providerName}</Text>
+            <Text style={styles.name}>{providerName || 'Unknown Provider'}</Text>
             {verified && (
               <Ionicons name="shield-checkmark" size={16} color={colors.secondary[600]} />
             )}
           </View>
           
-          {rating && (
+          {rating != null && rating > 0 && (
             <View style={styles.ratingRow}>
               <Ionicons name="star" size={14} color={colors.semantic.warning} />
-              <Text style={styles.ratingText}>{rating.toFixed(1)}</Text>
+              <Text style={styles.ratingText}>
+                {typeof rating === 'number' ? rating.toFixed(1) : String(rating)}
+              </Text>
               {reviewCount !== undefined && reviewCount > 0 && (
                 <Text style={styles.reviewCount}>({reviewCount} reviews)</Text>
               )}

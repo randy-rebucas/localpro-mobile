@@ -88,6 +88,16 @@ export const OTPInput: React.FC<OTPInputProps> = ({
   );
 };
 
+// Theme colors
+const themeColors = {
+  primary: '#2563EB',
+  primaryLight: '#EFF6FF',
+  error: '#DC2626',
+  gray200: '#E5E7EB',
+  gray900: '#1F2937',
+  white: '#FFFFFF',
+};
+
 const styles = StyleSheet.create({
   container: {
     marginBottom: 16,
@@ -99,27 +109,40 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    height: 56,
+    height: 64,
     borderWidth: 2,
-    borderColor: '#ddd',
-    borderRadius: 12,
+    borderColor: themeColors.gray200,
+    borderRadius: 16,
     textAlign: 'center',
-    fontSize: 24,
-    fontWeight: '600',
-    backgroundColor: '#fff',
+    fontSize: 28,
+    fontWeight: '700',
+    backgroundColor: themeColors.white,
+    color: themeColors.gray900,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   inputFilled: {
-    borderColor: '#007AFF',
-    backgroundColor: '#F0F8FF',
+    borderColor: themeColors.primary,
+    backgroundColor: themeColors.primaryLight,
+    borderWidth: 3,
+    shadowColor: themeColors.primary,
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   inputError: {
-    borderColor: '#FF3B30',
+    borderColor: themeColors.error,
+    backgroundColor: '#FEE2E2',
   },
   error: {
-    color: '#FF3B30',
-    fontSize: 12,
-    marginTop: 8,
+    color: themeColors.error,
+    fontSize: 13,
+    marginTop: 12,
     textAlign: 'center',
+    fontWeight: '500',
   },
 });
 

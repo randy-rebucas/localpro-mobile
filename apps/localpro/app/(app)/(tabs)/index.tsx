@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthContext } from '@localpro/auth';
-import { useServices } from '@localpro/marketplace';
-import type { Service } from '@localpro/types';
+import { useCategories, useMyServices, useServices } from '@localpro/marketplace';
+import type { Service, ServiceCategory } from '@localpro/types';
 import { Card } from '@localpro/ui';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -20,10 +20,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   CategoryFilter,
   EmptyState,
+  FilterSheet,
   LoadingSkeleton,
   SearchInput,
   ServiceCard,
+  SortDropdown,
   type Category,
+  type FilterState
 } from '../../../components/marketplace';
 import PackageSelectionModal from '../../../components/PackageSelectionModal';
 import { BorderRadius, Colors, Shadows, Spacing } from '../../../constants/theme';
@@ -48,13 +51,174 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-
-  // Fetch services
-  const { services, loading } = useServices({
-    category: selectedCategory === 'all' ? undefined : selectedCategory,
-    search: searchQuery || undefined,
-    page,
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [filterSheetVisible, setFilterSheetVisible] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    categories: [],
+    subcategories: [],
+    location: undefined,
+    minPrice: 0,
+    maxPrice: 1000,
+    minRating: 0,
+    sort: 'newest',
+    groupByCategory: false,
   });
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [accumulatedServices, setAccumulatedServices] = useState<Service[]>([]);
+  const previousFiltersKeyRef = React.useRef<string>('');
+
+  // Fetch my services if provider role
+  const { services: myServices, loading: myServicesLoading } = useMyServices();
+
+  // Generate search suggestions
+  useEffect(() => {
+    if (searchQuery.length > 0) {
+      const matches = POPULAR_SEARCHES.filter((term) =>
+        term.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setSearchSuggestions(matches.slice(0, 5));
+    } else {
+      setSearchSuggestions([]);
+    }
+  }, [searchQuery]);
+
+  // Memoize sort params to prevent unnecessary recalculations
+  const sortParams = useMemo(() => {
+    const sortMapping: Record<string, { sortBy: string; sortOrder: 'asc' | 'desc' }> = {
+      'newest': { sortBy: 'createdAt', sortOrder: 'desc' },
+      'price-asc': { sortBy: 'pricing.basePrice', sortOrder: 'asc' },
+      'price-desc': { sortBy: 'pricing.basePrice', sortOrder: 'desc' },
+      'rating': { sortBy: 'rating.average', sortOrder: 'desc' },
+    };
+    return sortMapping[filters.sort] || { sortBy: 'createdAt', sortOrder: 'desc' };
+  }, [filters.sort]);
+
+  // Memoize filters object (without page) to detect filter changes
+  const baseFilters = useMemo(() => ({
+    category: filters.categories.length > 0 ? filters.categories : (selectedCategory === 'all' ? undefined : selectedCategory),
+    subcategory: filters.subcategories,
+    location: filters.location,
+    search: searchQuery || undefined,
+    minPrice: filters.minPrice > 0 ? filters.minPrice : undefined,
+    maxPrice: filters.maxPrice < 1000 ? filters.maxPrice : undefined,
+    rating: filters.minRating > 0 ? filters.minRating : undefined,
+    sortBy: sortParams.sortBy,
+    sortOrder: sortParams.sortOrder,
+    radius: filters.radius ? filters.radius * 1000 : undefined, // Convert km to meters
+    latitude: filters.latitude,
+    longitude: filters.longitude,
+    groupByCategory: filters.groupByCategory,
+  }), [
+    filters.categories,
+    selectedCategory,
+    filters.subcategories,
+    filters.location,
+    searchQuery,
+    filters.minPrice,
+    filters.maxPrice,
+    filters.minRating,
+    sortParams.sortBy,
+    sortParams.sortOrder,
+    filters.radius,
+    filters.latitude,
+    filters.longitude,
+    filters.groupByCategory,
+  ]);
+
+  // Create a key for base filters to detect when they change
+  const filtersKey = useMemo(() => JSON.stringify(baseFilters), [baseFilters]);
+
+  // Reset accumulated services when filters change (not page)
+  useEffect(() => {
+    if (filtersKey !== previousFiltersKeyRef.current) {
+      setAccumulatedServices([]);
+      setPage(1);
+      setHasMore(true);
+      setLoadingMore(false);
+      currentPageRef.current = 1;
+      previousFiltersKeyRef.current = filtersKey;
+    }
+  }, [filtersKey]);
+
+  // Service filters with current page
+  const serviceFilters = useMemo(() => ({
+    ...baseFilters,
+    page,
+  }), [baseFilters, page]);
+
+  // Fetch services with all filters
+  const { services, loading } = useServices(serviceFilters);
+
+  // Track previous services to detect actual changes
+  const previousServicesRef = React.useRef<Service[]>([]);
+  const currentPageRef = React.useRef(1);
+  const isInitialLoadRef = React.useRef(true);
+
+  // Accumulate services across pages
+  useEffect(() => {
+    // Skip if services haven't actually changed (same reference or same content)
+    const servicesChanged = 
+      previousServicesRef.current.length !== services.length ||
+      services.some((s, i) => previousServicesRef.current[i]?.id !== s.id);
+
+    if (!servicesChanged && !isInitialLoadRef.current) {
+      return;
+    }
+
+    isInitialLoadRef.current = false;
+
+    if (services.length === 0) {
+      if (page === 1) {
+        // No services on first page
+        setAccumulatedServices([]);
+        setHasMore(false);
+      } else {
+        // No more services on subsequent pages
+        setHasMore(false);
+      }
+      setLoadingMore(false);
+      previousServicesRef.current = services;
+      return;
+    }
+
+    if (page === 1) {
+      // First page or filter change - replace
+      setAccumulatedServices(services);
+      currentPageRef.current = 1;
+    } else if (page > currentPageRef.current) {
+      // New page loaded - append and deduplicate
+      setAccumulatedServices(prev => {
+        // Only update if we actually have new services
+        const existingIds = new Set(prev.map(s => s.id));
+        const newServices = services.filter(s => !existingIds.has(s.id));
+        
+        if (newServices.length === 0) {
+          // No new services means we've reached the end
+          setHasMore(false);
+          setLoadingMore(false);
+          return prev; // Return previous to prevent unnecessary re-render
+        }
+        
+        setLoadingMore(false);
+        return [...prev, ...newServices];
+      });
+      currentPageRef.current = page;
+    } else {
+      // Same page, just update loading state
+      setLoadingMore(false);
+    }
+    
+    // Update hasMore based on returned data
+    // If we got fewer items than expected, likely no more pages
+    if (services.length < 20) { // Assuming 20 items per page
+      setHasMore(false);
+    }
+    
+    previousServicesRef.current = services;
+  }, [services, page]);
+
+  // Fetch categories from API
+  const { categories: apiCategories, loading: categoriesLoading } = useCategories();
 
   // Detect if a package is selected and show modal if not
   useEffect(() => {
@@ -65,32 +229,115 @@ export default function HomeScreen() {
     }
   }, [activePackage]);
 
-  // Mock categories - replace with actual API call
-  const categories: Category[] = [
-    { id: 'all', name: 'All', icon: 'apps-outline' },
-    { id: 'cleaning', name: 'Cleaning', icon: 'sparkles-outline' },
-    { id: 'plumbing', name: 'Plumbing', icon: 'water-outline' },
-    { id: 'electrical', name: 'Electrical', icon: 'flash-outline' },
-    { id: 'carpentry', name: 'Carpentry', icon: 'hammer-outline' },
-    { id: 'landscaping', name: 'Landscaping', icon: 'leaf-outline' },
-    { id: 'painting', name: 'Painting', icon: 'brush-outline' },
-    { id: 'handyman', name: 'Handyman', icon: 'construct-outline' },
+  // Map emoji icons to Ionicons names
+  const getIconName = (emoji?: string, categoryKey?: string): keyof typeof Ionicons.glyphMap => {
+    // Map common emoji/icons to Ionicons
+    const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
+      '🧹': 'sparkles-outline', // cleaning
+      '🔧': 'construct-outline', // plumbing
+      '⚡': 'flash-outline', // electrical
+      '📦': 'cube-outline', // moving
+      '🌳': 'leaf-outline', // landscaping
+      '🎨': 'brush-outline', // painting
+      '🪵': 'hammer-outline', // carpentry
+      '🏠': 'home-outline', // flooring
+      '🏡': 'home-outline', // roofing
+      '❄️': 'snow-outline', // HVAC / snow removal
+      '🔌': 'flash-outline', // appliance repair
+      '🔐': 'lock-closed-outline', // locksmith
+      '🔨': 'construct-outline', // handyman
+      '🚨': 'shield-outline', // home security
+      '🏊': 'water-outline', // pool maintenance
+      '🐛': 'bug-outline', // pest control
+      '🧼': 'sparkles-outline', // carpet cleaning
+      '🪟': 'square-outline', // window cleaning
+      '🌧️': 'rainy-outline', // gutter cleaning
+      '💦': 'water-outline', // power washing
+      '📋': 'list-outline', // other
+    };
+
+    // Try emoji first, then category key, then default
+    if (emoji && iconMap[emoji]) {
+      return iconMap[emoji];
+    }
+
+    // Fallback to category key mapping
+    const keyMap: Record<string, keyof typeof Ionicons.glyphMap> = {
+      'cleaning': 'sparkles-outline',
+      'plumbing': 'water-outline',
+      'electrical': 'flash-outline',
+      'moving': 'cube-outline',
+      'landscaping': 'leaf-outline',
+      'painting': 'brush-outline',
+      'carpentry': 'hammer-outline',
+      'flooring': 'home-outline',
+      'roofing': 'home-outline',
+      'hvac': 'snow-outline',
+      'appliance_repair': 'flash-outline',
+      'locksmith': 'lock-closed-outline',
+      'handyman': 'construct-outline',
+      'home_security': 'shield-outline',
+      'pool_maintenance': 'water-outline',
+      'pest_control': 'bug-outline',
+      'carpet_cleaning': 'sparkles-outline',
+      'window_cleaning': 'square-outline',
+      'gutter_cleaning': 'rainy-outline',
+      'power_washing': 'water-outline',
+      'snow_removal': 'snow-outline',
+      'other': 'list-outline',
+    };
+
+    if (categoryKey && keyMap[categoryKey]) {
+      return keyMap[categoryKey];
+    }
+
+    // Default icon
+    return 'apps-outline';
+  };
+
+  // Transform API categories to Category format
+  const categories: Category[] = useMemo(() => {
+    // Start with "All" category
+    const allCategory: Category = { id: 'all', name: 'All', icon: 'apps-outline' };
+    
+    // Map API categories to Category format
+    const mappedCategories = apiCategories
+      .map((apiCategory: ServiceCategory) => ({
+        id: apiCategory.id,
+        name: apiCategory.name.replace(/\s+Services$/, ''), // Remove " Services" suffix
+        icon: getIconName(apiCategory.icon, apiCategory.id),
+      }))
+      .sort((a, b) => {
+        // Sort by displayOrder if available, otherwise alphabetically
+        const categoryA = apiCategories.find(c => c.id === a.id);
+        const categoryB = apiCategories.find(c => c.id === b.id);
+        const orderA = categoryA?.displayOrder ?? 999;
+        const orderB = categoryB?.displayOrder ?? 999;
+        return orderA - orderB;
+      });
+
+    return [allCategory, ...mappedCategories];
+  }, [apiCategories]);
+
+  const POPULAR_SEARCHES = [
+    'Plumbing',
+    'Electrical',
+    'Cleaning',
+    'Landscaping',
+    'Handyman',
+    'Painting',
+    'Carpentry',
+    'HVAC',
+    'Roofing',
+    'Flooring',
   ];
 
-  // Filter and categorize services
+  // Services are already filtered and sorted by the API
+  // Only apply client-side filtering for UI-specific features
   const filteredServices = useMemo(() => {
-    let filtered = services;
-    
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (service) =>
-          service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          service.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    return filtered;
-  }, [services, searchQuery]);
+    // Use accumulated services for smooth pagination
+    return accumulatedServices;
+  }, [accumulatedServices]);
 
   const featuredServices = useMemo(
     () => filteredServices.filter((s) => s.rating && s.rating >= 4.5).slice(0, 5),
@@ -117,34 +364,64 @@ export default function HomeScreen() {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
+    setAccumulatedServices([]);
     setPage(1);
     setHasMore(true);
+    setLoadingMore(false);
+    currentPageRef.current = 1;
     // Wait a bit for the refresh animation
     setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
   const handleLoadMore = useCallback(() => {
-    if (!loading && hasMore) {
+    if (!loading && !loadingMore && hasMore && accumulatedServices.length > 0) {
+      setLoadingMore(true);
       setPage((prev) => prev + 1);
     }
-  }, [loading, hasMore]);
+  }, [loading, loadingMore, hasMore, accumulatedServices.length]);
 
-  const handleServicePress = (serviceId: string) => {
+  const handleServicePress = useCallback((serviceId: string) => {
     router.push(`/(stack)/service/${serviceId}` as any);
+  }, [router]);
+
+  const handleProviderPress = useCallback((providerId: string) => {
+    router.push(`/(stack)/provider/${providerId}` as any);
+  }, [router]);
+
+  const handleFilterApply = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    setAccumulatedServices([]);
+    setPage(1);
+    setHasMore(true);
+    setLoadingMore(false);
+    currentPageRef.current = 1;
   };
+
+  const hasActiveFilters =
+    filters.categories.length > 0 ||
+    (filters.subcategories && filters.subcategories.length > 0) ||
+    !!filters.location ||
+    filters.minPrice > 0 ||
+    filters.maxPrice < 1000 ||
+    filters.minRating > 0 ||
+    filters.sort !== 'newest' ||
+    filters.radius !== undefined ||
+    filters.latitude !== undefined ||
+    filters.groupByCategory === true;
 
   const formatCurrency = (amount: number) => {
     return `$${amount.toFixed(2)}`;
   };
 
-  // Render service card
-  const renderServiceCard = ({ item }: { item: Service }) => (
+  // Render service card - memoized to prevent flickering during scroll
+  const renderServiceCard = useCallback(({ item }: { item: Service }) => (
     <ServiceCard
       service={item}
       viewMode={viewMode}
       onPress={handleServicePress}
+      onProviderPress={handleProviderPress}
     />
-  );
+  ), [viewMode, handleServicePress, handleProviderPress]);
 
   // Render section header
   const renderSectionHeader = (title: string, subtitle?: string) => (
@@ -180,18 +457,22 @@ export default function HomeScreen() {
                 <Ionicons name="image-outline" size={24} color={colors.primary[400]} />
               </View>
             )}
-            {item.rating && (
+            {item.rating != null && item.rating > 0 && (
               <View style={styles.ratingBadgeSmall}>
                 <Ionicons name="star" size={10} color={colors.semantic.warning} />
-                <Text style={styles.ratingTextSmall}>{item.rating.toFixed(1)}</Text>
+                <Text style={styles.ratingTextSmall}>
+                  {typeof item.rating === 'number' ? item.rating.toFixed(1) : String(item.rating)}
+                </Text>
               </View>
             )}
           </View>
           <View style={styles.horizontalServiceContent}>
             <Text style={styles.horizontalServiceTitle} numberOfLines={2}>
-              {item.title}
+              {item.title || 'Untitled Service'}
             </Text>
-            <Text style={styles.horizontalServicePrice}>{formatCurrency(item.price)}</Text>
+            <Text style={styles.horizontalServicePrice}>
+              {item.price != null ? formatCurrency(item.price) : 'N/A'}
+            </Text>
           </View>
         </TouchableOpacity>
       )}
@@ -275,13 +556,26 @@ export default function HomeScreen() {
         visible={showPackageModal}
         onSelectPackage={handlePackageSelect}
       />
+      <FilterSheet
+        visible={filterSheetVisible}
+        onClose={() => setFilterSheetVisible(false)}
+        onApply={handleFilterApply}
+        categories={categories.filter((c) => c.id !== 'all')}
+        initialFilters={filters}
+        minPrice={0}
+        maxPrice={1000}
+      />
       <SafeAreaView style={styles.container} edges={['bottom']}>
         <FlatList
-          data={filteredServices}
           key={viewMode}
+          data={filteredServices}
           numColumns={viewMode === 'grid' ? 2 : 1}
           keyExtractor={(item) => item.id}
           renderItem={renderServiceCard}
+          removeClippedSubviews={false}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          initialNumToRender={10}
           ListHeaderComponent={
             <View style={styles.marketplaceHeader}>
               {/* Header */}
@@ -290,20 +584,71 @@ export default function HomeScreen() {
                   <Text style={styles.title}>Browse Services</Text>
                   <Text style={styles.subtitle}>Find and book services near you</Text>
                 </View>
-                {activeRole && (
-                  <View style={styles.roleBadge}>
-                    <Ionicons name="briefcase-outline" size={14} color={colors.primary[600]} />
-                    <Text style={styles.roleText}>{activeRole}</Text>
-                  </View>
-                )}
+                <View style={styles.headerRight}>
+                  {activeRole === 'provider' && (
+                    <TouchableOpacity
+                      style={[styles.createServiceButton, { backgroundColor: colors.primary[600] }]}
+                      onPress={() => router.push('/(stack)/service/create' as any)}
+                    >
+                      <Ionicons name="add" size={20} color={Colors.text.inverse} />
+                      <Text style={styles.createServiceText}>Create</Text>
+                    </TouchableOpacity>
+                  )}
+                  {activeRole && (
+                    <View style={styles.roleBadge}>
+                      <Ionicons name="briefcase-outline" size={14} color={colors.primary[600]} />
+                      <Text style={styles.roleText}>{activeRole}</Text>
+                    </View>
+                  )}
+                </View>
               </View>
 
+              {/* My Services Section - Only for providers */}
+              {activeRole === 'provider' && myServices.length > 0 && (
+                <View style={styles.section}>
+                  <View style={styles.myServicesHeader}>
+                    <View>
+                      <Text style={styles.sectionTitle}>My Services</Text>
+                      <Text style={styles.sectionSubtitle}>
+                        {`${myServices.length} service${myServices.length !== 1 ? 's' : ''}`}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.viewAllButton}
+                      onPress={() => {
+                        // TODO: Navigate to My Services screen
+                        setSelectedCategory('all');
+                        setSearchQuery('');
+                      }}
+                    >
+                      <Text style={[styles.viewAllText, { color: colors.primary[600] }]}>View All</Text>
+                      <Ionicons name="chevron-forward" size={16} color={colors.primary[600]} />
+                    </TouchableOpacity>
+                  </View>
+                  {renderHorizontalServiceList(myServices.slice(0, 5))}
+                </View>
+              )}
+
               {/* Search Bar */}
-              <SearchInput
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholder="Search services..."
-              />
+              <View style={styles.searchSection}>
+                <SearchInput
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholder="Search services..."
+                  onFilterPress={() => setFilterSheetVisible(true)}
+                  suggestions={searchSuggestions}
+                  onSuggestionSelect={setSearchQuery}
+                />
+                {hasActiveFilters && (
+                  <TouchableOpacity
+                    style={styles.activeFiltersBadge}
+                    onPress={() => setFilterSheetVisible(true)}
+                  >
+                    <Ionicons name="filter" size={14} color={colors.primary[600]} />
+                    <Text style={styles.activeFiltersText}>Filters</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
 
               {/* Category Filter Chips */}
               <CategoryFilter
@@ -312,9 +657,14 @@ export default function HomeScreen() {
                 onCategorySelect={setSelectedCategory}
               />
 
-              {/* View Mode Toggle */}
+              {/* Sort and View Mode Toggle */}
               <View style={styles.viewModeContainer}>
-                <Text style={styles.viewModeLabel}>View:</Text>
+                <View style={styles.sortContainer}>
+                  <SortDropdown
+                    selectedSort={filters.sort}
+                    onSortChange={(sort) => setFilters({ ...filters, sort })}
+                  />
+                </View>
                 <View style={styles.viewModeToggle}>
                   <TouchableOpacity
                     style={[
@@ -387,7 +737,7 @@ export default function HomeScreen() {
             )
           }
           ListFooterComponent={
-            loading && filteredServices.length > 0 ? (
+            loadingMore && filteredServices.length > 0 ? (
               <View style={styles.loadingFooter}>
                 <ActivityIndicator size="small" color={colors.primary[600]} />
               </View>
@@ -400,6 +750,13 @@ export default function HomeScreen() {
           onEndReachedThreshold={0.5}
           contentContainerStyle={styles.listContent}
           columnWrapperStyle={viewMode === 'grid' ? styles.gridRow : undefined}
+          maintainVisibleContentPosition={
+            filteredServices.length > 0
+              ? {
+                  minIndexForVisible: 0,
+                }
+              : undefined
+          }
         />
       </SafeAreaView>
     </>
@@ -763,5 +1120,65 @@ const styles = StyleSheet.create({
   loadingFooter: {
     paddingVertical: Spacing.lg,
     alignItems: 'center',
+  },
+  searchSection: {
+    position: 'relative',
+  },
+  activeFiltersBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginTop: Spacing.xs,
+    marginLeft: Spacing.lg,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primary[50],
+    borderWidth: 1,
+    borderColor: Colors.primary[200],
+    gap: 4,
+  },
+  activeFiltersText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.primary[600],
+  },
+  sortContainer: {
+    flex: 1,
+    marginRight: Spacing.md,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  createServiceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    gap: Spacing.xs,
+  },
+  createServiceText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.inverse,
+  },
+  myServicesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  viewAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  viewAllText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

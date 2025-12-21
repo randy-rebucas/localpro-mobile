@@ -1,5 +1,6 @@
 import { useAuthContext } from '@localpro/auth';
 import { OTPInput } from '@localpro/ui';
+import { Colors, Shadows, Spacing, Typography } from '../../constants/theme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -86,44 +87,65 @@ export default function OTPScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
+      <View style={styles.gradient}>
+        {/* Decorative Circles */}
+        <View style={styles.decorativeCircle1} />
+        <View style={styles.decorativeCircle2} />
+        <View style={styles.decorativeCircle3} />
+        
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-        <View style={styles.content}>
-          <Text style={styles.title}>Enter Verification Code</Text>
-          <Text style={styles.subtitle}>
-            We&apos;ve sent a 6-digit code to{'\n'}
-            <Text style={styles.phone}>{phone}</Text>
-          </Text>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.content}>
+              {/* Header Icon */}
+              <View style={styles.iconContainer}>
+                <View style={styles.iconCircle}>
+                  <Text style={styles.iconEmoji}>🔐</Text>
+                </View>
+              </View>
 
-          <OTPInput
-            length={6}
-            onComplete={handleVerify}
-            error={error}
-          />
+              {/* Title Section */}
+              <Text style={styles.title}>Verify Your Number</Text>
+              <Text style={styles.subtitle}>
+                We&apos;ve sent a 6-digit verification code to{'\n'}
+                <Text style={styles.phone}>{phone}</Text>
+              </Text>
 
-          <View style={styles.resendContainer}>
-            <Text style={styles.resendText}>Didn&apos;t receive the code? </Text>
-            {resendTimer > 0 ? (
-              <Text style={styles.timerText}>Resend in {resendTimer}s</Text>
-            ) : (
-              <TouchableOpacity onPress={handleResend}>
-                <Text style={styles.resendLink}>Resend Code</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+              {/* Card Container */}
+              <View style={styles.card}>
+                <OTPInput
+                  length={6}
+                  onComplete={handleVerify}
+                  error={error}
+                />
 
-          {loading && (
-            <Text style={styles.loadingText}>Verifying...</Text>
-          )}
-        </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+                {loading && (
+                  <View style={styles.loadingContainer}>
+                    <Text style={styles.loadingText}>Verifying...</Text>
+                  </View>
+                )}
+
+                <View style={styles.resendContainer}>
+                  <Text style={styles.resendText}>Didn&apos;t receive the code? </Text>
+                  {resendTimer > 0 ? (
+                    <Text style={styles.timerText}>Resend in {resendTimer}s</Text>
+                  ) : (
+                    <TouchableOpacity onPress={handleResend} style={styles.resendButton}>
+                      <Text style={styles.resendLink}>Resend Code</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -131,63 +153,137 @@ export default function OTPScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+  },
+  gradient: {
+    flex: 1,
+    backgroundColor: Colors.primary[600],
+    position: 'relative',
+  },
+  decorativeCircle1: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: Colors.primary[400],
+    opacity: 0.3,
+    top: -50,
+    right: -50,
+  },
+  decorativeCircle2: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: Colors.secondary[400],
+    opacity: 0.25,
+    bottom: 100,
+    left: -30,
+  },
+  decorativeCircle3: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: Colors.primary[300],
+    opacity: 0.2,
+    top: '30%',
+    right: 20,
   },
   keyboardView: {
     flex: 1,
+    zIndex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 24,
+    padding: Spacing.lg,
+    minHeight: '100%',
   },
   content: {
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 420,
     alignSelf: 'center',
   },
+  iconContainer: {
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+  },
+  iconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: Colors.neutral.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.lg,
+  },
+  iconEmoji: {
+    fontSize: 48,
+  },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    color: '#000',
+    fontSize: Typography.fontSize['4xl'],
+    fontWeight: Typography.fontWeight.bold,
+    marginBottom: Spacing.md,
+    color: Colors.neutral.white,
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 40,
+    fontSize: Typography.fontSize.base,
+    color: Colors.neutral.white,
+    marginBottom: Spacing['2xl'],
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: Typography.lineHeight.base + 4,
+    opacity: 0.95,
+    paddingHorizontal: Spacing.md,
   },
   phone: {
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.neutral.white,
+    fontSize: Typography.fontSize.lg,
+  },
+  card: {
+    backgroundColor: Colors.neutral.white,
+    borderRadius: 24,
+    padding: Spacing.xl,
+    ...Shadows.xl,
+  },
+  loadingContainer: {
+    marginTop: Spacing.md,
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.primary[600],
+    fontWeight: Typography.fontWeight.medium,
   },
   resendContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: Spacing.xl,
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
   },
   resendText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: Typography.fontSize.sm,
+    color: Colors.text.secondary,
   },
   timerText: {
-    fontSize: 14,
-    color: '#999',
+    fontSize: Typography.fontSize.sm,
+    color: Colors.text.tertiary,
+    fontWeight: Typography.fontWeight.medium,
+  },
+  resendButton: {
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
   },
   resendLink: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-  loadingText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 16,
+    fontSize: Typography.fontSize.sm,
+    color: Colors.primary[600],
+    fontWeight: Typography.fontWeight.semibold,
   },
 });
 

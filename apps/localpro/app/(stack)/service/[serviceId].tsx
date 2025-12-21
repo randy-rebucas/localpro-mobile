@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useAuthContext } from '@localpro/auth';
 import { MarketplaceService, useService } from '@localpro/marketplace';
 import type { Review } from '@localpro/types';
 import { Card } from '@localpro/ui';
@@ -10,6 +11,7 @@ import {
   ScrollView,
   Share,
   StyleSheet,
+  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -23,18 +25,37 @@ import {
   ReviewList,
 } from '../../../components/marketplace';
 import { BorderRadius, Colors, Shadows, Spacing } from '../../../constants/theme';
+import { useRoleContext } from '../../../contexts/RoleContext';
 import { useThemeColors } from '../../../hooks/use-theme';
 
 export default function ServiceDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ serviceId: string }>();
+  // Extract serviceId from params - handle both serviceId and id for compatibility
+  const rawServiceId = Array.isArray(params.serviceId) 
+    ? params.serviceId[0] 
+    : (params.serviceId || (params as any).id);
+  
+  // Ensure serviceId is a valid string, not empty
+  const serviceId = rawServiceId && typeof rawServiceId === 'string' && rawServiceId.trim() !== '' 
+    ? rawServiceId.trim() 
+    : '';
+  
   const router = useRouter();
   const colors = useThemeColors();
-  const { service, loading, error } = useService(id);
+  const { user } = useAuthContext();
+  const { activeRole } = useRoleContext();
+  const { service, loading, error } = useService(serviceId);
+
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewsError, setReviewsError] = useState<Error | null>(null);
   const [reviewsPage, setReviewsPage] = useState(1);
   const [hasMoreReviews, setHasMoreReviews] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
+  
+  // Check if current user is the service provider
+  const isServiceOwner = activeRole === 'provider' && service?.providerId === user?.id;
 
   // Reset reviews when service changes
   useEffect(() => {
@@ -54,7 +75,7 @@ export default function ServiceDetailScreen() {
       setReviewsLoading(true);
       setReviewsError(null);
       try {
-        const result = await MarketplaceService.getServiceReviews(service.id, reviewsPage, 10);
+        const result = await MarketplaceService.getServiceReviews(service.id ? String(service.id) : '', reviewsPage, 10);
         if (reviewsPage === 1) {
           setReviews(result.reviews);
         } else {
@@ -78,7 +99,10 @@ export default function ServiceDetailScreen() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | undefined | null) => {
+    if (amount == null || isNaN(amount)) {
+      return '$0.00';
+    }
     return `$${amount.toFixed(2)}`;
   };
 
@@ -114,8 +138,66 @@ export default function ServiceDetailScreen() {
   };
 
   const handleBook = () => {
-    if (!service) return;
-    router.push(`/(stack)/booking/create?serviceId=${service.id}` as any);
+    if (!service?.id) return;
+    const id = String(service.id);
+    router.push(`/(stack)/booking/create?serviceId=${id}` as any);
+  };
+
+  const handleEdit = () => {
+    if (!service?.id) return;
+    const id = String(service.id);
+    router.push(`/(stack)/service/${id}/edit` as any);
+  };
+
+  const handleDelete = () => {
+    if (!service?.id) return;
+    
+    Alert.alert(
+      'Delete Service',
+      'Are you sure you want to delete this service? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeleting(true);
+            try {
+              const id = String(service.id);
+              await MarketplaceService.deleteService(id);
+              Alert.alert('Success', 'Service deleted successfully', [
+                { text: 'OK', onPress: () => router.back() },
+              ]);
+            } catch (error: any) {
+              console.error('Error deleting service:', error);
+              Alert.alert('Error', error.message || 'Failed to delete service');
+            } finally {
+              setIsDeleting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleToggleStatus = async () => {
+    if (!service?.id) return;
+    
+    setIsTogglingStatus(true);
+    try {
+      const currentStatus = service.status || 'published';
+      const newStatus = currentStatus === 'published' ? 'draft' : 'published';
+      const id = String(service.id);
+      await MarketplaceService.updateService(id, { status: newStatus });
+      Alert.alert('Success', `Service ${newStatus === 'published' ? 'published' : 'saved as draft'}`);
+      // Refresh service data
+      router.replace(`/(stack)/service/${id}` as any);
+    } catch (error: any) {
+      console.error('Error toggling status:', error);
+      Alert.alert('Error', error.message || 'Failed to update service status');
+    } finally {
+      setIsTogglingStatus(false);
+    }
   };
 
   if (loading) {
@@ -129,7 +211,7 @@ export default function ServiceDetailScreen() {
     );
   }
 
-  if (error || !service) {
+  if (error || !service || !service.id) {
     return (
       <SafeAreaView style={styles.container} edges={['bottom']}>
         <EmptyState
@@ -141,8 +223,22 @@ export default function ServiceDetailScreen() {
     );
   }
 
+  // Ensure all critical service properties exist before rendering
+  const safeServiceId = service.id ? String(service.id) : '';
+  if (!safeServiceId) {
+    return (
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <EmptyState
+          icon="alert-circle-outline"
+          title="Service not found"
+          subtitle="Invalid service ID."
+        />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header Actions */}
         <View style={styles.headerActions}>
@@ -153,12 +249,37 @@ export default function ServiceDetailScreen() {
             <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
           </TouchableOpacity>
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
-              <Ionicons name="share-outline" size={24} color={colors.text.primary} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.headerButton} onPress={handleReport}>
-              <Ionicons name="flag-outline" size={24} color={colors.semantic.error} />
-            </TouchableOpacity>
+            {isServiceOwner ? (
+              <>
+                <TouchableOpacity
+                  style={styles.headerButton}
+                  onPress={handleEdit}
+                  disabled={isDeleting || isTogglingStatus}
+                >
+                  <Ionicons name="create-outline" size={24} color={colors.primary[600]} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.headerButton}
+                  onPress={handleDelete}
+                  disabled={isDeleting || isTogglingStatus}
+                >
+                  {isDeleting ? (
+                    <ActivityIndicator size="small" color={colors.semantic.error} />
+                  ) : (
+                    <Ionicons name="trash-outline" size={24} color={colors.semantic.error} />
+                  )}
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
+                  <Ionicons name="share-outline" size={24} color={colors.text.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.headerButton} onPress={handleReport}>
+                  <Ionicons name="flag-outline" size={24} color={colors.semantic.error} />
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
 
@@ -169,18 +290,20 @@ export default function ServiceDetailScreen() {
         <View style={styles.content}>
           {/* Title and Price */}
           <View style={styles.titleSection}>
-            <Text style={styles.title}>{service.title}</Text>
+            <Text style={styles.title}>{service.title || 'Untitled Service'}</Text>
             <Text style={[styles.price, { color: colors.primary[600] }]}>
-              {formatCurrency(service.price)}
+              {formatCurrency(service.price || 0)}
             </Text>
           </View>
 
           {/* Rating and Category */}
           <View style={styles.metaRow}>
-            {service.rating && (
+            {service.rating != null && service.rating > 0 && (
               <View style={styles.ratingContainer}>
                 <Ionicons name="star" size={16} color={colors.semantic.warning} />
-                <Text style={styles.ratingText}>{service.rating.toFixed(1)}</Text>
+                <Text style={styles.ratingText}>
+                  {typeof service.rating === 'number' ? service.rating.toFixed(1) : String(service.rating || '0.0')}
+                </Text>
                 {service.reviewCount !== undefined && service.reviewCount > 0 && (
                   <Text style={styles.reviewCountText}>
                     ({service.reviewCount} reviews)
@@ -190,14 +313,14 @@ export default function ServiceDetailScreen() {
             )}
             <View style={styles.categoryBadge}>
               <Ionicons name="pricetag-outline" size={14} color={colors.text.secondary} />
-              <Text style={styles.categoryText}>{service.category}</Text>
+              <Text style={styles.categoryText}>{service.category || 'Uncategorized'}</Text>
             </View>
           </View>
 
           {/* Description */}
           <Card style={styles.card}>
             <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.description}>{service.description}</Text>
+            <Text style={styles.description}>{service.description || 'No description available'}</Text>
           </Card>
 
           {/* Service Area */}
@@ -217,24 +340,78 @@ export default function ServiceDetailScreen() {
           </Card>
 
           {/* Provider Card */}
-          <ProviderCard
-            providerId={service.providerId}
-            providerName={service.providerName}
-            rating={service.rating}
-            reviewCount={service.reviewCount}
-            verified={true}
-            location="San Francisco, CA"
-          />
+          {service.providerId && (
+            <ProviderCard
+              providerId={service.providerId ? String(service.providerId) : ''}
+              providerName={service.providerName ? String(service.providerName) : 'Unknown Provider'}
+              rating={service.rating}
+              reviewCount={service.reviewCount}
+              verified={true}
+              location="San Francisco, CA"
+            />
+          )}
+
+          {/* Provider Actions - Only visible to service owner */}
+          {isServiceOwner && (
+            <Card style={styles.card}>
+              <Text style={styles.sectionTitle}>Manage Service</Text>
+              
+              {/* Status Toggle */}
+              <View style={styles.statusRow}>
+                <View style={styles.statusInfo}>
+                  <Text style={styles.statusLabel}>Service Status</Text>
+                  <Text style={[styles.statusText, { color: (service.status || 'published') === 'published' ? colors.semantic.success : colors.text.secondary }]}>
+                    {(service.status || 'published') === 'published' ? 'Published' : 'Draft'}
+                  </Text>
+                </View>
+                <Switch
+                  value={(service.status || 'published') === 'published'}
+                  onValueChange={handleToggleStatus}
+                  disabled={isTogglingStatus}
+                  trackColor={{ false: colors.neutral.gray300, true: colors.primary[400] }}
+                  thumbColor={(service.status || 'published') === 'published' ? colors.primary[600] : colors.neutral.gray500}
+                />
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.providerActions}>
+                <TouchableOpacity
+                  style={[styles.providerActionButton, { borderColor: colors.primary[600] }]}
+                  onPress={handleEdit}
+                  disabled={isDeleting || isTogglingStatus}
+                >
+                  <Ionicons name="create-outline" size={20} color={colors.primary[600]} />
+                  <Text style={[styles.providerActionText, { color: colors.primary[600] }]}>
+                    Edit Service
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.providerActionButton, { borderColor: colors.semantic.error }]}
+                  onPress={handleDelete}
+                  disabled={isDeleting || isTogglingStatus}
+                >
+                  {isDeleting ? (
+                    <ActivityIndicator size="small" color={colors.semantic.error} />
+                  ) : (
+                    <Ionicons name="trash-outline" size={20} color={colors.semantic.error} />
+                  )}
+                  <Text style={[styles.providerActionText, { color: colors.semantic.error }]}>
+                    Delete Service
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Card>
+          )}
 
           {/* Reviews Section */}
           <Card style={styles.card}>
             <View style={styles.reviewsHeader}>
               <Text style={styles.sectionTitle}>Reviews</Text>
-              {service.rating && (
+              {service.rating != null && service.rating > 0 && (
                 <View style={styles.overallRating}>
                   <Ionicons name="star" size={20} color={colors.semantic.warning} />
                   <Text style={styles.overallRatingText}>
-                    {service.rating.toFixed(1)}
+                    {typeof service.rating === 'number' ? service.rating.toFixed(1) : String(service.rating || '0.0')}
                   </Text>
                 </View>
               )}
@@ -254,7 +431,7 @@ export default function ServiceDetailScreen() {
             ) : (
               <ReviewList
                 reviews={reviews}
-                serviceId={service.id}
+                serviceId={safeServiceId}
                 onLoadMore={handleLoadMoreReviews}
                 hasMore={hasMoreReviews}
               />
@@ -263,8 +440,10 @@ export default function ServiceDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Booking CTA */}
-      <BookingCTA serviceId={service.id} price={service.price} onBook={handleBook} />
+      {/* Booking CTA - Only show if not service owner */}
+      {!isServiceOwner && safeServiceId && (
+        <BookingCTA serviceId={safeServiceId} price={service.price || 0} onBook={handleBook} />
+      )}
     </SafeAreaView>
   );
 }
@@ -432,6 +611,47 @@ const styles = StyleSheet.create({
   reviewsErrorText: {
     fontSize: 14,
     color: Colors.semantic.error,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.light,
+    marginBottom: Spacing.md,
+  },
+  statusInfo: {
+    flex: 1,
+  },
+  statusLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: Spacing.xs,
+  },
+  statusText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  providerActions: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginTop: Spacing.sm,
+  },
+  providerActionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    gap: Spacing.sm,
+  },
+  providerActionText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

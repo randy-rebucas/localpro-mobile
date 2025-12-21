@@ -4,6 +4,7 @@ import React from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { BorderRadius, Colors, Spacing } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
+import { ReviewSentiment } from './ReviewSentiment';
 
 interface ReviewListProps {
   reviews: Review[];
@@ -24,7 +25,9 @@ function ReviewItem({ review }: { review: Review }) {
             <Ionicons name="person" size={20} color={colors.primary[600]} />
           </View>
           <View style={styles.reviewInfo}>
-            <Text style={styles.reviewerName}>User {review.userId.slice(0, 8)}</Text>
+            <Text style={styles.reviewerName}>
+              User {review.userId ? review.userId.slice(0, 8) : 'Unknown'}
+            </Text>
             <View style={styles.stars}>
               {stars.map((star) => (
                 <Ionicons
@@ -45,6 +48,11 @@ function ReviewItem({ review }: { review: Review }) {
       {review.comment && (
         <Text style={styles.reviewComment}>{review.comment}</Text>
       )}
+      
+      {/* Review Sentiment Analysis */}
+      <View style={styles.sentimentContainer}>
+        <ReviewSentiment reviewId={review.id} autoLoad={true} />
+      </View>
     </View>
   );
 }
@@ -68,7 +76,7 @@ export function ReviewList({ reviews, serviceId, onLoadMore, hasMore }: ReviewLi
     <View style={styles.container}>
       <FlatList
         data={reviews}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id || `review-${Math.random()}`}
         renderItem={({ item }) => <ReviewItem review={item} />}
         onEndReached={hasMore ? onLoadMore : undefined}
         onEndReachedThreshold={0.5}
@@ -148,6 +156,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.text.tertiary,
     textAlign: 'center',
+  },
+  sentimentContainer: {
+    marginTop: Spacing.sm,
   },
 });
 

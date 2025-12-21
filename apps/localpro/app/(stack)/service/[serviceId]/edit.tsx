@@ -16,7 +16,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { PhotoUpload } from '../../../../components/marketplace';
+import { PhotoUpload, PricingOptimizer } from '../../../../components/marketplace';
 import { BorderRadius, Colors, Spacing } from '../../../../constants/theme';
 import { useThemeColors } from '../../../../hooks/use-theme';
 
@@ -509,6 +509,69 @@ export default function EditServiceScreen() {
               />
               {errors.images && <Text style={styles.errorText}>{errors.images}</Text>}
             </Card>
+
+            {/* Pricing Optimizer */}
+            {service && formData.price && (
+              <Card style={styles.card}>
+                <PricingOptimizer
+                  serviceId={service.id}
+                  currentPrice={parseFloat(formData.price) || 0}
+                  onPriceUpdate={(newPrice) => {
+                    setFormData({ ...formData, price: newPrice.toFixed(2) });
+                    Alert.alert('Success', 'Price updated successfully!');
+                  }}
+                />
+              </Card>
+            )}
+
+            {/* Service Status */}
+            <Card style={styles.card}>
+              <Text style={styles.sectionTitle}>Service Status</Text>
+              <View style={styles.statusContainer}>
+                <View style={styles.statusInfo}>
+                  <Text style={styles.statusLabel}>Publish Status</Text>
+                  <Text style={[styles.statusText, { color: formData.status === 'published' ? colors.semantic.success : colors.text.secondary }]}>
+                    {formData.status === 'published' ? 'Published' : 'Draft'}
+                  </Text>
+                </View>
+                <View style={styles.statusToggleContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.statusToggleButton,
+                      formData.status === 'published' && { backgroundColor: colors.primary[600] },
+                      { borderColor: colors.border.medium },
+                    ]}
+                    onPress={() => setFormData({ ...formData, status: 'published' })}
+                  >
+                    <Text
+                      style={[
+                        styles.statusToggleText,
+                        formData.status === 'published' && { color: Colors.text.inverse },
+                      ]}
+                    >
+                      Published
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.statusToggleButton,
+                      formData.status === 'draft' && { backgroundColor: colors.neutral.gray400 },
+                      { borderColor: colors.border.medium },
+                    ]}
+                    onPress={() => setFormData({ ...formData, status: 'draft' })}
+                  >
+                    <Text
+                      style={[
+                        styles.statusToggleText,
+                        formData.status === 'draft' && { color: Colors.text.inverse },
+                      ]}
+                    >
+                      Draft
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Card>
           </View>
         </ScrollView>
 
@@ -741,6 +804,39 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderTopWidth: 1,
     borderTopColor: Colors.border.light,
+  },
+  statusContainer: {
+    marginTop: Spacing.sm,
+  },
+  statusInfo: {
+    marginBottom: Spacing.md,
+  },
+  statusLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: Spacing.xs,
+  },
+  statusText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  statusToggleContainer: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  statusToggleButton: {
+    flex: 1,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    alignItems: 'center',
+    backgroundColor: Colors.background.primary,
+  },
+  statusToggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.primary,
   },
 });
 

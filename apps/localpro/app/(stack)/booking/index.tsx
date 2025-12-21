@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
+  BookingCalendar,
   BookingCard,
   EmptyState,
   LoadingSkeleton,
@@ -37,6 +38,7 @@ export default function BookingIndexScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<FilterStatus>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   // Fetch bookings
   const { bookings, loading } = useBookings(user?.id || '');
@@ -186,7 +188,16 @@ export default function BookingIndexScreen() {
         <Text style={[styles.headerTitle, { color: colors.text.primary }]}>
           Bookings
         </Text>
-        <View style={styles.placeholder} />
+        <TouchableOpacity
+          onPress={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
+          style={styles.viewToggle}
+        >
+          <Ionicons
+            name={viewMode === 'list' ? 'calendar-outline' : 'list-outline'}
+            size={24}
+            color={colors.text.primary}
+          />
+        </TouchableOpacity>
       </View>
 
       {/* Search Input */}
@@ -233,28 +244,50 @@ export default function BookingIndexScreen() {
         })}
       </ScrollView>
 
-      {/* Bookings List */}
-      <FlatList
-        data={filteredBookings}
-        keyExtractor={(item) => item.id}
-        renderItem={renderBookingCard}
-        contentContainerStyle={[
-          styles.listContent,
-          filteredBookings.length === 0 && styles.emptyListContent,
-        ]}
-        ItemSeparatorComponent={renderItemSeparator}
-        ListEmptyComponent={renderEmptyState}
-        ListFooterComponent={renderListFooter}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={colors.primary[600]}
-            colors={[colors.primary[600]]}
+      {/* Bookings List or Calendar */}
+      {viewMode === 'calendar' ? (
+        <ScrollView
+          style={styles.calendarContainer}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary[600]}
+              colors={[colors.primary[600]]}
+            />
+          }
+        >
+          <BookingCalendar
+            bookings={filteredBookings}
+            onDateSelect={(date) => {
+              // Filter bookings by selected date
+              console.log('Date selected:', date);
+            }}
           />
-        }
-        showsVerticalScrollIndicator={false}
-      />
+        </ScrollView>
+      ) : (
+        <FlatList
+          data={filteredBookings}
+          keyExtractor={(item) => item.id}
+          renderItem={renderBookingCard}
+          contentContainerStyle={[
+            styles.listContent,
+            filteredBookings.length === 0 && styles.emptyListContent,
+          ]}
+          ItemSeparatorComponent={renderItemSeparator}
+          ListEmptyComponent={renderEmptyState}
+          ListFooterComponent={renderListFooter}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary[600]}
+              colors={[colors.primary[600]]}
+            />
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -289,6 +322,15 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
+  },
+  viewToggle: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calendarContainer: {
+    flex: 1,
   },
   filtersContainer: {
     marginBottom: Spacing.sm,

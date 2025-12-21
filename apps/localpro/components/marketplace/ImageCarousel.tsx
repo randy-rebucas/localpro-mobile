@@ -28,8 +28,16 @@ export function ImageCarousel({ images, height = 300 }: ImageCarouselProps) {
 
   if (!images || images.length === 0) {
     return (
-      <View style={[styles.container, { height, backgroundColor: colors.neutral.gray100 }]}>
-        <Ionicons name="image-outline" size={64} color={colors.text.tertiary} />
+      <View style={[styles.placeholderContainer, { height, backgroundColor: colors.neutral.gray100 }]}>
+        <View style={styles.placeholderContent}>
+          <Ionicons name="image-outline" size={80} color={colors.text.tertiary} />
+          <Text style={[styles.placeholderText, { color: colors.text.secondary }]}>
+            No images available
+          </Text>
+          <Text style={[styles.placeholderSubtext, { color: colors.text.tertiary }]}>
+            Images will appear here when added
+          </Text>
+        </View>
       </View>
     );
   }
@@ -89,6 +97,25 @@ const styles = StyleSheet.create({
   container: {
     position: 'relative',
     backgroundColor: Colors.neutral.gray100,
+  },
+  placeholderContainer: {
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.md,
+  },
+  placeholderText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: Spacing.sm,
+  },
+  placeholderSubtext: {
+    fontSize: 14,
+    textAlign: 'center',
   },
   image: {
     width: '100%',

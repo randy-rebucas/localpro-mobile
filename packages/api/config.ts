@@ -74,5 +74,85 @@ export const API_ENDPOINTS = {
     // Send test notification to current user
     sendTest: '/api/communication/notifications/test',
   },
+  // Marketplace endpoints
+  marketplace: {
+    // Public endpoints (no auth required)
+    services: {
+      // List services with filters
+      list: '/api/marketplace/services',
+      // Get service categories
+      categories: '/api/marketplace/services/categories',
+      // Location-based search
+      nearby: '/api/marketplace/services/nearby',
+      // Get single service by ID
+      getById: (id: string) => `/api/marketplace/services/${id}`,
+      // Get service reviews
+      reviews: (id: string) => `/api/marketplace/services/${id}/reviews`,
+    },
+    providers: {
+      // List providers with filters
+      list: '/api/marketplace/providers',
+      // Get provider by ID
+      getById: (id: string) => `/api/marketplace/providers/${id}`,
+      // Get provider's services
+      services: (id: string) => `/api/marketplace/providers/${id}/services`,
+      // Get provider reviews
+      reviews: (id: string) => `/api/marketplace/providers/${id}/reviews`,
+    },
+    // Authenticated endpoints (auth required)
+    myServices: {
+      // Get user's services (provider)
+      list: '/api/marketplace/my-services',
+    },
+    myBookings: {
+      // Get user's bookings
+      list: '/api/marketplace/my-bookings',
+    },
+    serviceManagement: {
+      // Create service
+      create: '/api/marketplace/services',
+      // Update service
+      update: (id: string) => `/api/marketplace/services/${id}`,
+      // Delete service
+      delete: (id: string) => `/api/marketplace/services/${id}`,
+      // Upload service images
+      uploadImages: (id: string) => `/api/marketplace/services/${id}/images`,
+    },
+    bookings: {
+      // Create booking
+      create: '/api/marketplace/bookings',
+      // Get booking by ID
+      getById: (id: string) => `/api/marketplace/bookings/${id}`,
+      // Update booking status
+      updateStatus: (id: string) => `/api/marketplace/bookings/${id}/status`,
+      // Upload booking photos
+      uploadPhotos: (id: string) => `/api/marketplace/bookings/${id}/photos`,
+      // Submit booking review
+      submitReview: (id: string) => `/api/marketplace/bookings/${id}/review`,
+    },
+    payments: {
+      // Create PayPal order
+      createPayPalOrder: '/api/marketplace/bookings/paypal/create',
+      // Approve PayPal order
+      approvePayPalOrder: '/api/marketplace/bookings/paypal/approve',
+      // Get PayPal order details
+      getPayPalOrder: (orderId: string) => `/api/marketplace/bookings/paypal/order/${orderId}`,
+    },
+  },
+  // AI Marketplace endpoints
+  ai: {
+    marketplace: {
+      // Generate service description
+      descriptionGenerator: '/api/ai/marketplace/description-generator',
+      // Natural language search/recommendations
+      recommendations: '/api/ai/marketplace/recommendations',
+      // Price estimation
+      priceEstimator: '/api/ai/marketplace/price-estimator',
+      // Pricing optimization
+      pricingOptimizer: '/api/ai/marketplace/pricing-optimizer',
+      // Review sentiment analysis
+      reviewSentiment: '/api/ai/marketplace/review-sentiment',
+    },
+  },
 } as const;
 

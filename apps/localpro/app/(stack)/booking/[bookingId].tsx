@@ -18,6 +18,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     EmptyState,
+    OrderApprovalButton,
+    PayPalPaymentButton,
     PaymentStatusIndicator,
     PhotoUpload,
     ReviewFormModal,
@@ -360,6 +362,33 @@ export default function BookingDetailScreen() {
               status={(booking as any).paymentStatus || 'pending'}
               amount={booking.totalAmount}
             />
+            
+            {/* PayPal Payment Button */}
+            {((booking as any).paymentStatus === 'pending' || !(booking as any).paymentStatus) && isClient && (
+              <View style={styles.paymentButtonContainer}>
+                <PayPalPaymentButton
+                  bookingId={booking.id}
+                  amount={booking.totalAmount}
+                  onPaymentSuccess={() => {
+                    loadBooking();
+                  }}
+                />
+              </View>
+            )}
+            
+            {/* Order Approval Button */}
+            {(booking as any).paypalOrderId && (booking as any).paymentStatus === 'pending' && isProvider && (
+              <View style={styles.paymentButtonContainer}>
+                <OrderApprovalButton
+                  bookingId={booking.id}
+                  orderId={(booking as any).paypalOrderId}
+                  amount={booking.totalAmount}
+                  onApprovalSuccess={() => {
+                    loadBooking();
+                  }}
+                />
+              </View>
+            )}
           </Card>
 
           {/* Photos Section */}
@@ -634,6 +663,9 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   reviewButtonContainer: {
+    marginTop: Spacing.md,
+  },
+  paymentButtonContainer: {
     marginTop: Spacing.md,
   },
 });

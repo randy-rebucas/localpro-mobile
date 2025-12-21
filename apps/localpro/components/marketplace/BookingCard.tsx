@@ -56,7 +56,9 @@ export function BookingCard({
         {/* Header */}
         <View style={styles.header}>
           <StatusBadge status={booking.status} />
-          <Text style={styles.amount}>{formatCurrency(booking.totalAmount)}</Text>
+          <Text style={styles.amount}>
+            {booking.totalAmount != null ? formatCurrency(booking.totalAmount) : 'N/A'}
+          </Text>
         </View>
 
         {/* Service Image and Info */}
@@ -74,7 +76,7 @@ export function BookingCard({
           )}
           <View style={styles.serviceInfo}>
             <Text style={styles.serviceTitle} numberOfLines={2}>
-              {booking.service.title}
+              {booking.service.title || 'Untitled Service'}
             </Text>
             <View style={styles.serviceMeta}>
               <Ionicons name="calendar-outline" size={14} color={colors.text.tertiary} />
@@ -84,7 +86,9 @@ export function BookingCard({
             </View>
             <View style={styles.serviceMeta}>
               <Ionicons name="person-outline" size={14} color={colors.text.tertiary} />
-              <Text style={styles.serviceMetaText}>{booking.service.providerName}</Text>
+              <Text style={styles.serviceMetaText}>
+                {booking.service.providerName || 'Unknown Provider'}
+              </Text>
             </View>
           </View>
         </View>

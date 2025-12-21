@@ -37,6 +37,69 @@ export class ApiClient {
     return null;
   }
 
+  /**
+   * Extract user-friendly error message from HTML error pages
+   */
+  private extractErrorMessageFromHTML(status: number, html: string): string {
+    // Check for common error patterns in HTML
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    if (titleMatch && titleMatch[1]) {
+      const title = titleMatch[1].trim();
+      // Remove "| 500: Internal server error" type patterns
+      const cleanTitle = title.replace(/\|\s*\d+[:\s].*/i, '').trim();
+      if (cleanTitle && !cleanTitle.includes('<!DOCTYPE')) {
+        return cleanTitle;
+      }
+    }
+
+    // Check for h1 tags with error messages
+    const h1Match = html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+    if (h1Match && h1Match[1]) {
+      const h1Text = h1Match[1].trim();
+      if (h1Text && h1Text.length < 100) {
+        return h1Text;
+      }
+    }
+
+    // Fallback to status-based message
+    return this.getUserFriendlyErrorMessage(status);
+  }
+
+  /**
+   * Get user-friendly error message based on HTTP status code
+   */
+  private getUserFriendlyErrorMessage(status: number): string {
+    switch (status) {
+      case 400:
+        return 'Invalid request. Please check your input and try again.';
+      case 401:
+        return 'Authentication required. Please log in again.';
+      case 403:
+        return 'You do not have permission to perform this action.';
+      case 404:
+        return 'The requested resource was not found.';
+      case 408:
+        return 'Request timeout. Please try again.';
+      case 429:
+        return 'Too many requests. Please wait a moment and try again.';
+      case 500:
+        return 'Server error. The service is temporarily unavailable. Please try again later.';
+      case 502:
+        return 'Service temporarily unavailable. The server is down or overloaded. Please try again in a few minutes.';
+      case 503:
+        return 'Service unavailable. The server is temporarily down for maintenance. Please try again later.';
+      case 504:
+        return 'Gateway timeout. The server took too long to respond. Please try again.';
+      default:
+        if (status >= 500) {
+          return 'Server error. Please try again later.';
+        } else if (status >= 400) {
+          return 'Request error. Please check your input and try again.';
+        }
+        return 'An error occurred. Please try again.';
+    }
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -73,10 +136,10 @@ export class ApiClient {
 
       if (!response.ok) {
         let errorData: any = {};
-        const contentType = response.headers.get('content-type');
+        const contentType = response.headers.get('content-type') || '';
         
         // Try to parse JSON error response, but handle cases where it's not JSON
-        if (contentType && contentType.includes('application/json')) {
+        if (contentType.includes('application/json')) {
           try {
             errorData = await response.json();
           } catch (e) {
@@ -84,17 +147,33 @@ export class ApiClient {
             errorData = { message: response.statusText || 'An error occurred' };
           }
         } else {
-          // If not JSON, try to get text or use status text
+          // If not JSON (could be HTML error page), try to get text
           try {
             const text = await response.text();
-            errorData = { message: text || response.statusText || 'An error occurred' };
+            
+            // Check if response is HTML (common for Cloudflare/nginx error pages)
+            if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+              // Extract meaningful error message from HTML
+              const userFriendlyMessage = this.extractErrorMessageFromHTML(response.status, text);
+              errorData = { message: userFriendlyMessage };
+            } else {
+              // Try to parse as JSON even if content-type wasn't set correctly
+              try {
+                errorData = JSON.parse(text);
+              } catch {
+                // If it's plain text, use it as message (but limit length)
+                errorData = { 
+                  message: text.length > 200 ? text.substring(0, 200) + '...' : text || response.statusText || 'An error occurred' 
+                };
+              }
+            }
           } catch (e) {
-            errorData = { message: response.statusText || 'An error occurred' };
+            errorData = { message: this.getUserFriendlyErrorMessage(response.status) };
           }
         }
 
         const error: ApiError = {
-          message: errorData.message || errorData.error || 'An error occurred',
+          message: errorData.message || errorData.error || this.getUserFriendlyErrorMessage(response.status),
           status: response.status,
           code: errorData.code,
         };

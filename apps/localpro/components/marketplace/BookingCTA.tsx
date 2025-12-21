@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BorderRadius, Colors, Shadows, Spacing } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
 
@@ -15,7 +15,10 @@ export function BookingCTA({ serviceId, price, onBook }: BookingCTAProps) {
   const colors = useThemeColors();
   const router = useRouter();
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | undefined | null) => {
+    if (amount == null || isNaN(amount)) {
+      return '$0.00';
+    }
     return `$${amount.toFixed(2)}`;
   };
 
