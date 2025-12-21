@@ -5,21 +5,21 @@ import { Card } from '@localpro/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Linking,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-    EmptyState,
-    ReviewList,
-    ServiceCard,
+  EmptyState,
+  ReviewList,
+  ServiceCard,
 } from '../../../components/marketplace';
 import { BorderRadius, Colors, Shadows, Spacing } from '../../../constants/theme';
 import { useThemeColors } from '../../../hooks/use-theme';
@@ -39,7 +39,14 @@ interface Provider {
 }
 
 export default function ProviderProfileScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ providerId: string }>();
+  // Extract serviceId from params - handle both serviceId and id for compatibility
+  const rawProviderId = Array.isArray(params.providerId) 
+    ? params.providerId[0] 
+    : (params.providerId || (params as any).id);
+  const providerId = rawProviderId && typeof rawProviderId === 'string' && rawProviderId.trim() !== '' 
+    ? rawProviderId.trim() 
+    : undefined;
   const router = useRouter();
   const colors = useThemeColors();
   const [provider, setProvider] = useState<Provider | null>(null);
@@ -52,25 +59,55 @@ export default function ProviderProfileScreen() {
   const [hasMoreReviews, setHasMoreReviews] = useState(false);
 
   useEffect(() => {
-    if (id) {
+    if (providerId) {
       loadProvider();
       loadServices();
       loadReviews();
     }
-  }, [id]);
+  }, [providerId]);
 
   useEffect(() => {
-    if (id && reviewsPage > 1) {
+    if (providerId && reviewsPage > 1) {
       loadMoreReviews();
     }
   }, [reviewsPage]);
 
   const loadProvider = async () => {
-    if (!id) return;
+    if (!providerId) return;
     setLoading(true);
     try {
-      const providerData = await MarketplaceService.getProvider(id as string);
-      setProvider(providerData);
+      const providerData = await MarketplaceService.getProvider(providerId as string);
+      if (providerData) {
+        setProvider(providerData);
+        // If services are included in the provider response, use them
+        if (providerData._raw?.services && Array.isArray(providerData._raw.services)) {
+          const mappedServices = providerData._raw.services.map((service: any) => {
+            // Map API service format to Service type
+            const serviceId = service._id || service.id;
+            return {
+              id: serviceId ? String(serviceId) : '',
+              title: service.title ? String(service.title) : 'Untitled Service',
+              description: service.description ? String(service.description) : '',
+              category: service.category ? String(service.category) : '',
+              subcategory: service.subcategory ? String(service.subcategory) : undefined,
+              price: service.pricing?.basePrice || 0,
+              pricing: service.pricing,
+              providerId: providerId ? String(providerId) : '',
+              providerName: providerData.name ? String(providerData.name) : 'Unknown Provider',
+              images: Array.isArray(service.images) ? service.images : [],
+              rating: service.rating?.average,
+              reviewCount: service.rating?.count,
+              status: service.isActive ? 'published' : 'draft',
+              availability: service.availability,
+              estimatedDuration: service.estimatedDuration,
+              serviceType: service.serviceType,
+              createdAt: service.createdAt ? new Date(service.createdAt) : new Date(),
+            } as Service;
+          });
+          setServices(mappedServices);
+          setServicesLoading(false);
+        }
+      }
     } catch (error: any) {
       console.error('Error loading provider:', error);
       Alert.alert('Error', 'Failed to load provider profile');
@@ -80,10 +117,15 @@ export default function ProviderProfileScreen() {
   };
 
   const loadServices = async () => {
-    if (!id) return;
+    if (!providerId) return;
+    // Only load services if not already loaded from provider response
+    if (services.length > 0) {
+      setServicesLoading(false);
+      return;
+    }
     setServicesLoading(true);
     try {
-      const servicesData = await MarketplaceService.getProviderServices(id as string);
+      const servicesData = await MarketplaceService.getProviderServices(providerId as string);
       setServices(servicesData);
     } catch (error: any) {
       console.error('Error loading services:', error);
@@ -93,10 +135,10 @@ export default function ProviderProfileScreen() {
   };
 
   const loadReviews = async () => {
-    if (!id) return;
+    if (!providerId) return;
     setReviewsLoading(true);
     try {
-      const result = await MarketplaceService.getProviderReviews(id as string, 1, 10);
+      const result = await MarketplaceService.getProviderReviews(providerId as string, 1, 10);
       setReviews(result.reviews);
       setHasMoreReviews(result.hasMore);
     } catch (error: any) {
@@ -107,9 +149,9 @@ export default function ProviderProfileScreen() {
   };
 
   const loadMoreReviews = async () => {
-    if (!id) return;
+    if (!providerId) return;
     try {
-      const result = await MarketplaceService.getProviderReviews(id as string, reviewsPage, 10);
+      const result = await MarketplaceService.getProviderReviews(providerId as string, reviewsPage, 10);
       setReviews((prev) => [...prev, ...result.reviews]);
       setHasMoreReviews(result.hasMore);
     } catch (error: any) {
@@ -139,7 +181,8 @@ export default function ProviderProfileScreen() {
   };
 
   const handleServicePress = (serviceId: string) => {
-    router.push(`/(stack)/service/${serviceId}` as any);
+    if (!serviceId) return;
+    router.push(`/(stack)/service/${String(serviceId)}` as any);
   };
 
   if (loading) {
@@ -153,7 +196,7 @@ export default function ProviderProfileScreen() {
     );
   }
 
-  if (!provider) {
+  if (!provider || !providerId) {
     return (
       <SafeAreaView style={styles.container} edges={['bottom']}>
         <EmptyState
@@ -166,7 +209,7 @@ export default function ProviderProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -195,7 +238,7 @@ export default function ProviderProfileScreen() {
               </View>
               <View style={styles.profileInfo}>
                 <View style={styles.nameRow}>
-                  <Text style={styles.providerName}>{provider.name}</Text>
+                  <Text style={styles.providerName}>{provider.name || 'Unknown Provider'}</Text>
                   {provider.verified && (
                     <Ionicons name="shield-checkmark" size={20} color={colors.secondary[600]} />
                   )}
@@ -203,14 +246,16 @@ export default function ProviderProfileScreen() {
                 {provider.location && (
                   <View style={styles.locationRow}>
                     <Ionicons name="location-outline" size={16} color={colors.text.secondary} />
-                    <Text style={styles.locationText}>{provider.location}</Text>
+                    <Text style={styles.locationText}>{String(provider.location)}</Text>
                   </View>
                 )}
-                {(provider.rating || provider.reviewCount) && (
+                {(provider.rating != null || provider.reviewCount != null) && (
                   <View style={styles.ratingRow}>
                     <Ionicons name="star" size={16} color={colors.semantic.warning} />
                     <Text style={styles.ratingText}>
-                      {provider.rating?.toFixed(1) || 'N/A'}
+                      {provider.rating != null && typeof provider.rating === 'number' 
+                        ? provider.rating.toFixed(1) 
+                        : 'N/A'}
                     </Text>
                     {provider.reviewCount !== undefined && provider.reviewCount > 0 && (
                       <Text style={styles.reviewCountText}>
@@ -223,7 +268,7 @@ export default function ProviderProfileScreen() {
             </View>
             {provider.bio && (
               <View style={styles.bioContainer}>
-                <Text style={styles.bioText}>{provider.bio}</Text>
+                <Text style={styles.bioText}>{String(provider.bio)}</Text>
               </View>
             )}
           </Card>
@@ -252,17 +297,21 @@ export default function ProviderProfileScreen() {
           <Card style={styles.card}>
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>{services.length}</Text>
+                <Text style={styles.statValue}>{String(services.length || 0)}</Text>
                 <Text style={styles.statLabel}>Services</Text>
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>{provider.reviewCount || 0}</Text>
+                <Text style={styles.statValue}>{String(provider.reviewCount || 0)}</Text>
                 <Text style={styles.statLabel}>Reviews</Text>
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>{provider.rating?.toFixed(1) || 'N/A'}</Text>
+                <Text style={styles.statValue}>
+                  {provider.rating != null && typeof provider.rating === 'number' 
+                    ? provider.rating.toFixed(1) 
+                    : 'N/A'}
+                </Text>
                 <Text style={styles.statLabel}>Rating</Text>
               </View>
             </View>
@@ -272,7 +321,7 @@ export default function ProviderProfileScreen() {
           <Card style={styles.card}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Services Offered</Text>
-              <Text style={styles.sectionSubtitle}>{services.length} services</Text>
+              <Text style={styles.sectionSubtitle}>{String(services.length || 0)} services</Text>
             </View>
             {servicesLoading ? (
               <View style={styles.loadingContainer}>
@@ -299,10 +348,12 @@ export default function ProviderProfileScreen() {
           <Card style={styles.card}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Reviews</Text>
-              {provider.rating && (
+              {provider.rating != null && provider.rating > 0 && (
                 <View style={styles.overallRating}>
                   <Ionicons name="star" size={20} color={colors.semantic.warning} />
-                  <Text style={styles.overallRatingText}>{provider.rating.toFixed(1)}</Text>
+                  <Text style={styles.overallRatingText}>
+                    {typeof provider.rating === 'number' ? provider.rating.toFixed(1) : String(provider.rating || '0.0')}
+                  </Text>
                 </View>
               )}
             </View>
@@ -314,7 +365,7 @@ export default function ProviderProfileScreen() {
             ) : (
               <ReviewList
                 reviews={reviews}
-                serviceId={provider.id}
+                serviceId={providerId ? String(providerId) : ''}
                 onLoadMore={handleLoadMoreReviews}
                 hasMore={hasMoreReviews}
               />

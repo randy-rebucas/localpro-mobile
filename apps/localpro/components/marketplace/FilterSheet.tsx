@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import { safeReverseGeocode } from '@localpro/utils/location';
 import type { Category } from './CategoryFilter';
 import { CategoryMultiSelect } from './CategoryMultiSelect';
 import { PriceRangeSlider } from './PriceRangeSlider';
@@ -139,8 +140,9 @@ export function FilterSheet({
       setLatitude(lat);
       setLongitude(lng);
 
-      // Reverse geocode to get location name
-      const reverseGeocode = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+      // Reverse geocode to get location name with rate limit handling
+      const reverseGeocode = await safeReverseGeocode(lat, lng);
+      
       if (reverseGeocode && reverseGeocode.length > 0) {
         const address = reverseGeocode[0];
         const city = address.city || address.district || address.subregion || '';
@@ -149,9 +151,17 @@ export function FilterSheet({
       } else {
         setLocationName('Current Location');
       }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to get your location. Please try again.');
-      console.error('Location error:', error);
+    } catch (error: any) {
+      const errorMessage = error?.message || String(error || '');
+      if (errorMessage.includes('rate limit') || errorMessage.includes('too many requests')) {
+        Alert.alert(
+          'Rate Limit Exceeded',
+          'Too many location requests. Please wait a moment and try again.'
+        );
+      } else {
+        Alert.alert('Error', 'Failed to get your location. Please try again.');
+        console.error('Location error:', error);
+      }
     } finally {
       setIsGettingLocation(false);
     }

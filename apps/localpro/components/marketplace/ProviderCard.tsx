@@ -73,7 +73,7 @@ export function ProviderCard({
           {location && (
             <View style={styles.locationRow}>
               <Ionicons name="location-outline" size={14} color={colors.text.tertiary} />
-              <Text style={styles.locationText}>{location}</Text>
+              <Text style={styles.locationText}>{String(location)}</Text>
             </View>
           )}
         </View>

@@ -255,26 +255,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flex: 1,
+    minWidth: 0,
   },
   servicePrice: {
     fontSize: 18,
     fontWeight: 'bold',
     color: Colors.primary[600],
+    flexShrink: 0,
   },
   serviceCardListFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 'auto',
+    gap: Spacing.sm,
   },
   serviceCardListFooterLeft: {
     flex: 1,
-    marginRight: Spacing.sm,
+    minWidth: 0,
+    marginRight: Spacing.xs,
   },
   serviceCardListRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    flexShrink: 0,
   },
   ratingBadgeList: {
     position: 'absolute',

@@ -1,6 +1,7 @@
 // Phone number utilities
 import * as Location from 'expo-location';
 import { parsePhoneNumber, getCountryCallingCode, AsYouType, CountryCode } from 'libphonenumber-js';
+import { safeReverseGeocode } from './location';
 
 /**
  * Format phone number as user types using libphonenumber-js
@@ -98,10 +99,7 @@ const getCountryCodeFromCoordinates = async (
   longitude: number
 ): Promise<string | null> => {
   try {
-    const reverseGeocode = await Location.reverseGeocodeAsync({
-      latitude,
-      longitude,
-    });
+    const reverseGeocode = await safeReverseGeocode(latitude, longitude);
 
     if (reverseGeocode && reverseGeocode.length > 0) {
       const countryCode = reverseGeocode[0].isoCountryCode;
@@ -112,7 +110,11 @@ const getCountryCodeFromCoordinates = async (
 
     return null;
   } catch (error) {
-    console.error('Error reverse geocoding:', error);
+    // Only log non-rate-limit errors
+    const errorMessage = error?.message || String(error || '');
+    if (!errorMessage.includes('rate limit') && !errorMessage.includes('too many requests')) {
+      console.error('Error reverse geocoding:', error);
+    }
     return null;
   }
 };

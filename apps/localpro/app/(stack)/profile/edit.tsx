@@ -3,6 +3,7 @@ import { useAuthContext } from '@localpro/auth';
 import { Button, Card, Loading } from '@localpro/ui';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
+import { safeReverseGeocode } from '@localpro/utils/location';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -288,11 +289,8 @@ export default function EditProfileScreen() {
 
       const { latitude, longitude } = location.coords;
 
-      // Reverse geocode to get address
-      const reverseGeocode = await Location.reverseGeocodeAsync({
-        latitude,
-        longitude,
-      });
+      // Reverse geocode to get address with rate limit handling
+      const reverseGeocode = await safeReverseGeocode(latitude, longitude);
 
       if (reverseGeocode && reverseGeocode.length > 0) {
         const addressData = reverseGeocode[0];
@@ -372,10 +370,27 @@ export default function EditProfileScreen() {
         Alert.alert('Location Updated', 'Coordinates updated, but address details could not be retrieved.');
       }
     } catch (error: any) {
-      Alert.alert(
-        'Error',
-        error.message || 'Failed to get your current location. Please try again or enter manually.'
-      );
+      const errorMessage = error?.message || String(error || '');
+      if (errorMessage.includes('rate limit') || errorMessage.includes('too many requests')) {
+        // Still update coordinates even if geocoding fails
+        setFormData({
+          ...formData,
+          location: {
+            latitude: latitude.toString(),
+            longitude: longitude.toString(),
+          },
+        });
+        Alert.alert(
+          'Rate Limit Exceeded',
+          'Location coordinates updated, but address lookup is temporarily unavailable. Please try again later.'
+        );
+      } else {
+        Alert.alert(
+          'Error',
+          errorMessage || 'Failed to get your current location. Please try again or enter manually.'
+        );
+        console.error('Location error:', error);
+      }
     } finally {
       setIsFetchingLocation(false);
     }

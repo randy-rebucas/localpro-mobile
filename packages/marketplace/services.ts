@@ -729,7 +729,59 @@ export class MarketplaceService {
 
   static async getProvider(id: string): Promise<any> {
     try {
-      const response = await apiClient.get<any>(API_ENDPOINTS.marketplace.providers.getById(id));
+      const response = await apiClient.get<{
+        success: boolean;
+        message?: string;
+        data: {
+          provider: any;
+          services?: any[];
+          serviceCount?: number;
+          totalServiceCount?: number;
+          statistics?: any;
+          reviews?: any[];
+        };
+      }>(API_ENDPOINTS.marketplace.providers.getById(id));
+      
+      // Handle wrapped response format
+      if (response.success && response.data) {
+        const providerData = response.data.provider;
+        const userData = providerData.userId || providerData.user || providerData.userProfile;
+        
+        // Map provider data to a consistent format
+        return {
+          id: providerData.id || providerData._id,
+          name: userData 
+            ? `${userData.firstName || ''} ${userData.lastName || ''}`.trim() 
+            : 'Unknown Provider',
+          firstName: userData?.firstName,
+          lastName: userData?.lastName,
+          avatar: userData?.profile?.avatar || userData?.avatar,
+          bio: userData?.profile?.bio || providerData.bio,
+          email: userData?.email,
+          phone: userData?.phoneNumber,
+          location: userData?.profile?.address 
+            ? `${userData.profile.address.city || ''}, ${userData.profile.address.state || ''}`.trim()
+            : undefined,
+          fullAddress: userData?.profile?.address,
+          verified: providerData.verification?.identityVerified || providerData.verification?.businessVerified || false,
+          rating: providerData.performance?.rating || response.data.statistics?.averageRating || 0,
+          reviewCount: providerData.performance?.totalReviews || response.data.statistics?.totalReviews || 0,
+          servicesCount: response.data.serviceCount || response.data.totalServiceCount || 0,
+          providerType: providerData.providerType,
+          status: providerData.status,
+          professionalInfo: providerData.professionalInfo,
+          verification: providerData.verification,
+          performance: providerData.performance,
+          preferences: providerData.preferences,
+          settings: providerData.settings,
+          metadata: providerData.metadata,
+          statistics: response.data.statistics,
+          // Include raw data for advanced use cases
+          _raw: providerData,
+        };
+      }
+      
+      // Fallback: return response as-is if structure is different
       return response;
     } catch (error: any) {
       if (error.status === 404) {
