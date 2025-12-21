@@ -188,7 +188,7 @@ export default function HelpSupportScreen() {
           <Card style={styles.card}>
             <Text style={styles.sectionTitle}>Additional Resources</Text>
             
-            <TouchableOpacity style={styles.resourceItem}>
+            <TouchableOpacity style={styles.resourceItem} onPress={() => router.push('/(stack)/terms-and-conditions')}>
               <View style={styles.resourceItemLeft}>
                 <Ionicons name="document-text-outline" size={20} color={colors.text.secondary} />
                 <Text style={styles.resourceText}>Terms & Conditions</Text>
@@ -198,7 +198,7 @@ export default function HelpSupportScreen() {
 
             <View style={styles.divider} />
 
-            <TouchableOpacity style={styles.resourceItem}>
+            <TouchableOpacity style={styles.resourceItem} onPress={() => router.push('/(stack)/terms-and-conditions')}>
               <View style={styles.resourceItemLeft}>
                 <Ionicons name="shield-checkmark-outline" size={20} color={colors.text.secondary} />
                 <Text style={styles.resourceText}>Privacy Policy</Text>

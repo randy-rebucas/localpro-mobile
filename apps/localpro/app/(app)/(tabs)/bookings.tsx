@@ -265,7 +265,7 @@ export default function BookingsTabScreen() {
               {activeFilter === 'all' && (
                 <TouchableOpacity
                   style={[styles.exploreButton, { backgroundColor: colors.primary[600] }]}
-                  onPress={() => router.push('/(app)/(tabs)/index' as any)}
+                  onPress={() => router.push('/(app)/(tabs)')}
                 >
                   <Text style={styles.exploreButtonText}>Explore Services</Text>
                 </TouchableOpacity>

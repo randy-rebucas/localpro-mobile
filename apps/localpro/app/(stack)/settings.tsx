@@ -38,9 +38,9 @@ export default function SettingsScreen() {
     if (!date) return 'N/A';
     try {
       const dateObj = typeof date === 'string' ? new Date(date) : date;
-      return dateObj.toLocaleDateString('en-US', { 
-        month: 'long', 
-        year: 'numeric' 
+      return dateObj.toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric'
       });
     } catch {
       return 'N/A';
@@ -57,14 +57,14 @@ export default function SettingsScreen() {
         <Text style={styles.headerTitle}>Settings</Text>
         <View style={styles.placeholder} />
       </View>
-      
+
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           {/* Account Section */}
           <Card style={styles.card}>
             <Text style={styles.sectionTitle}>Account</Text>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.settingItem}
               onPress={() => router.push('/(stack)/profile/edit')}
             >
@@ -118,7 +118,7 @@ export default function SettingsScreen() {
           {/* Notifications Section */}
           <Card style={styles.card}>
             <Text style={styles.sectionTitle}>Notifications</Text>
-            
+
             <View style={styles.settingItem}>
               <View style={styles.settingItemLeft}>
                 <Ionicons name="notifications-outline" size={20} color={colors.text.secondary} />
@@ -149,7 +149,7 @@ export default function SettingsScreen() {
 
             <View style={styles.divider} />
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.settingItem}
               onPress={() => router.push('/(app)/(tabs)/notifications-comm')}
             >
@@ -164,8 +164,8 @@ export default function SettingsScreen() {
           {/* App Settings */}
           <Card style={styles.card}>
             <Text style={styles.sectionTitle}>App Settings</Text>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.settingItem}
               onPress={() => router.push('/(stack)/help-support')}
             >
@@ -178,7 +178,7 @@ export default function SettingsScreen() {
 
             <View style={styles.divider} />
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.settingItem}
               onPress={() => router.push('/(stack)/about')}
             >
@@ -191,7 +191,7 @@ export default function SettingsScreen() {
 
             <View style={styles.divider} />
 
-            <TouchableOpacity style={styles.settingItem}>
+            <TouchableOpacity style={styles.settingItem} onPress={() => router.push('/(stack)/terms-and-conditions')}>
               <View style={styles.settingItemLeft}>
                 <Ionicons name="document-text-outline" size={20} color={colors.text.secondary} />
                 <Text style={styles.settingLabel}>Terms & Conditions</Text>
@@ -201,7 +201,7 @@ export default function SettingsScreen() {
 
             <View style={styles.divider} />
 
-            <TouchableOpacity style={styles.settingItem}>
+            <TouchableOpacity style={styles.settingItem} onPress={() => router.push('/(stack)/privacy-policy')}>
               <View style={styles.settingItemLeft}>
                 <Ionicons name="shield-checkmark-outline" size={20} color={colors.text.secondary} />
                 <Text style={styles.settingLabel}>Privacy Policy</Text>
