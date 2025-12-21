@@ -19,10 +19,11 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ErrorBoundary } from '../../../components/ErrorBoundary';
 import { BorderRadius, Colors, Shadows, Spacing } from '../../../constants/theme';
 import { useThemeColors } from '../../../hooks/use-theme';
 
-export default function CreateBookingScreen() {
+function CreateBookingScreenContent() {
   const router = useRouter();
   const { serviceId } = useLocalSearchParams<{ serviceId: string }>();
   const colors = useThemeColors();
@@ -48,6 +49,8 @@ export default function CreateBookingScreen() {
   const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [addressCoordinates, setAddressCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<any>(null);
 
   useEffect(() => {
     if (serviceId) {
@@ -58,13 +61,15 @@ export default function CreateBookingScreen() {
   const loadService = async () => {
     if (!serviceId) return;
     setLoadingService(true);
+    setApiError(null);
     try {
       const serviceData = await MarketplaceService.getService(serviceId);
+      if (!serviceData) {
+        throw new Error('Service not found');
+      }
       setService(serviceData);
     } catch (error: any) {
-      console.error('Error loading service:', error);
-      Alert.alert('Error', 'Failed to load service details');
-      router.back();
+      handleError(error, 'loading service');
     } finally {
       setLoadingService(false);
     }
@@ -301,9 +306,124 @@ export default function CreateBookingScreen() {
     setAddressSuggestions([]);
   };
 
+  const handleError = (error: any, context: string = 'booking creation') => {
+    console.error(`Error in ${context}:`, error);
+    
+    let errorMessage = 'An unexpected error occurred. Please try again.';
+    let errorTitle = 'Error';
+    let errorDetails: any = null;
+
+    // Handle different error types
+    if (error?.response) {
+      // API error response
+      const status = error.response.status || error.status;
+      const data = error.response.data || error.data;
+      
+      errorDetails = {
+        status,
+        data,
+        message: data?.message || data?.error || error.message,
+      };
+
+      switch (status) {
+        case 400:
+          errorTitle = 'Validation Error';
+          errorMessage = data?.message || 'Please check your input and try again.';
+          // If there are field-specific errors, update form errors
+          if (data?.errors && typeof data.errors === 'object') {
+            setErrors(data.errors);
+          }
+          break;
+        case 401:
+          errorTitle = 'Authentication Required';
+          errorMessage = 'Please log in to create a booking.';
+          break;
+        case 403:
+          errorTitle = 'Permission Denied';
+          errorMessage = 'You do not have permission to create this booking.';
+          break;
+        case 404:
+          errorTitle = 'Service Not Found';
+          errorMessage = 'The service you are trying to book is no longer available.';
+          break;
+        case 409:
+          errorTitle = 'Conflict';
+          errorMessage = data?.message || 'This booking conflicts with an existing booking. Please choose a different time.';
+          break;
+        case 422:
+          errorTitle = 'Validation Error';
+          errorMessage = data?.message || 'Please check all required fields are filled correctly.';
+          if (data?.errors && typeof data.errors === 'object') {
+            setErrors(data.errors);
+          }
+          break;
+        case 429:
+          errorTitle = 'Too Many Requests';
+          errorMessage = 'Please wait a moment and try again.';
+          break;
+        case 500:
+        case 502:
+        case 503:
+          errorTitle = 'Server Error';
+          errorMessage = 'Our servers are experiencing issues. Please try again later.';
+          break;
+        default:
+          errorMessage = data?.message || error.message || errorMessage;
+      }
+    } else if (error?.message) {
+      // Network or other errors
+      if (error.message.includes('Network') || error.message.includes('network')) {
+        errorTitle = 'Network Error';
+        errorMessage = 'Please check your internet connection and try again.';
+      } else if (error.message.includes('timeout')) {
+        errorTitle = 'Request Timeout';
+        errorMessage = 'The request took too long. Please try again.';
+      } else {
+        errorMessage = error.message;
+      }
+    }
+
+    setApiError(errorMessage);
+    setErrorDetails(errorDetails);
+
+    // Show alert with option to go back
+    Alert.alert(
+      errorTitle,
+      errorMessage,
+      [
+        {
+          text: 'Go Back',
+          style: 'cancel',
+          onPress: () => router.back(),
+        },
+        {
+          text: 'Try Again',
+          onPress: () => {
+            setApiError(null);
+            setErrorDetails(null);
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
   const handleCreateBooking = async () => {
+    // Clear previous errors
+    setApiError(null);
+    setErrorDetails(null);
+
     if (!validateForm() || !service || !serviceId) {
-      Alert.alert('Validation Error', 'Please fill in all required fields correctly.');
+      Alert.alert(
+        'Validation Error',
+        'Please fill in all required fields correctly.',
+        [
+          {
+            text: 'OK',
+            style: 'default',
+          },
+        ]
+      );
       return;
     }
 
@@ -311,15 +431,24 @@ export default function CreateBookingScreen() {
     try {
       // Combine date and time into ISO string
       const scheduledDateTime = new Date(`${formData.scheduledDate}T${formData.scheduledTime}`);
+      
+      // Validate date is not in the past
+      if (scheduledDateTime < new Date()) {
+        throw new Error('Booking date and time cannot be in the past.');
+      }
+      
       const bookingDate = scheduledDateTime.toISOString();
       
       // Parse duration as number
-      const duration = parseInt(formData.duration, 10) || 1;
+      const duration = parseInt(formData.duration, 10);
+      if (isNaN(duration) || duration <= 0) {
+        throw new Error('Duration must be a positive number.');
+      }
       
       // Build booking payload matching API structure
       const bookingData = {
         serviceId,
-        bookingDate, // Use bookingDate instead of scheduledDate
+        bookingDate,
         duration: duration,
         address: {
           street: formData.address,
@@ -342,12 +471,23 @@ export default function CreateBookingScreen() {
       
       const response = await apiClient.post<any>(API_ENDPOINTS.marketplace.bookings.create, bookingData);
       
-      Alert.alert('Success', 'Booking created successfully!', [
-        { text: 'OK', onPress: () => router.replace(`/(stack)/booking/${response.id || response._id || ''}`) },
-      ]);
+      Alert.alert(
+        'Success',
+        'Booking created successfully!',
+        [
+          {
+            text: 'View Booking',
+            onPress: () => router.replace(`/(stack)/booking/${response.id || response._id || ''}`),
+          },
+          {
+            text: 'Go Back',
+            style: 'cancel',
+            onPress: () => router.back(),
+          },
+        ]
+      );
     } catch (error: any) {
-      console.error('Error creating booking:', error);
-      Alert.alert('Error', error.message || 'Failed to create booking');
+      handleError(error, 'booking creation');
     } finally {
       setLoading(false);
     }
@@ -364,12 +504,38 @@ export default function CreateBookingScreen() {
     );
   }
 
-  if (!service) {
+  if (!service && !loadingService) {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.errorText}>Service not found</Text>
-          <Button title="Go Back" onPress={() => router.back()} variant="primary" />
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Create Booking</Text>
+          <View style={styles.placeholder} />
+        </View>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color={colors.semantic.error} />
+          <Text style={styles.errorTitle}>Service Not Found</Text>
+          <Text style={styles.errorMessage}>
+            {apiError || 'The service you are trying to book is no longer available or does not exist.'}
+          </Text>
+          <View style={styles.errorActions}>
+            <View style={styles.errorButton}>
+              <Button
+                title="Go Back"
+                onPress={() => router.back()}
+                variant="primary"
+              />
+            </View>
+            <View style={styles.errorButton}>
+              <Button
+                title="Try Again"
+                onPress={loadService}
+                variant="secondary"
+              />
+            </View>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -394,6 +560,27 @@ export default function CreateBookingScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Error Banner */}
+          {apiError && (
+            <View style={[styles.errorBanner, { backgroundColor: colors.semantic.error + '15', borderColor: colors.semantic.error }]}>
+              <View style={styles.errorBannerContent}>
+                <Ionicons name="alert-circle" size={20} color={colors.semantic.error} />
+                <Text style={[styles.errorBannerText, { color: colors.semantic.error }]}>
+                  {apiError}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  setApiError(null);
+                  setErrorDetails(null);
+                }}
+                style={styles.errorBannerClose}
+              >
+                <Ionicons name="close" size={20} color={colors.semantic.error} />
+              </TouchableOpacity>
+            </View>
+          )}
+
           <View style={styles.content}>
             {/* Service Info */}
             <Card style={styles.card}>
@@ -1010,5 +1197,65 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
     fontWeight: '500',
   },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+    gap: Spacing.md,
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginTop: Spacing.md,
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: Spacing.lg,
+  },
+  errorActions: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    width: '100%',
+    maxWidth: 400,
+  },
+  errorButton: {
+    flex: 1,
+  },
+  errorBanner: {
+    margin: Spacing.lg,
+    marginBottom: 0,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  errorBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: Spacing.sm,
+  },
+  errorBannerText: {
+    fontSize: 14,
+    flex: 1,
+  },
+  errorBannerClose: {
+    padding: Spacing.xs,
+  },
 });
+
+export default function CreateBookingScreen() {
+  return (
+    <ErrorBoundary>
+      <CreateBookingScreenContent />
+    </ErrorBoundary>
+  );
+}
 

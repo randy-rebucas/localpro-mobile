@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ErrorBoundary } from '../../../components/ErrorBoundary';
 import {
   BookingCTA,
   EmptyState,
@@ -28,7 +29,7 @@ import { BorderRadius, Colors, Shadows, Spacing } from '../../../constants/theme
 import { useRoleContext } from '../../../contexts/RoleContext';
 import { useThemeColors } from '../../../hooks/use-theme';
 
-export default function ServiceDetailScreen() {
+function ServiceDetailScreenContent() {
   const params = useLocalSearchParams<{ serviceId: string }>();
   // Extract serviceId from params - handle both serviceId and id for compatibility
   const rawServiceId = Array.isArray(params.serviceId) 
@@ -654,4 +655,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+export default function ServiceDetailScreen() {
+  return (
+    <ErrorBoundary>
+      <ServiceDetailScreenContent />
+    </ErrorBoundary>
+  );
+}
 

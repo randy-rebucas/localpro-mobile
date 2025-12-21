@@ -16,10 +16,10 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ErrorBoundary } from '../../../components/ErrorBoundary';
 import {
-  EmptyState,
   ReviewList,
-  ServiceCard,
+  ServiceCard
 } from '../../../components/marketplace';
 import { BorderRadius, Colors, Shadows, Spacing } from '../../../constants/theme';
 import { useThemeColors } from '../../../hooks/use-theme';
@@ -38,7 +38,7 @@ interface Provider {
   servicesCount?: number;
 }
 
-export default function ProviderProfileScreen() {
+function ProviderProfileScreenContent() {
   const params = useLocalSearchParams<{ providerId: string }>();
   // Extract serviceId from params - handle both serviceId and id for compatibility
   const rawProviderId = Array.isArray(params.providerId) 
@@ -57,6 +57,7 @@ export default function ProviderProfileScreen() {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewsPage, setReviewsPage] = useState(1);
   const [hasMoreReviews, setHasMoreReviews] = useState(false);
+  const [error, setError] = useState<{ status?: number; message?: string } | null>(null);
 
   useEffect(() => {
     if (providerId) {
@@ -110,7 +111,17 @@ export default function ProviderProfileScreen() {
       }
     } catch (error: any) {
       console.error('Error loading provider:', error);
-      Alert.alert('Error', 'Failed to load provider profile');
+      
+      // Extract error details
+      const errorStatus = error?.status || error?.response?.status;
+      const errorMessage = error?.message || error?.response?.data?.message || 'Failed to load provider profile';
+      
+      setError({
+        status: errorStatus,
+        message: errorMessage,
+      });
+      
+      // Don't show alert, let the UI handle it
     } finally {
       setLoading(false);
     }
@@ -196,14 +207,93 @@ export default function ProviderProfileScreen() {
     );
   }
 
+  // Handle specific error cases
+  if (error) {
+    const isInactiveProvider = error.status === 403 && error.message?.toLowerCase().includes('not active');
+    const isPendingProvider = error.message?.toLowerCase().includes('pending');
+    
+    return (
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Provider Profile</Text>
+          <View style={styles.placeholder} />
+        </View>
+        
+        <View style={styles.errorContainer}>
+          <View style={[styles.errorIconContainer, { backgroundColor: colors.semantic.warning + '20' }]}>
+            <Ionicons 
+              name={isPendingProvider ? "time-outline" : "lock-closed-outline"} 
+              size={64} 
+              color={colors.semantic.warning} 
+            />
+          </View>
+          
+          <Text style={styles.errorTitle}>
+            {isPendingProvider ? 'Profile Under Review' : 'Profile Not Available'}
+          </Text>
+          
+          <Text style={styles.errorMessage}>
+            {isPendingProvider 
+              ? 'This provider profile is currently pending approval. Please check back later.'
+              : error.message || 'This provider profile is not currently active or available.'}
+          </Text>
+          
+          {isPendingProvider && (
+            <View style={[styles.infoBox, { backgroundColor: colors.primary[50], borderColor: colors.primary[200] }]}>
+              <Ionicons name="information-circle-outline" size={20} color={colors.primary[600]} />
+              <Text style={[styles.infoText, { color: colors.primary[700] }]}>
+                The provider is completing their profile setup. Once approved, their services will be available.
+              </Text>
+            </View>
+          )}
+          
+          <TouchableOpacity
+            style={[styles.backButtonLarge, { backgroundColor: colors.primary[600] }]}
+            onPress={() => router.back()}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="arrow-back" size={20} color={Colors.text.inverse} />
+            <Text style={styles.backButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (!provider || !providerId) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
-        <EmptyState
-          icon="person-outline"
-          title="Provider not found"
-          subtitle="The provider you're looking for doesn't exist or has been removed."
-        />
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Provider Profile</Text>
+          <View style={styles.placeholder} />
+        </View>
+        
+        <View style={styles.errorContainer}>
+          <View style={[styles.errorIconContainer, { backgroundColor: colors.semantic.error + '20' }]}>
+            <Ionicons name="person-remove-outline" size={64} color={colors.semantic.error} />
+          </View>
+          
+          <Text style={styles.errorTitle}>Provider Not Found</Text>
+          
+          <Text style={styles.errorMessage}>
+            The provider you're looking for doesn't exist or has been removed.
+          </Text>
+          
+          <TouchableOpacity
+            style={[styles.backButtonLarge, { backgroundColor: colors.primary[600] }]}
+            onPress={() => router.back()}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="arrow-back" size={20} color={Colors.text.inverse} />
+            <Text style={styles.backButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
@@ -592,5 +682,75 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     marginTop: Spacing.md,
   },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+    gap: Spacing.lg,
+  },
+  errorIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    textAlign: 'center',
+    marginTop: Spacing.md,
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 24,
+    maxWidth: 400,
+    marginBottom: Spacing.md,
+  },
+  infoBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    gap: Spacing.sm,
+    maxWidth: 400,
+    marginTop: Spacing.sm,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  backButtonLarge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.sm,
+    marginTop: Spacing.lg,
+    minWidth: 200,
+    ...Shadows.sm,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.inverse,
+  },
 });
+
+export default function ProviderProfileScreen() {
+  return (
+    <ErrorBoundary>
+      <ProviderProfileScreenContent />
+    </ErrorBoundary>
+  );
+}
 
