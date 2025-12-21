@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     EmptyState,
     OrderApprovalButton,
+    PayMongoPaymentButton,
     PayPalPaymentButton,
     PaymentStatusIndicator,
     PhotoUpload,
@@ -363,8 +364,24 @@ export default function BookingDetailScreen() {
               amount={booking.totalAmount}
             />
             
-            {/* PayPal Payment Button */}
-            {((booking as any).paymentStatus === 'pending' || !(booking as any).paymentStatus) && isClient && (
+            {/* PayMongo Payment Button (Default) */}
+            {((booking as any).paymentStatus === 'pending' || !(booking as any).paymentStatus) && isClient && 
+              !(booking as any).paypalOrderId && (
+              <View style={styles.paymentButtonContainer}>
+                <PayMongoPaymentButton
+                  bookingId={booking.id}
+                  providerId={booking.service.providerId}
+                  amount={booking.totalAmount}
+                  onPaymentSuccess={() => {
+                    loadBooking();
+                  }}
+                />
+              </View>
+            )}
+            
+            {/* PayPal Payment Button (Alternative) */}
+            {((booking as any).paymentStatus === 'pending' || !(booking as any).paymentStatus) && isClient && 
+              (booking as any).paymentMethod === 'paypal' && (
               <View style={styles.paymentButtonContainer}>
                 <PayPalPaymentButton
                   bookingId={booking.id}

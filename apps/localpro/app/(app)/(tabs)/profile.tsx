@@ -443,7 +443,7 @@ export default function ProfileScreen() {
             
             <TouchableOpacity 
               style={styles.actionItem}
-              onPress={() => router.push('/(app)/(tabs)/settings-comm')}
+              onPress={() => router.push('/(stack)/settings')}
             >
               <View style={styles.actionItemLeft}>
                 <View style={[styles.actionIcon, { backgroundColor: colors.primary[100] }]}>

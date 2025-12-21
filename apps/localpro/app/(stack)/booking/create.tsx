@@ -40,7 +40,7 @@ function CreateBookingScreenContent() {
     country: '',
     duration: '',
     specialInstructions: '',
-    paymentMethod: '',
+    paymentMethod: 'paymongo', // Default to PayMongo
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -790,7 +790,7 @@ function CreateBookingScreenContent() {
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>Payment Method *</Text>
                 <View style={styles.paymentMethodContainer}>
-                  {['gcash', 'paypal', 'cash', 'card'].map((method) => (
+                  {['paymongo', 'paypal', 'cash'].map((method) => (
                     <TouchableOpacity
                       key={method}
                       style={[
@@ -814,7 +814,7 @@ function CreateBookingScreenContent() {
                           formData.paymentMethod === method && { color: Colors.text.inverse },
                         ]}
                       >
-                        {method.charAt(0).toUpperCase() + method.slice(1)}
+                        {method === 'paymongo' ? 'PayMongo (Cards, GCash, Maya)' : method.charAt(0).toUpperCase() + method.slice(1)}
                       </Text>
                     </TouchableOpacity>
                   ))}

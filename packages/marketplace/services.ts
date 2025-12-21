@@ -937,6 +937,286 @@ export class MarketplaceService {
     return response;
   }
 
+  // PayMongo Integration (supports cards, banks, GCash, Maya)
+  /**
+   * Create a PayMongo payment intent
+   * Creates a payment authorization (hold) for escrow transactions
+   * @param bookingId - The booking ID
+   * @param providerId - Provider ID receiving payment
+   * @param amount - Payment amount in PHP
+   * @param currency - Currency code (default: 'PHP')
+   * @returns Payment intent with clientSecret and publishableKey for frontend integration
+   */
+  static async createPayMongoIntent(
+    bookingId: string,
+    providerId: string,
+    amount: number,
+    currency: string = 'PHP'
+  ): Promise<{
+    intentId: string;
+    clientSecret: string;
+    publishableKey: string;
+    amount: number;
+    currency: string;
+  }> {
+    const response = await apiClient.post<{
+      intentId: string;
+      clientSecret: string;
+      publishableKey: string;
+      amount: number;
+      currency: string;
+    }>(API_ENDPOINTS.marketplace.payments.createPayMongoIntent, {
+      bookingId,
+      providerId,
+      amount,
+      currency,
+    });
+    return response;
+  }
+
+  /**
+   * Get PayMongo payment intent details
+   * @param intentId - Payment intent ID
+   * @returns Payment intent details with status
+   */
+  static async getPayMongoIntent(intentId: string): Promise<{
+    id: string;
+    status: 'awaiting_payment_method' | 'awaiting_next_action' | 'processing' | 'succeeded' | 'payment_failed';
+    amount: number;
+    currency: string;
+    charges: any[];
+  }> {
+    const response = await apiClient.get<{
+      id: string;
+      status: 'awaiting_payment_method' | 'awaiting_next_action' | 'processing' | 'succeeded' | 'payment_failed';
+      amount: number;
+      currency: string;
+      charges: any[];
+    }>(API_ENDPOINTS.marketplace.payments.getPayMongoIntent(intentId));
+    return response;
+  }
+
+  /**
+   * Confirm PayMongo payment
+   * Confirms a payment with a payment method and creates an escrow
+   * @param intentId - Payment intent ID from create-intent
+   * @param paymentMethodId - Payment method ID from client-side PayMongo SDK
+   * @param bookingId - Booking ID (for escrow creation)
+   * @param providerId - Provider ID (for escrow creation)
+   * @param amount - Amount (for escrow creation)
+   * @param currency - Currency (for escrow creation, default: 'PHP')
+   * @returns Escrow and payment details
+   */
+  static async confirmPayMongoPayment(
+    intentId: string,
+    paymentMethodId: string,
+    bookingId?: string,
+    providerId?: string,
+    amount?: number,
+    currency: string = 'PHP'
+  ): Promise<{
+    escrow: {
+      _id: string;
+      bookingId: string;
+      status: 'FUNDS_HELD';
+      amount: number;
+      currency: string;
+    };
+    payment: {
+      intentId: string;
+      status: string;
+      chargeId: string;
+    };
+  }> {
+    const response = await apiClient.post<{
+      escrow: {
+        _id: string;
+        bookingId: string;
+        status: 'FUNDS_HELD';
+        amount: number;
+        currency: string;
+      };
+      payment: {
+        intentId: string;
+        status: string;
+        chargeId: string;
+      };
+    }>(API_ENDPOINTS.marketplace.payments.confirmPayMongoPayment, {
+      intentId,
+      paymentMethodId,
+      bookingId,
+      providerId,
+      amount,
+      currency,
+    });
+    return response;
+  }
+
+  /**
+   * Get PayMongo charge details
+   * @param chargeId - PayMongo charge ID
+   * @returns Charge details with status and receipt
+   */
+  static async getPayMongoCharge(chargeId: string): Promise<{
+    id: string;
+    status: 'pending' | 'paid' | 'failed' | 'refunded';
+    amount: number;
+    currency: string;
+    receipt_number: string;
+    fees: {
+      amount: number;
+      currency: string;
+    };
+  }> {
+    const response = await apiClient.get<{
+      id: string;
+      status: 'pending' | 'paid' | 'failed' | 'refunded';
+      amount: number;
+      currency: string;
+      receipt_number: string;
+      fees: {
+        amount: number;
+        currency: string;
+      };
+    }>(API_ENDPOINTS.marketplace.payments.getPayMongoCharge(chargeId));
+    return response;
+  }
+
+  /**
+   * Create PayMongo refund
+   * Creates a refund for a charge (full or partial)
+   * @param chargeId - Charge ID to refund
+   * @param amount - Refund amount (if not provided, full refund)
+   * @param reason - Refund reason (default: 'customer_request')
+   * @returns Refund details
+   */
+  static async createPayMongoRefund(
+    chargeId: string,
+    amount?: number,
+    reason: string = 'customer_request'
+  ): Promise<{
+    refundId: string;
+    status: 'pending' | 'succeeded' | 'failed';
+    amount: number;
+  }> {
+    const response = await apiClient.post<{
+      refundId: string;
+      status: 'pending' | 'succeeded' | 'failed';
+      amount: number;
+    }>(API_ENDPOINTS.marketplace.payments.createPayMongoRefund, {
+      chargeId,
+      amount,
+      reason,
+    });
+    return response;
+  }
+
+  /**
+   * Get PayMongo refund details
+   * @param refundId - PayMongo refund ID
+   * @returns Refund details
+   */
+  static async getPayMongoRefund(refundId: string): Promise<{
+    id: string;
+    status: 'pending' | 'succeeded' | 'failed';
+    amount: number;
+    reason: string;
+    charge_id: string;
+    receipt_number: string;
+  }> {
+    const response = await apiClient.get<{
+      id: string;
+      status: 'pending' | 'succeeded' | 'failed';
+      amount: number;
+      reason: string;
+      charge_id: string;
+      receipt_number: string;
+    }>(API_ENDPOINTS.marketplace.payments.getPayMongoRefund(refundId));
+    return response;
+  }
+
+  /**
+   * List PayMongo payment intents (Admin only)
+   * @param limit - Number of results (default: 20)
+   * @returns List of payment intents
+   */
+  static async listPayMongoIntents(limit: number = 20): Promise<{
+    data: Array<{
+      id: string;
+      status: string;
+      amount: number;
+      currency: string;
+      created_at: number;
+    }>;
+    pagination: {
+      has_more: boolean;
+      limit: number;
+    };
+  }> {
+    const params = new URLSearchParams();
+    if (limit) params.append('limit', limit.toString());
+    
+    const queryString = params.toString();
+    const url = `${API_ENDPOINTS.marketplace.payments.listPayMongoIntents}${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await apiClient.get<{
+      data: Array<{
+        id: string;
+        status: string;
+        amount: number;
+        currency: string;
+        created_at: number;
+      }>;
+      pagination: {
+        has_more: boolean;
+        limit: number;
+      };
+    }>(url);
+    return response;
+  }
+
+  /**
+   * List PayMongo charges (Admin only)
+   * @param limit - Number of results (default: 20)
+   * @returns List of charges
+   */
+  static async listPayMongoCharges(limit: number = 20): Promise<{
+    data: Array<{
+      id: string;
+      status: string;
+      amount: number;
+      currency: string;
+      receipt_number: string;
+      created_at: number;
+    }>;
+    pagination: {
+      has_more: boolean;
+      limit: number;
+    };
+  }> {
+    const params = new URLSearchParams();
+    if (limit) params.append('limit', limit.toString());
+    
+    const queryString = params.toString();
+    const url = `${API_ENDPOINTS.marketplace.payments.listPayMongoCharges}${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await apiClient.get<{
+      data: Array<{
+        id: string;
+        status: string;
+        amount: number;
+        currency: string;
+        receipt_number: string;
+        created_at: number;
+      }>;
+      pagination: {
+        has_more: boolean;
+        limit: number;
+      };
+    }>(url);
+    return response;
+  }
+
   // AI Features
   static async naturalLanguageSearch(query: string): Promise<Service[]> {
     try {

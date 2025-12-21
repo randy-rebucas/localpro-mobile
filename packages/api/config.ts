@@ -131,12 +131,32 @@ export const API_ENDPOINTS = {
       submitReview: (id: string) => `/api/marketplace/bookings/${id}/review`,
     },
     payments: {
+      // PayPal endpoints
       // Create PayPal order
       createPayPalOrder: '/api/marketplace/bookings/paypal/create',
       // Approve PayPal order
       approvePayPalOrder: '/api/marketplace/bookings/paypal/approve',
       // Get PayPal order details
       getPayPalOrder: (orderId: string) => `/api/marketplace/bookings/paypal/order/${orderId}`,
+      // PayMongo endpoints (supports cards, banks, GCash, Maya)
+      // Base path: /api/paymongo
+      // Create payment intent (creates authorization/hold for escrow)
+      createPayMongoIntent: '/api/paymongo/create-intent',
+      // Get payment intent details
+      getPayMongoIntent: (intentId: string) => `/api/paymongo/intent/${intentId}`,
+      // Confirm payment (attaches payment method and creates escrow)
+      confirmPayMongoPayment: '/api/paymongo/confirm-payment',
+      // Get charge details
+      getPayMongoCharge: (chargeId: string) => `/api/paymongo/charge/${chargeId}`,
+      // Create refund
+      createPayMongoRefund: '/api/paymongo/refund',
+      // Get refund details
+      getPayMongoRefund: (refundId: string) => `/api/paymongo/refund/${refundId}`,
+      // Admin endpoints
+      // List payment intents (admin only)
+      listPayMongoIntents: '/api/paymongo/intents',
+      // List charges (admin only)
+      listPayMongoCharges: '/api/paymongo/charges',
     },
   },
   // AI Marketplace endpoints

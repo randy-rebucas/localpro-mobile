@@ -9,6 +9,7 @@ export { ImageCarousel } from './ImageCarousel';
 export { LoadingSkeleton } from './LoadingSkeleton';
 export { NaturalLanguageSearch } from './NaturalLanguageSearch';
 export { OrderApprovalButton } from './OrderApprovalButton';
+export { PayMongoPaymentButton } from './PayMongoPaymentButton';
 export { PayPalPaymentButton } from './PayPalPaymentButton';
 export { PaymentStatusIndicator } from './PaymentStatusIndicator';
 export { PhotoUpload } from './PhotoUpload';
