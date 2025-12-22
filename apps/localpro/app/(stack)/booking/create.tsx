@@ -20,6 +20,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '../../../components/ErrorBoundary';
+import { WavyBackground } from '../../../components/WavyBackground';
 import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../../constants/theme';
 import { useThemeColors } from '../../../hooks/use-theme';
 
@@ -547,18 +548,19 @@ function CreateBookingScreenContent() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <WavyBackground />
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Header Actions */}
-        <View style={styles.headerActions}>
+        <View style={[styles.headerActions, { backgroundColor: 'transparent' }]}>
           <TouchableOpacity
-            style={styles.headerButton}
+            style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
             onPress={() => router.back()}
             activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
           >
-            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            <Ionicons name="arrow-back" size={26} color={colors.text.primary} />
           </TouchableOpacity>
         </View>
 
@@ -589,7 +591,7 @@ function CreateBookingScreenContent() {
             </View>
           )}
 
-          <View style={[styles.content, { paddingTop: Platform.select({ ios: 60, android: 70 }) }]}>
+          <View style={styles.content}>
             {/* Service Info */}
             <Card style={styles.card}>
               <Text style={styles.sectionTitle}>Service Details</Text>
@@ -852,15 +854,23 @@ function CreateBookingScreenContent() {
           </View>
         </ScrollView>
 
-        {/* Action Button */}
-        <View style={[styles.footer, { backgroundColor: colors.background.primary }]}>
-          <Button
-            title="Create Booking"
+        {/* Action Buttons */}
+        <View style={[styles.actionBar, { 
+          backgroundColor: 'transparent', 
+          borderTopColor: colors.border.light 
+        }]}>
+          <TouchableOpacity
+            style={[styles.applyButton, { backgroundColor: colors.primary[600] }]}
             onPress={handleCreateBooking}
-            variant="primary"
-            loading={loading}
             disabled={loading}
-          />
+            activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color={Colors.text.inverse} />
+            ) : (
+              <Text style={styles.applyButtonText}>Create Booking</Text>
+            )}
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
 
@@ -872,6 +882,11 @@ function CreateBookingScreenContent() {
         onRequestClose={() => setShowDatePicker(false)}
       >
         <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setShowDatePicker(false)}
+          />
           <View style={[styles.modalContent, { backgroundColor: colors.background.primary }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Date</Text>
@@ -945,26 +960,45 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerActions: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.lg }),
-    paddingBottom: Spacing.sm,
-    zIndex: 10,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    paddingTop: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.xl
+    }),
+    backgroundColor: 'transparent',
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
   },
   headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    height: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    borderRadius: Platform.select({
+      ios: 24,
+      android: 24
+    }),
     backgroundColor: Colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.sm,
+    ...Shadows.lg,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.lg.elevation,
+      },
+    }),
   },
   loadingContainer: {
     flex: 1,
@@ -980,10 +1014,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: Spacing.xl,
+    paddingBottom: Platform.select({ ios: Spacing['3xl'], android: Spacing['3xl'] + 8 }),
   },
   content: {
     padding: Spacing.lg,
+    paddingTop: Spacing.md,
   },
   card: {
     marginBottom: Spacing.md,
@@ -1025,10 +1060,55 @@ const styles = StyleSheet.create({
     minHeight: 100,
     textAlignVertical: 'top',
   },
-  footer: {
+  actionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border.light,
+    paddingBottom: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.lg + 4
+    }),
+    backgroundColor: 'transparent',
+    borderTopWidth: Platform.select({
+      ios: 1,
+      android: 1.5
+    }),
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
+  },
+  applyButton: {
+    flex: 1,
+    height: Platform.select({
+      ios: 48,
+      android: 50
+    }),
+    borderRadius: BorderRadius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  applyButtonText: {
+    fontSize: Platform.select({
+      ios: 16,
+      android: 15
+    }),
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.text.inverse,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
+    ...Platform.select({
+      android: {
+        letterSpacing: 0.3,
+      },
+    }),
   },
   inputContainer: {
     marginBottom: Spacing.md,
@@ -1106,13 +1186,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: Spacing.lg,
-    borderBottomWidth: 1,
+    borderBottomWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderBottomColor: Colors.border.light,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: Platform.select({ ios: 20, android: 19 }),
+    fontWeight: Typography.fontWeight.bold,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.bold || 'System',
   },
   modalCloseButton: {
     width: 32,

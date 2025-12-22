@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAuthContext } from '@localpro/auth';
 import type { FacilityBooking } from '@localpro/types';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';

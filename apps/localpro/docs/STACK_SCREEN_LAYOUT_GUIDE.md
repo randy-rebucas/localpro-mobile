@@ -347,9 +347,11 @@ applyButtonDisabled: {
 
 ### Screen Container
 ```tsx
+import { WavyBackground } from '../../../components/WavyBackground';
+
 <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
   {/* Optional: Background decoration */}
-  <WavyBackground colors={colors} />
+  <WavyBackground />
   
   {/* Scrollable Content */}
   <ScrollView
@@ -381,10 +383,11 @@ applyButtonDisabled: {
 ### Key Layout Points
 
 1. **SafeAreaView**: Wraps entire screen with top/bottom safe area insets
-2. **ScrollView**: Contains all scrollable content
-3. **Header Actions**: First element in ScrollView, transparent background
-4. **Content**: Main content area with padding
-5. **Action Bar**: Outside ScrollView, fixed at bottom
+2. **WavyBackground** (Optional): Decorative background component, positioned absolutely behind content
+3. **ScrollView**: Contains all scrollable content
+4. **Header Actions**: First element in ScrollView, transparent background
+5. **Content**: Main content area with padding
+6. **Action Bar**: Outside ScrollView, fixed at bottom
 
 ---
 
@@ -461,6 +464,7 @@ When creating a new stack screen, ensure:
 - [ ] State variations handled (loading, disabled, etc.)
 - [ ] Colors from theme hook used
 - [ ] SafeAreaView wraps entire screen
+- [ ] WavyBackground component imported and used (optional)
 - [ ] ScrollView contains header actions and content
 - [ ] Action bar is outside ScrollView
 
@@ -557,9 +561,302 @@ When creating a new stack screen, ensure:
 
 ---
 
+## 11. WavyBackground Component
+
+### Overview
+The `WavyBackground` component provides an optional decorative background pattern for stack screens. It creates a subtle, animated wave effect using theme colors.
+
+### Location
+- **Component File**: `apps/localpro/components/WavyBackground.tsx`
+- **Global Component**: Reusable across all screens
+
+### Usage
+
+```tsx
+import { WavyBackground } from '../../../components/WavyBackground';
+
+// In your component render:
+<SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+  <WavyBackground />
+  {/* Rest of your content */}
+</SafeAreaView>
+```
+
+### Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `colors` | `ReturnType<typeof useThemeColors>` | No | `useThemeColors()` | Optional custom colors object. If not provided, uses theme colors from `useThemeColors` hook. |
+
+### Implementation Details
+
+- **Position**: Absolute positioning, covers entire screen (`top: 0, left: 0, right: 0, bottom: 0`)
+- **Z-Index**: `0` (behind content)
+- **Pointer Events**: `none` (doesn't interfere with touch interactions)
+- **Colors Used**:
+  - Primary colors: `colors.primary[100]`, `colors.primary[200]`, `colors.primary[300]`
+  - Secondary colors: `colors.secondary[100]`, `colors.secondary[200]`, `colors.secondary[300]`
+- **Platform Differences**: Border radius values differ slightly between iOS and Android
+
+### Customization
+
+If you need custom colors, pass them as a prop:
+
+```tsx
+const customColors = {
+  primary: { 100: '#custom1', 200: '#custom2', 300: '#custom3' },
+  secondary: { 100: '#custom4', 200: '#custom5', 300: '#custom6' }
+};
+
+<WavyBackground colors={customColors} />
+```
+
+### When to Use
+
+- **Optional**: Not required for all screens
+- **Visual Enhancement**: Adds visual interest to detail screens
+- **Consistent Branding**: Uses theme colors automatically
+- **Performance**: Lightweight, doesn't impact scroll performance
+
+---
+
+## 12. Modal Styling with Opacity
+
+### Overview
+Modals in stack screens should use consistent opacity styling for backdrop overlays and content containers. This section covers the two main modal patterns used in the application.
+
+### Modal Types
+
+#### Type 1: Full-Screen Modal (PageSheet)
+Used for full-screen forms and content that require the entire screen space.
+
+**Structure:**
+```tsx
+<Modal
+  visible={showModal}
+  animationType="slide"
+  presentationStyle="pageSheet"
+  onRequestClose={() => setShowModal(false)}
+>
+  <SafeAreaView style={styles.modalContainer} edges={['top', 'bottom']}>
+    {/* Modal content */}
+  </SafeAreaView>
+</Modal>
+```
+
+**Styling:**
+```typescript
+modalContainer: {
+  flex: 1,
+  backgroundColor: Colors.background.secondary,
+}
+```
+
+**Characteristics:**
+- No backdrop overlay (full-screen on iOS)
+- Uses `presentationStyle="pageSheet"` (iOS-specific)
+- Solid background color
+- No opacity needed for container
+
+#### Type 2: Transparent Modal with Backdrop
+Used for bottom sheets, date pickers, and overlay dialogs.
+
+**Structure:**
+```tsx
+<Modal
+  visible={showModal}
+  transparent
+  animationType="slide"
+  onRequestClose={() => setShowModal(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={[styles.modalContent, { backgroundColor: colors.background.primary }]}>
+      {/* Modal content */}
+    </View>
+  </View>
+</Modal>
+```
+
+**Styling:**
+```typescript
+modalOverlay: {
+  flex: 1,
+  backgroundColor: 'rgba(0, 0, 0, 0.5)',  // 50% opacity black backdrop
+  justifyContent: 'flex-end',              // For bottom sheets
+  // or 'center' for centered modals
+},
+modalContent: {
+  borderTopLeftRadius: BorderRadius.lg,
+  borderTopRightRadius: BorderRadius.lg,
+  maxHeight: '80%',                        // For bottom sheets
+  paddingBottom: Spacing.xl,
+  backgroundColor: Colors.background.primary,
+}
+```
+
+### Opacity Specifications
+
+#### Backdrop Overlay Opacity
+- **Standard Backdrop**: `rgba(0, 0, 0, 0.5)` - 50% opacity black
+  - Provides good contrast while keeping background visible
+  - Standard for most overlay modals
+- **Light Backdrop**: `rgba(0, 0, 0, 0.3)` - 30% opacity black
+  - For less intrusive overlays
+- **Dark Backdrop**: `rgba(0, 0, 0, 0.7)` - 70% opacity black
+  - For critical actions requiring focus
+
+#### Content Card Opacity
+Cards within modals can use semi-transparent backgrounds to blend with the backdrop:
+
+```typescript
+modalCard: {
+  backgroundColor: Platform.select({
+    ios: 'rgba(255, 255, 255, 0.7)',      // 70% opacity white (iOS)
+    android: 'rgba(255, 255, 255, 0.75)', // 75% opacity white (Android)
+  }),
+  borderRadius: BorderRadius.lg,
+  padding: Spacing.lg,
+  ...Shadows.md,
+}
+```
+
+**Platform Differences:**
+- **iOS**: `rgba(255, 255, 255, 0.7)` - 70% opacity
+- **Android**: `rgba(255, 255, 255, 0.75)` - 75% opacity (slightly more opaque for better visibility)
+
+### Modal Header Styling
+
+For modals with headers:
+
+```typescript
+modalHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: Spacing.lg,
+  borderBottomWidth: Platform.select({ ios: 1, android: 1.5 }),
+  borderBottomColor: Colors.border.light,
+},
+modalTitle: {
+  fontSize: Platform.select({ ios: 20, android: 19 }),
+  fontWeight: Typography.fontWeight.bold,
+  color: Colors.text.primary,
+  fontFamily: Typography.fontFamily?.bold || 'System',
+},
+modalCloseButton: {
+  width: 32,
+  height: 32,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+```
+
+### Bottom Sheet Pattern
+
+For bottom sheet modals (common for date pickers, filters, etc.):
+
+```tsx
+<Modal
+  visible={showModal}
+  transparent
+  animationType="slide"
+  onRequestClose={() => setShowModal(false)}
+>
+  <View style={styles.modalOverlay}>
+    <TouchableOpacity
+      style={StyleSheet.absoluteFill}
+      activeOpacity={1}
+      onPress={() => setShowModal(false)}
+    />
+    <View style={[styles.modalContent, { backgroundColor: colors.background.primary }]}>
+      {/* Content */}
+    </View>
+  </View>
+</Modal>
+```
+
+**Key Points:**
+- `justifyContent: 'flex-end'` in `modalOverlay` positions content at bottom
+- `maxHeight: '80%'` prevents content from taking full screen
+- Rounded top corners (`borderTopLeftRadius`, `borderTopRightRadius`)
+- Dismissible by tapping backdrop (optional)
+
+### Centered Modal Pattern
+
+For centered dialog modals:
+
+```tsx
+<Modal
+  visible={showModal}
+  transparent
+  animationType="fade"
+  onRequestClose={() => setShowModal(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={[styles.modalContent, { backgroundColor: colors.background.primary }]}>
+      {/* Content */}
+    </View>
+  </View>
+</Modal>
+```
+
+**Styling:**
+```typescript
+modalOverlay: {
+  flex: 1,
+  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  justifyContent: 'center',              // Center content
+  alignItems: 'center',
+  padding: Spacing.lg,
+},
+modalContent: {
+  borderRadius: BorderRadius.lg,
+  width: '100%',
+  maxWidth: 400,                         // Limit width on larger screens
+  padding: Spacing.lg,
+  backgroundColor: Colors.background.primary,
+  ...Shadows.lg,
+}
+```
+
+### Disabled State Opacity
+
+For disabled buttons or elements within modals:
+
+```typescript
+disabledButton: {
+  opacity: 0.6,                          // 60% opacity for disabled state
+}
+```
+
+### Implementation Checklist
+
+When creating a modal, ensure:
+
+- [ ] Appropriate modal type selected (full-screen vs transparent)
+- [ ] Backdrop opacity set to `rgba(0, 0, 0, 0.5)` for transparent modals
+- [ ] Content background uses solid color or appropriate opacity
+- [ ] Platform-specific opacity values applied (iOS: 0.7, Android: 0.75 for cards)
+- [ ] SafeAreaView used for full-screen modals
+- [ ] Proper animation type (`slide` for bottom sheets, `fade` for dialogs)
+- [ ] `onRequestClose` handler implemented
+- [ ] Disabled states use `opacity: 0.6`
+
+### Common Patterns
+
+| Modal Type | Backdrop | Content Background | Animation | Use Case |
+|------------|----------|-------------------|-----------|----------|
+| Full-Screen | None | Solid | `slide` | Forms, detail views |
+| Bottom Sheet | `rgba(0, 0, 0, 0.5)` | Solid | `slide` | Date pickers, filters |
+| Dialog | `rgba(0, 0, 0, 0.5)` | Solid | `fade` | Confirmations, alerts |
+| Overlay Card | `rgba(0, 0, 0, 0.5)` | `rgba(255, 255, 255, 0.7/0.75)` | `fade` | Quick actions |
+
+---
+
 ## References
 
 - **Source File**: `apps/localpro/app/(stack)/job/[jobId].tsx`
+- **WavyBackground Component**: `apps/localpro/components/WavyBackground.tsx`
 - **Theme Constants**: `apps/localpro/constants/theme.ts`
 - **Related Screens**: 
   - `apps/localpro/app/(stack)/company/[companyId].tsx`
@@ -568,6 +865,6 @@ When creating a new stack screen, ensure:
 
 ---
 
-**Last Updated**: Based on job detail screen implementation
-**Version**: 1.0
+**Last Updated**: Based on job detail screen implementation with global WavyBackground component and modal opacity specifications
+**Version**: 1.2
 

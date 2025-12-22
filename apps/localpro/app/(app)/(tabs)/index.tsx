@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAuthContext } from '@localpro/auth';
 import { JobBoardService } from '@localpro/job-board';
 import { useCategories, useMyServices, useServices } from '@localpro/marketplace';
 import type { Job, Service, ServiceCategory } from '@localpro/types';

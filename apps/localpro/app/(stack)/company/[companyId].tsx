@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '../../../components/ErrorBoundary';
+import { WavyBackground } from '../../../components/WavyBackground';
 import {
   CompanyHeader,
   CompanyJobsList,
@@ -197,6 +198,7 @@ function CompanyDetailScreenContent() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <WavyBackground />
       <FlatList
         data={jobs}
         keyExtractor={(item) => item.id}
@@ -204,21 +206,23 @@ function CompanyDetailScreenContent() {
         ListHeaderComponent={
           <View>
             {/* Header Actions */}
-            <View style={styles.headerActions}>
+            <View style={[styles.headerActions, { backgroundColor: 'transparent' }]}>
               <TouchableOpacity
-                style={styles.headerButton}
+                style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
                 onPress={() => router.back()}
                 activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
               >
-                <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+                <Ionicons name="arrow-back" size={26} color={colors.text.primary} />
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.headerButton}
-                onPress={handleShare}
-                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
-              >
-                <Ionicons name="share-outline" size={24} color={colors.text.primary} />
-              </TouchableOpacity>
+              <View style={styles.headerRight}>
+                <TouchableOpacity
+                  style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
+                  onPress={handleShare}
+                  activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+                >
+                  <Ionicons name="share-outline" size={26} color={colors.text.primary} />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={styles.headerSection}>
@@ -290,26 +294,49 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
   },
   headerActions: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.lg }),
-    paddingBottom: Spacing.sm,
-    zIndex: 10,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    paddingTop: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.xl
+    }),
+    backgroundColor: 'transparent',
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
+  },
+  headerRight: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
   },
   headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    height: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    borderRadius: Platform.select({
+      ios: 24,
+      android: 24
+    }),
     backgroundColor: Colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.sm,
+    ...Shadows.lg,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.lg.elevation,
+      },
+    }),
   },
   headerSection: {
     paddingHorizontal: Spacing.lg,

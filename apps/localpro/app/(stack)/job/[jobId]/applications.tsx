@@ -19,6 +19,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WavyBackground } from '../../../../components/WavyBackground';
 import {
   ApplicantCard,
   ApplicationAnalytics,
@@ -299,6 +300,7 @@ export default function JobApplicationsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <WavyBackground />
       <FlatList
         data={filteredApplications}
         keyExtractor={(item) => item.id}
@@ -306,26 +308,26 @@ export default function JobApplicationsScreen() {
         ListHeaderComponent={
           <View>
             {/* Header Actions */}
-            <View style={styles.headerActions}>
+            <View style={[styles.headerActions, { backgroundColor: 'transparent' }]}>
               <TouchableOpacity
-                style={styles.headerButton}
+                style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
                 onPress={() => router.back()}
                 activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
               >
-                <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+                <Ionicons name="arrow-back" size={26} color={colors.text.primary} />
               </TouchableOpacity>
               <View style={styles.headerRight}>
                 <TouchableOpacity
-                  style={styles.headerButton}
+                  style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
                   onPress={handleShare}
                   activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                 >
-                  <Ionicons name="share-outline" size={24} color={colors.text.primary} />
+                  <Ionicons name="share-outline" size={26} color={colors.text.primary} />
                 </TouchableOpacity>
               </View>
             </View>
 
-            <View style={[styles.header, { paddingTop: Platform.select({ ios: 60, android: 70 }) }]}>
+            <View style={styles.header}>
               <View>
                 <Text style={styles.title}>Applications</Text>
                 <Text style={styles.subtitle}>{job.title}</Text>
@@ -464,30 +466,49 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
   headerActions: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.lg }),
-    paddingBottom: Spacing.sm,
-    zIndex: 10,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    paddingTop: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.xl
+    }),
+    backgroundColor: 'transparent',
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
   },
   headerRight: {
     flexDirection: 'row',
     gap: Spacing.sm,
   },
   headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    height: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    borderRadius: Platform.select({
+      ios: 24,
+      android: 24
+    }),
     backgroundColor: Colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.sm,
+    ...Shadows.lg,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.lg.elevation,
+      },
+    }),
   },
   header: {
     paddingHorizontal: Spacing.lg,

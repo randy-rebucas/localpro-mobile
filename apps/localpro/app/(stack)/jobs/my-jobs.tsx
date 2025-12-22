@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WavyBackground } from '../../../components/WavyBackground';
 import {
   JobStatsCard,
   QuickActionButtons
@@ -287,12 +288,24 @@ export default function MyJobsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={Platform.select({ ios: ['bottom'], android: ['bottom', 'top'] })}>
+      <WavyBackground />
       <FlatList
         data={filteredJobs}
         keyExtractor={(item) => item.id}
         renderItem={renderJobCard}
         ListHeaderComponent={
           <View>
+            {/* Header Actions */}
+            <View style={[styles.headerActions, { backgroundColor: 'transparent' }]}>
+              <TouchableOpacity
+                style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
+                onPress={() => router.back()}
+                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+              >
+                <Ionicons name="arrow-back" size={26} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+
             <View style={styles.header}>
               <View>
                 <Text style={styles.title}>My Jobs</Text>
@@ -386,12 +399,53 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background.secondary,
   },
+  headerActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    paddingTop: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.xl
+    }),
+    backgroundColor: 'transparent',
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
+  },
+  headerButton: {
+    width: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    height: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    borderRadius: Platform.select({
+      ios: 24,
+      android: 24
+    }),
+    backgroundColor: Colors.background.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.lg,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.lg.elevation,
+      },
+    }),
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingHorizontal: Spacing.lg,
-    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.sm }),
+    paddingTop: Spacing.md,
     paddingBottom: Spacing.md,
   },
   title: {

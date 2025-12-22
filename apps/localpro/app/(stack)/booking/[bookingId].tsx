@@ -18,6 +18,7 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WavyBackground } from '../../../components/WavyBackground';
 import {
     EmptyState,
     OrderApprovalButton,
@@ -226,27 +227,28 @@ export default function BookingDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <WavyBackground />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Header Actions */}
-        <View style={styles.headerActions}>
+        <View style={[styles.headerActions, { backgroundColor: 'transparent' }]}>
           <TouchableOpacity
-            style={styles.headerButton}
+            style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
             onPress={() => router.back()}
             activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
           >
-            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            <Ionicons name="arrow-back" size={26} color={colors.text.primary} />
           </TouchableOpacity>
           <View style={styles.headerRight}>
             <TouchableOpacity
-              style={styles.headerButton}
+              style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
               onPress={handleShare}
               activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
             >
-              <Ionicons name="share-outline" size={24} color={colors.text.primary} />
+              <Ionicons name="share-outline" size={26} color={colors.text.primary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -460,61 +462,87 @@ export default function BookingDetailScreen() {
             </Card>
           )}
 
-          {/* Actions */}
-          {canUpdateStatus && (
-            <Card style={styles.card}>
-              <Text style={styles.sectionTitle}>Actions</Text>
-              {booking.status === 'pending' && isProvider && (
-                <Button
-                  title="Confirm Booking"
-                  onPress={() => handleUpdateStatus('confirmed')}
-                  variant="primary"
-                  loading={updating}
-                  disabled={updating}
-                />
-              )}
-              {booking.status === 'confirmed' && isProvider && (
-                <Button
-                  title="Start Service"
-                  onPress={() => handleUpdateStatus('in-progress')}
-                  variant="primary"
-                  loading={updating}
-                  disabled={updating}
-                />
-              )}
-              {booking.status === 'in-progress' && isProvider && (
-                <Button
-                  title="Complete Service"
-                  onPress={() => handleUpdateStatus('completed')}
-                  variant="primary"
-                  loading={updating}
-                  disabled={updating}
-                />
-              )}
-              {canCancel && (
-                <View style={styles.cancelButtonContainer}>
-                  <Button
-                    title="Cancel Booking"
-                    onPress={handleCancel}
-                    variant="outline"
-                    loading={updating}
-                    disabled={updating}
-                  />
-                </View>
-              )}
-              {canReview && (
-                <View style={styles.reviewButtonContainer}>
-                  <Button
-                    title="Write Review"
-                    onPress={() => setReviewModalVisible(true)}
-                    variant="primary"
-                  />
-                </View>
-              )}
-            </Card>
-          )}
         </View>
       </ScrollView>
+
+      {/* Action Buttons */}
+      {canUpdateStatus && (
+        <View style={[styles.actionBar, { 
+          backgroundColor: 'transparent', 
+          borderTopColor: colors.border.light 
+        }]}>
+          {booking.status === 'pending' && isProvider && (
+            <TouchableOpacity
+              style={[styles.applyButton, { backgroundColor: colors.primary[600] }]}
+              onPress={() => handleUpdateStatus('confirmed')}
+              disabled={updating}
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+            >
+              {updating ? (
+                <ActivityIndicator size="small" color={Colors.text.inverse} />
+              ) : (
+                <Text style={styles.applyButtonText}>Confirm Booking</Text>
+              )}
+            </TouchableOpacity>
+          )}
+          {booking.status === 'confirmed' && isProvider && (
+            <TouchableOpacity
+              style={[styles.applyButton, { backgroundColor: colors.primary[600] }]}
+              onPress={() => handleUpdateStatus('in-progress')}
+              disabled={updating}
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+            >
+              {updating ? (
+                <ActivityIndicator size="small" color={Colors.text.inverse} />
+              ) : (
+                <Text style={styles.applyButtonText}>Start Service</Text>
+              )}
+            </TouchableOpacity>
+          )}
+          {booking.status === 'in-progress' && isProvider && (
+            <TouchableOpacity
+              style={[styles.applyButton, { backgroundColor: colors.primary[600] }]}
+              onPress={() => handleUpdateStatus('completed')}
+              disabled={updating}
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+            >
+              {updating ? (
+                <ActivityIndicator size="small" color={Colors.text.inverse} />
+              ) : (
+                <Text style={styles.applyButtonText}>Complete Service</Text>
+              )}
+            </TouchableOpacity>
+          )}
+          {canReview && (
+            <TouchableOpacity
+              style={[styles.applyButton, { backgroundColor: colors.primary[600] }]}
+              onPress={() => setReviewModalVisible(true)}
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+            >
+              <Text style={styles.applyButtonText}>Write Review</Text>
+            </TouchableOpacity>
+          )}
+          {canCancel && (
+            <TouchableOpacity
+              style={[styles.secondaryButton, { 
+                backgroundColor: colors.background.primary,
+                borderColor: colors.semantic.error[600]
+              }]}
+              onPress={handleCancel}
+              disabled={updating}
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+            >
+              {updating ? (
+                <ActivityIndicator size="small" color={colors.semantic.error[600]} />
+              ) : (
+                <Text style={[styles.secondaryButtonText, { color: colors.semantic.error[600] }]}>
+                  Cancel Booking
+                </Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       {/* Review Modal */}
       <ReviewFormModal
@@ -546,37 +574,56 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: Spacing.xl,
+    paddingBottom: Platform.select({ ios: Spacing['3xl'], android: Spacing['3xl'] + 8 }),
   },
   headerActions: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.lg }),
-    paddingBottom: Spacing.sm,
-    zIndex: 10,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    paddingTop: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.xl
+    }),
+    backgroundColor: 'transparent',
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
   },
   headerRight: {
     flexDirection: 'row',
     gap: Spacing.sm,
   },
   headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    height: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    borderRadius: Platform.select({
+      ios: 24,
+      android: 24
+    }),
     backgroundColor: Colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.sm,
+    ...Shadows.lg,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.lg.elevation,
+      },
+    }),
   },
   content: {
     padding: Spacing.lg,
-    paddingTop: Platform.select({ ios: 60, android: 70 }),
+    paddingTop: Spacing.md,
   },
   statusSection: {
     flexDirection: 'row',
@@ -717,14 +764,91 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  cancelButtonContainer: {
-    marginTop: Spacing.md,
-  },
-  reviewButtonContainer: {
-    marginTop: Spacing.md,
-  },
   paymentButtonContainer: {
     marginTop: Spacing.md,
+  },
+  actionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.lg,
+    paddingBottom: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.lg + 4
+    }),
+    backgroundColor: 'transparent',
+    borderTopWidth: Platform.select({
+      ios: 1,
+      android: 1.5
+    }),
+    gap: Spacing.md,
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
+  },
+  applyButton: {
+    flex: 1,
+    height: Platform.select({
+      ios: 48,
+      android: 50
+    }),
+    borderRadius: BorderRadius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  secondaryButton: {
+    flex: 1,
+    height: Platform.select({
+      ios: 48,
+      android: 50
+    }),
+    borderRadius: BorderRadius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: Platform.select({
+      ios: 1,
+      android: 1.5
+    }),
+    ...Platform.select({
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  applyButtonText: {
+    fontSize: Platform.select({
+      ios: 16,
+      android: 15
+    }),
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.text.inverse,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
+    ...Platform.select({
+      android: {
+        letterSpacing: 0.3,
+      },
+    }),
+  },
+  secondaryButtonText: {
+    fontSize: Platform.select({
+      ios: 16,
+      android: 15
+    }),
+    fontWeight: Typography.fontWeight.semibold,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
+    ...Platform.select({
+      android: {
+        letterSpacing: 0.3,
+      },
+    }),
   },
 });
 

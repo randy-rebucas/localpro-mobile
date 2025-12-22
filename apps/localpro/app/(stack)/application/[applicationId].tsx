@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '../../../components/ErrorBoundary';
+import { WavyBackground } from '../../../components/WavyBackground';
 import {
   ApplicationStatusBadge,
   ApplicationTimeline,
@@ -232,27 +233,28 @@ function ApplicationDetailScreenContent() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <WavyBackground />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Header Actions */}
-        <View style={styles.headerActions}>
+        <View style={[styles.headerActions, { backgroundColor: 'transparent' }]}>
           <TouchableOpacity
-            style={styles.headerButton}
+            style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
             onPress={() => router.back()}
             activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
           >
-            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            <Ionicons name="arrow-back" size={26} color={colors.text.primary} />
           </TouchableOpacity>
           <View style={styles.headerRight}>
             <TouchableOpacity
-              style={styles.headerButton}
+              style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
               onPress={handleShare}
               activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
             >
-              <Ionicons name="share-outline" size={24} color={colors.text.primary} />
+              <Ionicons name="share-outline" size={26} color={colors.text.primary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -335,53 +337,57 @@ function ApplicationDetailScreenContent() {
             />
           )}
 
-          {/* Actions */}
-          <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Actions</Text>
-            <View style={styles.actionsContainer}>
-              {canWithdraw && (
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.withdrawButton, { borderColor: colors.semantic.error[200] }]}
-                  onPress={handleWithdraw}
-                  disabled={withdrawing}
-                  activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
-                >
-                  {withdrawing ? (
-                    <ActivityIndicator size="small" color={colors.semantic.error[600]} />
-                  ) : (
-                    <Ionicons name="close-circle-outline" size={20} color={colors.semantic.error[600]} />
-                  )}
-                  <Text style={[styles.actionButtonText, { color: colors.semantic.error[600] }]}>
-                    {withdrawing ? 'Withdrawing...' : 'Withdraw Application'}
-                  </Text>
-                </TouchableOpacity>
-              )}
-
-              <TouchableOpacity
-                style={[styles.actionButton, styles.viewJobActionButton, { borderColor: colors.border.light }]}
-                onPress={() => router.push(`/(stack)/job/${application.jobId}` as any)}
-                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
-              >
-                <Ionicons name="briefcase-outline" size={20} color={colors.primary[600]} />
-                <Text style={[styles.actionButtonText, { color: colors.primary[600] }]}>View Job</Text>
-              </TouchableOpacity>
-
-              {isJobSeeker && (
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.contactButton, { borderColor: colors.border.light }]}
-                  onPress={handleContactEmployer}
-                  activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
-                >
-                  <Ionicons name="mail-outline" size={20} color={colors.text.secondary} />
-                  <Text style={[styles.actionButtonText, { color: colors.text.secondary }]}>
-                    Contact Employer
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </Card>
         </View>
       </ScrollView>
+
+      {/* Action Buttons */}
+      <View style={[styles.actionBar, { 
+        backgroundColor: 'transparent', 
+        borderTopColor: colors.border.light 
+      }]}>
+        {canWithdraw && (
+          <TouchableOpacity
+            style={[styles.applyButton, { backgroundColor: colors.semantic.error[600] }]}
+            onPress={handleWithdraw}
+            disabled={withdrawing}
+            activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+          >
+            {withdrawing ? (
+              <ActivityIndicator size="small" color={Colors.text.inverse} />
+            ) : (
+              <>
+                <Ionicons name="close-circle-outline" size={20} color={Colors.text.inverse} />
+                <Text style={styles.applyButtonText}>Withdraw Application</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+        {!canWithdraw && (
+          <>
+            <TouchableOpacity
+              style={[styles.secondaryButton, { 
+                backgroundColor: colors.background.primary,
+                borderColor: colors.primary[600]
+              }]}
+              onPress={() => router.push(`/(stack)/job/${application.jobId}` as any)}
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+            >
+              <Ionicons name="briefcase-outline" size={20} color={colors.primary[600]} />
+              <Text style={[styles.secondaryButtonText, { color: colors.primary[600] }]}>View Job</Text>
+            </TouchableOpacity>
+            {isJobSeeker && (
+              <TouchableOpacity
+                style={[styles.applyButton, { backgroundColor: colors.primary[600] }]}
+                onPress={handleContactEmployer}
+                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+              >
+                <Ionicons name="mail-outline" size={20} color={Colors.text.inverse} />
+                <Text style={styles.applyButtonText}>Contact Employer</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -403,37 +409,56 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: Spacing.xl,
+    paddingBottom: Platform.select({ ios: Spacing['3xl'], android: Spacing['3xl'] + 8 }),
   },
   headerActions: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.lg }),
-    paddingBottom: Spacing.sm,
-    zIndex: 10,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    paddingTop: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.xl
+    }),
+    backgroundColor: 'transparent',
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
   },
   headerRight: {
     flexDirection: 'row',
     gap: Spacing.sm,
   },
   headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    height: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    borderRadius: Platform.select({
+      ios: 24,
+      android: 24
+    }),
     backgroundColor: Colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.sm,
+    ...Shadows.lg,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.lg.elevation,
+      },
+    }),
   },
   content: {
     padding: Spacing.lg,
-    paddingTop: Platform.select({ ios: 60, android: 70 }),
+    paddingTop: Spacing.md,
   },
   loadingContainer: {
     flex: 1,
@@ -504,33 +529,91 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
-  actionsContainer: {
-    gap: Spacing.sm,
+  actionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.lg,
+    paddingBottom: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.lg + 4
+    }),
+    backgroundColor: 'transparent',
+    borderTopWidth: Platform.select({
+      ios: 1,
+      android: 1.5
+    }),
+    gap: Spacing.md,
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
   },
-  actionButton: {
+  applyButton: {
+    flex: 1,
+    height: Platform.select({
+      ios: 48,
+      android: 50
+    }),
+    borderRadius: BorderRadius.full,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-    paddingVertical: Platform.select({ ios: 12, android: 14 }),
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
-    borderWidth: Platform.select({ ios: 1, android: 1.5 }),
-    backgroundColor: Colors.background.secondary,
+    ...Platform.select({
+      android: {
+        elevation: 2,
+      },
+    }),
   },
-  withdrawButton: {
-    backgroundColor: Colors.semantic.error[50],
+  secondaryButton: {
+    flex: 1,
+    height: Platform.select({
+      ios: 48,
+      android: 50
+    }),
+    borderRadius: BorderRadius.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    borderWidth: Platform.select({
+      ios: 1,
+      android: 1.5
+    }),
+    ...Platform.select({
+      android: {
+        elevation: 2,
+      },
+    }),
   },
-  viewJobActionButton: {
-    backgroundColor: Colors.primary[50],
-    borderColor: Colors.primary[200],
+  applyButtonText: {
+    fontSize: Platform.select({
+      ios: 16,
+      android: 15
+    }),
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.text.inverse,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
+    ...Platform.select({
+      android: {
+        letterSpacing: 0.3,
+      },
+    }),
   },
-  contactButton: {
-    backgroundColor: Colors.background.secondary,
-  },
-  actionButtonText: {
-    fontSize: 15,
+  secondaryButtonText: {
+    fontSize: Platform.select({
+      ios: 16,
+      android: 15
+    }),
     fontWeight: Typography.fontWeight.semibold,
     fontFamily: Typography.fontFamily?.semibold || 'System',
+    ...Platform.select({
+      android: {
+        letterSpacing: 0.3,
+      },
+    }),
   },
 });

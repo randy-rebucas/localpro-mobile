@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { MarketplaceService } from '@localpro/marketplace';
-import { Button, Card, Input } from '@localpro/ui';
+import { Card, Input } from '@localpro/ui';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WavyBackground } from '../../../components/WavyBackground';
 import { PhotoUpload } from '../../../components/marketplace';
 import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../../constants/theme';
 import { useThemeColors } from '../../../hooks/use-theme';
@@ -217,18 +218,19 @@ export default function CreateServiceScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <WavyBackground />
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Header Actions */}
-        <View style={styles.headerActions}>
+        <View style={[styles.headerActions, { backgroundColor: 'transparent' }]}>
           <TouchableOpacity
-            style={styles.headerButton}
+            style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
             onPress={() => router.back()}
             activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
           >
-            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            <Ionicons name="arrow-back" size={26} color={colors.text.primary} />
           </TouchableOpacity>
         </View>
 
@@ -238,7 +240,7 @@ export default function CreateServiceScreen() {
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.scrollContent}
         >
-          <View style={[styles.content, { paddingTop: Platform.select({ ios: 60, android: 70 }) }]}>
+          <View style={styles.content}>
             {/* Basic Information */}
             <Card style={styles.card}>
               <Text style={styles.sectionTitle}>Basic Information</Text>
@@ -469,21 +471,39 @@ export default function CreateServiceScreen() {
         </ScrollView>
 
         {/* Action Buttons */}
-        <View style={[styles.footer, { backgroundColor: colors.background.primary }]}>
-          <Button
-            title="Save Draft"
+        <View style={[styles.actionBar, { 
+          backgroundColor: 'transparent', 
+          borderTopColor: colors.border.light 
+        }]}>
+          <TouchableOpacity
+            style={[styles.secondaryButton, { 
+              backgroundColor: colors.background.primary,
+              borderColor: colors.primary[600]
+            }]}
             onPress={handleSaveDraft}
-            variant="outline"
-            loading={loading}
             disabled={loading}
-          />
-          <Button
-            title="Publish"
+            activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color={colors.primary[600]} />
+            ) : (
+              <Text style={[styles.secondaryButtonText, { color: colors.primary[600] }]}>
+                Save Draft
+              </Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.applyButton, { backgroundColor: colors.primary[600] }]}
             onPress={handlePublish}
-            variant="primary"
-            loading={loading}
             disabled={loading}
-          />
+            activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color={Colors.text.inverse} />
+            ) : (
+              <Text style={styles.applyButtonText}>Publish</Text>
+            )}
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -499,35 +519,55 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerActions: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.lg }),
-    paddingBottom: Spacing.sm,
-    zIndex: 10,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    paddingTop: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.xl
+    }),
+    backgroundColor: 'transparent',
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
   },
   headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    height: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    borderRadius: Platform.select({
+      ios: 24,
+      android: 24
+    }),
     backgroundColor: Colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.sm,
+    ...Shadows.lg,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.lg.elevation,
+      },
+    }),
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: Spacing.xl,
+    paddingBottom: Platform.select({ ios: Spacing['3xl'], android: Spacing['3xl'] + 8 }),
   },
   content: {
     padding: Spacing.lg,
+    paddingTop: Spacing.md,
   },
   card: {
     marginBottom: Spacing.md,
@@ -686,12 +726,88 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.text.secondary,
   },
-  footer: {
+  actionBar: {
     flexDirection: 'row',
-    gap: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border.light,
+    paddingBottom: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.lg + 4
+    }),
+    backgroundColor: 'transparent',
+    borderTopWidth: Platform.select({
+      ios: 1,
+      android: 1.5
+    }),
+    gap: Spacing.md,
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
+  },
+  applyButton: {
+    flex: 1,
+    height: Platform.select({
+      ios: 48,
+      android: 50
+    }),
+    borderRadius: BorderRadius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  secondaryButton: {
+    flex: 1,
+    height: Platform.select({
+      ios: 48,
+      android: 50
+    }),
+    borderRadius: BorderRadius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: Platform.select({
+      ios: 1,
+      android: 1.5
+    }),
+    ...Platform.select({
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  applyButtonText: {
+    fontSize: Platform.select({
+      ios: 16,
+      android: 15
+    }),
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.text.inverse,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
+    ...Platform.select({
+      android: {
+        letterSpacing: 0.3,
+      },
+    }),
+  },
+  secondaryButtonText: {
+    fontSize: Platform.select({
+      ios: 16,
+      android: 15
+    }),
+    fontWeight: Typography.fontWeight.semibold,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
+    ...Platform.select({
+      android: {
+        letterSpacing: 0.3,
+      },
+    }),
   },
 });
 

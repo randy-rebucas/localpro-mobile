@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthContext } from '@localpro/auth';
 import { Button, Card, Loading } from '@localpro/ui';
+import { safeReverseGeocode } from '@localpro/utils/location';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import { safeReverseGeocode } from '@localpro/utils/location';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WavyBackground } from '../../../components/WavyBackground';
 import { BorderRadius, Colors, Spacing } from '../../../constants/theme';
 import { useThemeColors } from '../../../hooks/use-theme';
 
@@ -376,8 +377,8 @@ export default function EditProfileScreen() {
         setFormData({
           ...formData,
           location: {
-            latitude: latitude.toString(),
-            longitude: longitude.toString(),
+            latitude: formData.location.latitude,
+            longitude: formData.location.longitude,
           },
         });
         Alert.alert(
@@ -396,7 +397,7 @@ export default function EditProfileScreen() {
     }
   };
 
-  if (isLoading && !user) {
+  if (!user) {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
@@ -409,6 +410,7 @@ export default function EditProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <WavyBackground />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>

@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '../../../components/ErrorBoundary';
+import { WavyBackground } from '../../../components/WavyBackground';
 import {
   ReviewList,
   ServiceCard
@@ -320,32 +321,33 @@ function ProviderProfileScreenContent() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <WavyBackground />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Header Actions */}
-        <View style={styles.headerActions}>
+        <View style={[styles.headerActions, { backgroundColor: 'transparent' }]}>
           <TouchableOpacity
-            style={styles.headerButton}
+            style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
             onPress={() => router.back()}
             activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
           >
-            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            <Ionicons name="arrow-back" size={26} color={colors.text.primary} />
           </TouchableOpacity>
           <View style={styles.headerRight}>
             <TouchableOpacity
-              style={styles.headerButton}
+              style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
               onPress={handleShare}
               activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
             >
-              <Ionicons name="share-outline" size={24} color={colors.text.primary} />
+              <Ionicons name="share-outline" size={26} color={colors.text.primary} />
             </TouchableOpacity>
           </View>
         </View>
 
-        <View style={[styles.content, { paddingTop: Platform.select({ ios: 60, android: 70 }) }]}>
+        <View style={styles.content}>
           {/* Provider Header Card */}
           <Card style={styles.profileCard}>
             <View style={styles.profileHeader}>
@@ -398,25 +400,6 @@ function ProviderProfileScreenContent() {
             )}
           </Card>
 
-          {/* Contact Actions */}
-          <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: colors.primary[600] }]}
-              onPress={handleContact}
-            >
-              <Ionicons name="call-outline" size={20} color={Colors.text.inverse} />
-              <Text style={styles.actionButtonText}>Contact</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.messageButton, { borderColor: colors.primary[600] }]}
-              onPress={handleMessage}
-            >
-              <Ionicons name="chatbubble-outline" size={20} color={colors.primary[600]} />
-              <Text style={[styles.actionButtonText, { color: colors.primary[600] }]}>
-                Message
-              </Text>
-            </TouchableOpacity>
-          </View>
 
           {/* Stats */}
           <Card style={styles.card}>
@@ -498,6 +481,34 @@ function ProviderProfileScreenContent() {
           </Card>
         </View>
       </ScrollView>
+
+      {/* Action Buttons */}
+      <View style={[styles.actionBar, { 
+        backgroundColor: 'transparent', 
+        borderTopColor: colors.border.light 
+      }]}>
+        <TouchableOpacity
+          style={[styles.applyButton, { backgroundColor: colors.primary[600] }]}
+          onPress={handleContact}
+          activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+        >
+          <Ionicons name="call-outline" size={20} color={Colors.text.inverse} />
+          <Text style={styles.applyButtonText}>Contact</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.secondaryButton, { 
+            backgroundColor: colors.background.primary,
+            borderColor: colors.primary[600]
+          }]}
+          onPress={handleMessage}
+          activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+        >
+          <Ionicons name="chatbubble-outline" size={20} color={colors.primary[600]} />
+          <Text style={[styles.secondaryButtonText, { color: colors.primary[600] }]}>
+            Message
+          </Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -522,36 +533,56 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: Spacing.xl,
+    paddingBottom: Platform.select({ ios: Spacing['3xl'], android: Spacing['3xl'] + 8 }),
   },
   headerActions: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.lg }),
-    paddingBottom: Spacing.sm,
-    zIndex: 10,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    paddingTop: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.xl
+    }),
+    backgroundColor: 'transparent',
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
   },
   headerRight: {
     flexDirection: 'row',
     gap: Spacing.sm,
   },
   headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    height: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    borderRadius: Platform.select({
+      ios: 24,
+      android: 24
+    }),
     backgroundColor: Colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.sm,
+    ...Shadows.lg,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.lg.elevation,
+      },
+    }),
   },
   content: {
     padding: Spacing.lg,
+    paddingTop: Spacing.md,
   },
   profileCard: {
     marginBottom: Spacing.md,
@@ -637,28 +668,92 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: Colors.text.secondary,
   },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    marginBottom: Spacing.md,
-  },
-  actionButton: {
-    flex: 1,
+  actionBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.sm,
-  },
-  messageButton: {
+    padding: Spacing.lg,
+    paddingBottom: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.lg + 4
+    }),
     backgroundColor: 'transparent',
-    borderWidth: 1,
+    borderTopWidth: Platform.select({
+      ios: 1,
+      android: 1.5
+    }),
+    gap: Spacing.md,
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
   },
-  actionButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+  applyButton: {
+    flex: 1,
+    height: Platform.select({
+      ios: 48,
+      android: 50
+    }),
+    borderRadius: BorderRadius.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    ...Platform.select({
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  secondaryButton: {
+    flex: 1,
+    height: Platform.select({
+      ios: 48,
+      android: 50
+    }),
+    borderRadius: BorderRadius.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    borderWidth: Platform.select({
+      ios: 1,
+      android: 1.5
+    }),
+    ...Platform.select({
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  applyButtonText: {
+    fontSize: Platform.select({
+      ios: 16,
+      android: 15
+    }),
+    fontWeight: Typography.fontWeight.semibold,
     color: Colors.text.inverse,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
+    ...Platform.select({
+      android: {
+        letterSpacing: 0.3,
+      },
+    }),
+  },
+  secondaryButtonText: {
+    fontSize: Platform.select({
+      ios: 16,
+      android: 15
+    }),
+    fontWeight: Typography.fontWeight.semibold,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
+    ...Platform.select({
+      android: {
+        letterSpacing: 0.3,
+      },
+    }),
   },
   card: {
     marginBottom: Spacing.md,

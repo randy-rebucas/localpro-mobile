@@ -6,20 +6,21 @@ import { Card } from '@localpro/ui';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Platform,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WavyBackground } from '../../../components/WavyBackground';
 import { EmptyState, LoadingSkeleton } from '../../../components/marketplace';
-import { BorderRadius, Colors, Spacing, Typography } from '../../../constants/theme';
+import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../../constants/theme';
 import { useThemeColors } from '../../../hooks/use-theme';
 
 type FilterType = 'all' | 'unread' | NotificationType;
@@ -416,6 +417,7 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'top']}>
+      <WavyBackground />
       <FlatList
         data={notificationSections}
         keyExtractor={(item, index) => `${item.title}-${index}`}
@@ -431,6 +433,40 @@ export default function NotificationsScreen() {
         )}
         ListHeaderComponent={
           <View style={styles.headerContent}>
+            {/* Header Actions */}
+            <View style={[styles.headerActions, { backgroundColor: 'transparent' }]}>
+              {/* Left: Back Button */}
+              <TouchableOpacity
+                style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
+                onPress={() => router.back()}
+                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+              >
+                <Ionicons name="arrow-back" size={26} color={colors.text.primary} />
+              </TouchableOpacity>
+
+              {/* Right: Action Buttons Group */}
+              {notifications.length > 0 && (
+                <View style={styles.headerRight}>
+                  {unreadCount > 0 && (
+                    <TouchableOpacity
+                      style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
+                      onPress={markAllAsRead}
+                      activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+                    >
+                      <Ionicons name="checkmark-done-outline" size={26} color={colors.primary[600]} />
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
+                    onPress={handleDeleteAll}
+                    activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+                  >
+                    <Ionicons name="trash-outline" size={26} color={colors.semantic.error[600]} />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+
             {/* Header */}
             <View style={styles.header}>
               <View style={styles.headerLeft}>
@@ -439,30 +475,6 @@ export default function NotificationsScreen() {
                   <View style={[styles.badge, { backgroundColor: colors.primary[600] }]}>
                     <Text style={styles.badgeText}>{unreadCount}</Text>
                   </View>
-                )}
-              </View>
-              <View style={styles.headerRight}>
-                {notifications.length > 0 && (
-                  <>
-                    {unreadCount > 0 && (
-                      <TouchableOpacity
-                        onPress={markAllAsRead}
-                        style={styles.headerButton}
-                        activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
-                      >
-                        <Text style={[styles.headerButtonText, { color: colors.primary[600] }]}>
-                          Mark all read
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                    <TouchableOpacity
-                      onPress={handleDeleteAll}
-                      style={styles.headerButton}
-                      activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
-                    >
-                      <Ionicons name="trash-outline" size={20} color={colors.semantic.error[600]} />
-                    </TouchableOpacity>
-                  </>
                 )}
               </View>
             </View>
@@ -623,6 +635,51 @@ const styles = StyleSheet.create({
   headerContent: {
     paddingBottom: Spacing.md,
   },
+  headerActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    paddingTop: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.xl
+    }),
+    backgroundColor: 'transparent',
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
+  },
+  headerButton: {
+    width: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    height: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    borderRadius: Platform.select({
+      ios: 24,
+      android: 24
+    }),
+    backgroundColor: Colors.background.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.lg,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.lg.elevation,
+      },
+    }),
+  },
+  headerRight: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -656,20 +713,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: Typography.fontWeight.bold,
     fontFamily: Typography.fontFamily?.bold || 'System',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  headerButton: {
-    paddingVertical: 4,
-    paddingHorizontal: Spacing.sm,
-  },
-  headerButtonText: {
-    fontSize: 14,
-    fontWeight: Typography.fontWeight.semibold,
-    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   filtersContent: {
     paddingHorizontal: Spacing.lg,

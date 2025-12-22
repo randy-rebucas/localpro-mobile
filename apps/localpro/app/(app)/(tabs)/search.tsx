@@ -25,7 +25,6 @@ import {
   type FilterState
 } from '../../../components/marketplace';
 import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../../constants/theme';
-import { usePackageContext } from '../../../contexts/PackageContext';
 import { useThemeColors } from '../../../hooks/use-theme';
 
 // Mock categories - replace with actual API call

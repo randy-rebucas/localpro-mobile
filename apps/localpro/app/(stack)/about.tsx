@@ -3,9 +3,10 @@ import { Card } from '@localpro/ui';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Spacing } from '../../constants/theme';
+import { WavyBackground } from '../../components/WavyBackground';
+import { Colors, Shadows, Spacing } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
 
 export default function AboutScreen() {
@@ -54,14 +55,18 @@ export default function AboutScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+      <WavyBackground />
+      {/* Header Actions */}
+      <View style={[styles.headerActions, { backgroundColor: 'transparent' }]}>
+        <TouchableOpacity
+          style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
+          onPress={() => router.back()}
+          activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+        >
+          <Ionicons name="arrow-back" size={26} color={colors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>About LocalPro</Text>
-        <View style={styles.placeholder} />
       </View>
+
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -180,31 +185,46 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  header: {
+  headerActions: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
-    backgroundColor: Colors.background.primary,
+    paddingTop: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.xl
+    }),
+    backgroundColor: 'transparent',
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
   },
-  backButton: {
-    width: 40,
-    height: 40,
+  headerButton: {
+    width: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    height: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    borderRadius: Platform.select({
+      ios: 24,
+      android: 24
+    }),
+    backgroundColor: Colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.text.primary,
-    flex: 1,
-    textAlign: 'center',
-  },
-  placeholder: {
-    width: 40,
+    ...Shadows.lg,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.lg.elevation,
+      },
+    }),
   },
   content: {
     padding: Spacing.lg,

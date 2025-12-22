@@ -19,8 +19,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '../../../components/ErrorBoundary';
+import { WavyBackground } from '../../../components/WavyBackground';
 import {
-  BookingCTA,
   EmptyState,
   ImageCarousel,
   ProviderCard,
@@ -241,59 +241,60 @@ function ServiceDetailScreenContent() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <WavyBackground />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Header Actions */}
-        <View style={styles.headerActions}>
+        <View style={[styles.headerActions, { backgroundColor: 'transparent' }]}>
           <TouchableOpacity
-            style={styles.headerButton}
+            style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
             onPress={() => router.back()}
             activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
           >
-            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            <Ionicons name="arrow-back" size={26} color={colors.text.primary} />
           </TouchableOpacity>
           <View style={styles.headerRight}>
             {isServiceOwner ? (
               <>
                 <TouchableOpacity
-                  style={styles.headerButton}
+                  style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
                   onPress={handleEdit}
                   disabled={isDeleting || isTogglingStatus}
                   activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                 >
-                  <Ionicons name="create-outline" size={24} color={colors.primary[600]} />
+                  <Ionicons name="create-outline" size={26} color={colors.primary[600]} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.headerButton}
+                  style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
                   onPress={handleDelete}
                   disabled={isDeleting || isTogglingStatus}
                   activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                 >
                   {isDeleting ? (
-                    <ActivityIndicator size="small" color={colors.semantic.error} />
+                    <ActivityIndicator size="small" color={colors.semantic.error[600]} />
                   ) : (
-                    <Ionicons name="trash-outline" size={24} color={colors.semantic.error} />
+                    <Ionicons name="trash-outline" size={26} color={colors.semantic.error[600]} />
                   )}
                 </TouchableOpacity>
               </>
             ) : (
               <>
                 <TouchableOpacity
-                  style={styles.headerButton}
+                  style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
                   onPress={handleShare}
                   activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                 >
-                  <Ionicons name="share-outline" size={24} color={colors.text.primary} />
+                  <Ionicons name="share-outline" size={26} color={colors.text.primary} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.headerButton}
+                  style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
                   onPress={handleReport}
                   activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                 >
-                  <Ionicons name="flag-outline" size={24} color={colors.semantic.error} />
+                  <Ionicons name="flag-outline" size={26} color={colors.semantic.error[600]} />
                 </TouchableOpacity>
               </>
             )}
@@ -304,7 +305,7 @@ function ServiceDetailScreenContent() {
         <ImageCarousel images={service.images || []} height={300} />
 
         {/* Service Info */}
-        <View style={[styles.content, { paddingTop: Platform.select({ ios: 60, android: 70 }) }]}>
+        <View style={styles.content}>
           {/* Title and Price */}
           <View style={styles.titleSection}>
             <Text style={styles.title}>{service.title || 'Untitled Service'}</Text>
@@ -457,9 +458,20 @@ function ServiceDetailScreenContent() {
         </View>
       </ScrollView>
 
-      {/* Booking CTA - Only show if not service owner */}
+      {/* Action Buttons */}
       {!isServiceOwner && safeServiceId && (
-        <BookingCTA serviceId={safeServiceId} price={service.price || 0} onBook={handleBook} />
+        <View style={[styles.actionBar, { 
+          backgroundColor: 'transparent', 
+          borderTopColor: colors.border.light 
+        }]}>
+          <TouchableOpacity
+            style={[styles.applyButton, { backgroundColor: colors.primary[600] }]}
+            onPress={handleBook}
+            activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+          >
+            <Text style={styles.applyButtonText}>Book Now</Text>
+          </TouchableOpacity>
+        </View>
       )}
     </SafeAreaView>
   );
@@ -484,37 +496,56 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
   scrollContent: {
-    paddingBottom: Spacing.xl,
+    paddingBottom: Platform.select({ ios: Spacing['3xl'], android: Spacing['3xl'] + 8 }),
   },
   headerActions: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.lg }),
-    paddingBottom: Spacing.sm,
-    zIndex: 10,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    paddingTop: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.xl
+    }),
+    backgroundColor: 'transparent',
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
   },
   headerRight: {
     flexDirection: 'row',
     gap: Spacing.sm,
   },
   headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    height: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    borderRadius: Platform.select({
+      ios: 24,
+      android: 24
+    }),
     backgroundColor: Colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.sm,
+    ...Shadows.lg,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.lg.elevation,
+      },
+    }),
   },
   content: {
     padding: Spacing.lg,
-    paddingTop: 0,
+    paddingTop: Spacing.md,
   },
   titleSection: {
     marginBottom: Spacing.md,
@@ -676,6 +707,56 @@ const styles = StyleSheet.create({
   providerActionText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  actionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.lg,
+    paddingBottom: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.lg + 4
+    }),
+    backgroundColor: 'transparent',
+    borderTopWidth: Platform.select({
+      ios: 1,
+      android: 1.5
+    }),
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
+  },
+  applyButton: {
+    flex: 1,
+    height: Platform.select({
+      ios: 48,
+      android: 50
+    }),
+    borderRadius: BorderRadius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  applyButtonText: {
+    fontSize: Platform.select({
+      ios: 16,
+      android: 15
+    }),
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.text.inverse,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
+    ...Platform.select({
+      android: {
+        letterSpacing: 0.3,
+      },
+    }),
   },
 });
 

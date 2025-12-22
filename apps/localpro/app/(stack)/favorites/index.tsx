@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WavyBackground } from '../../../components/WavyBackground';
 import { EmptyState, LoadingSkeleton, SearchInput } from '../../../components/marketplace';
 import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../../constants/theme';
 import { useThemeColors } from '../../../hooks/use-theme';
@@ -63,14 +64,14 @@ export default function FavoritesScreen() {
 
   const [allFavorites, setAllFavorites] = useState<FavoriteItem[]>([]);
 
-  const favoriteTypes: { key: FavoriteType; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  const favoriteTypes = useMemo<{ key: FavoriteType; label: string; icon: keyof typeof Ionicons.glyphMap }[]>(() => [
     { key: 'all', label: 'All', icon: 'star-outline' },
     { key: 'services', label: 'Services', icon: 'construct-outline' },
     { key: 'products', label: 'Products', icon: 'cube-outline' },
     { key: 'jobs', label: 'Jobs', icon: 'briefcase-outline' },
     { key: 'rentals', label: 'Rentals', icon: 'home-outline' },
     { key: 'agencies', label: 'Agencies', icon: 'business-outline' },
-  ];
+  ], []);
 
   // Load all favorites from SecureStorage
   useEffect(() => {
@@ -387,7 +388,7 @@ export default function FavoritesScreen() {
     }).format(value);
   };
 
-  const getTypeColor = (type: FavoriteType) => {
+  const getTypeColor = useCallback((type: FavoriteType) => {
     switch (type) {
       case 'services':
         return colors.primary[600];
@@ -402,7 +403,7 @@ export default function FavoritesScreen() {
       default:
         return colors.text.secondary;
     }
-  };
+  }, [colors]);
 
   const renderFavoriteCard = useCallback(
     ({ item }: { item: FavoriteItem }) => {
@@ -530,6 +531,7 @@ export default function FavoritesScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'top']}>
+      <WavyBackground />
       <FlatList
         key={viewMode}
         data={filteredFavorites}
@@ -538,6 +540,17 @@ export default function FavoritesScreen() {
         renderItem={renderFavoriteCard}
         ListHeaderComponent={
           <View style={styles.headerContent}>
+            {/* Header Actions */}
+            <View style={[styles.headerActions, { backgroundColor: 'transparent' }]}>
+              <TouchableOpacity
+                style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
+                onPress={() => router.back()}
+                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+              >
+                <Ionicons name="arrow-back" size={26} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+
             {/* Header */}
             <View style={styles.header}>
               <View>
@@ -682,6 +695,47 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     paddingBottom: Spacing.md,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    paddingTop: Platform.select({
+      ios: Spacing.lg,
+      android: Spacing.xl
+    }),
+    backgroundColor: 'transparent',
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
+  },
+  headerButton: {
+    width: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    height: Platform.select({
+      ios: 48,
+      android: 48
+    }),
+    borderRadius: Platform.select({
+      ios: 24,
+      android: 24
+    }),
+    backgroundColor: Colors.background.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.lg,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.lg.elevation,
+      },
+    }),
   },
   header: {
     flexDirection: 'row',
