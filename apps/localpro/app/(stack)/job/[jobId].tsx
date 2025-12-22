@@ -1,14 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
+import { API_ENDPOINTS, apiClient } from '@localpro/api';
 import { useAuthContext } from '@localpro/auth';
 import { JobBoardService } from '@localpro/job-board';
 import { SecureStorage } from '@localpro/storage';
 import type { Job, JobApplication } from '@localpro/types';
 import { Card } from '@localpro/ui';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Modal,
   Platform,
   ScrollView,
@@ -87,6 +90,7 @@ function JobDetailScreenContent() {
   const colors = useThemeColors();
   const { user } = useAuthContext();
   const [job, setJob] = useState<Job | null>(null);
+  const [rawJobData, setRawJobData] = useState<any>(null); // Store raw API response
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
@@ -113,14 +117,29 @@ function JobDetailScreenContent() {
           throw new Error('Invalid job ID');
         }
         
-        const jobData = await JobBoardService.getJob(jobId);
+        // Fetch both transformed job and raw API response
+        const [jobData, rawResponse] = await Promise.all([
+          JobBoardService.getJob(jobId),
+          apiClient.get<any>(API_ENDPOINTS.jobs.public.getById(encodeURIComponent(jobId)))
+        ]);
         
         if (!jobData) {
           throw new Error('Job not found');
         }
         
+        // Extract raw job data from API response
+        let rawJob: any = null;
+        if (rawResponse?.success && rawResponse?.data) {
+          rawJob = rawResponse.data;
+        } else if (rawResponse?.data) {
+          rawJob = rawResponse.data;
+        } else {
+          rawJob = rawResponse;
+        }
+        
         setJob(jobData);
-        setCompanyLogo((jobData as any)?.companyLogo);
+        setRawJobData(rawJob);
+        setCompanyLogo(rawJob?.companyLogo || rawJob?.company?.logo);
 
         // Check if job is saved
         try {
@@ -322,10 +341,11 @@ function JobDetailScreenContent() {
     );
   }
 
-  const postedAgo = getRelativeTime(job.postedAt);
+  const postedAgo = getRelativeTime((job as any)?.createdAt || job.postedAt);
   const salaryLabel = formatSalaryRange(job.salary);
   const isJobClosed = job.status === 'closed' || job.status === 'filled';
-  const isJobOwner = job.postedBy && user?.id && job.postedBy === user.id;
+  const isJobOwner = ((job as any)?.employer?._id && user?.id && (job as any).employer._id === user.id) || 
+                      (job.postedBy && user?.id && job.postedBy === user.id);
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -364,9 +384,16 @@ function JobDetailScreenContent() {
         <View style={styles.content}>
           <Card style={styles.headerCard}>
           <View style={styles.headerTop}>
-            {job.featured && (
+            {((job as any)?.featured?.isFeatured || job.featured) && (
               <View style={styles.featuredBadge}>
+                <Ionicons name="star" size={12} color={colors.primary[600]} />
                 <Text style={styles.featuredBadgeText}>Featured</Text>
+              </View>
+            )}
+            {(job as any)?.promoted?.isPromoted && (
+              <View style={[styles.featuredBadge, { backgroundColor: colors.secondary[50], borderColor: colors.secondary[200] }]}>
+                <Ionicons name="rocket" size={12} color={colors.secondary[600]} />
+                <Text style={[styles.featuredBadgeText, { color: colors.secondary[600] }]}>Promoted</Text>
               </View>
             )}
             {isJobClosed && (
@@ -386,9 +413,20 @@ function JobDetailScreenContent() {
             onPress={handleCompanyPress}
             activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
           >
-            <CompanyLogo logo={companyLogo} companyName={job.company} size={48} />
+            <CompanyLogo 
+              logo={companyLogo || rawJobData?.company?.logo || (job as any)?.company?.logo} 
+              companyName={rawJobData?.company?.name || (job as any)?.company?.name || job.company} 
+              size={48} 
+            />
             <View style={styles.companyInfo}>
-              <Text style={[styles.companyName, { color: colors.text.secondary }]}>{job.company}</Text>
+              <Text style={[styles.companyName, { color: colors.text.secondary }]}>
+                {rawJobData?.company?.name || (job as any)?.company?.name || job.company}
+              </Text>
+              {(rawJobData?.company?.industry || (job as any)?.company?.industry) && (
+                <Text style={[styles.companyIndustry, { color: colors.text.tertiary }]}>
+                  {rawJobData?.company?.industry || (job as any)?.company?.industry}
+                </Text>
+              )}
               <View style={styles.companyLink}>
                 <Text style={[styles.companyLinkText, { color: colors.primary[600] }]}>View Company Profile</Text>
                 <Ionicons name="chevron-forward" size={16} color={colors.primary[600]} />
@@ -399,12 +437,22 @@ function JobDetailScreenContent() {
           <View style={styles.metaRow}>
             <View style={styles.metaItem}>
               <Ionicons name="location-outline" size={16} color={colors.text.tertiary} />
-              <Text style={[styles.metaText, { color: colors.text.tertiary }]}>{job.location}</Text>
+              <Text style={[styles.metaText, { color: colors.text.tertiary }]}>
+                {rawJobData?.company?.location?.address || 
+                 rawJobData?.company?.location?.city || 
+                 (job as any)?.company?.location?.address || 
+                 (job as any)?.company?.location?.city || 
+                 job.location}
+              </Text>
             </View>
-            {job.remote && (
+            {((rawJobData?.company?.location?.isRemote || (job as any)?.company?.location?.isRemote || job.remote)) && (
               <View style={[styles.remoteBadge, { backgroundColor: colors.primary[50] }]}>
                 <Ionicons name="wifi-outline" size={14} color={colors.primary[600]} />
-                <Text style={[styles.remoteText, { color: colors.primary[600] }]}>Remote</Text>
+                <Text style={[styles.remoteText, { color: colors.primary[600] }]}>
+                  {(rawJobData?.company?.location?.remoteType || (job as any)?.company?.location?.remoteType) === 'remote' ? 'Remote' : 
+                   (rawJobData?.company?.location?.remoteType || (job as any)?.company?.location?.remoteType) === 'hybrid' ? 'Hybrid' : 
+                   'Remote'}
+                </Text>
               </View>
             )}
           </View>
@@ -429,10 +477,10 @@ function JobDetailScreenContent() {
           <View style={styles.salaryRow}>
             <View style={styles.salaryInfo}>
               <Text style={[styles.salaryText, { color: colors.primary[600] }]}>{salaryLabel}</Text>
-              {(job.salary as any)?.negotiable && (
+              {((job.salary as any)?.isNegotiable || (job.salary as any)?.negotiable) && (
                 <Text style={[styles.salaryNote, { color: colors.text.tertiary }]}>Negotiable</Text>
               )}
-              {(job.salary as any)?.confidential && (
+              {((job.salary as any)?.isConfidential || (job.salary as any)?.confidential) && (
                 <Text style={[styles.salaryNote, { color: colors.text.tertiary }]}>Confidential</Text>
               )}
             </View>
@@ -455,18 +503,257 @@ function JobDetailScreenContent() {
           </Text>
         </Card>
 
-        {/* Requirements Section */}
-        {job.requirements && job.requirements.length > 0 && (
+        {/* Responsibilities Section */}
+        {(job as any)?.responsibilities && (job as any).responsibilities.length > 0 && (
           <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Requirements</Text>
-            {job.requirements.map((requirement, index) => (
+            <Text style={styles.sectionTitle}>Responsibilities</Text>
+            {(job as any).responsibilities.map((responsibility: string, index: number) => (
               <View key={index} style={styles.requirementItem}>
-                <Ionicons name="checkmark-circle-outline" size={16} color={colors.primary[600]} />
+                <Ionicons name="ellipse" size={8} color={colors.primary[600]} style={{ marginTop: 6 }} />
                 <Text style={[styles.requirementText, { color: colors.text.secondary }]}>
-                  {requirement}
+                  {responsibility}
                 </Text>
               </View>
             ))}
+          </Card>
+        )}
+
+        {/* Qualifications Section */}
+        {(job as any)?.qualifications && (job as any).qualifications.length > 0 && (
+          <Card style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>Qualifications</Text>
+            {(job as any).qualifications.map((qualification: string, index: number) => (
+              <View key={index} style={styles.requirementItem}>
+                <Ionicons name="checkmark-circle-outline" size={16} color={colors.primary[600]} />
+                <Text style={[styles.requirementText, { color: colors.text.secondary }]}>
+                  {qualification}
+                </Text>
+              </View>
+            ))}
+          </Card>
+        )}
+
+        {/* Requirements Section */}
+        {(rawJobData?.requirements || (job as any)?.requirements || (Array.isArray(job.requirements) && job.requirements.length > 0)) && (
+          <Card style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>Requirements</Text>
+            
+            {(() => {
+              const requirements = rawJobData?.requirements || (job as any)?.requirements;
+              
+              // If requirements is an object with structure (education, skills, etc.)
+              if (requirements && typeof requirements === 'object' && !Array.isArray(requirements)) {
+                return (
+                  <>
+                    {/* Education Requirement */}
+                    {requirements.education?.isRequired && (
+                      <View style={styles.requirementItem}>
+                        <Ionicons name="school-outline" size={16} color={colors.primary[600]} />
+                        <Text style={[styles.requirementText, { color: colors.text.secondary }]}>
+                          Education required
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* Skills */}
+                    {requirements.skills && Array.isArray(requirements.skills) && requirements.skills.length > 0 && (
+                      <View style={styles.requirementsSubsection}>
+                        <Text style={[styles.subsectionTitle, { color: colors.text.primary }]}>Skills</Text>
+                        <View style={styles.tagsContainer}>
+                          {requirements.skills.map((skill: string, index: number) => (
+                            <View key={index} style={[styles.tag, { backgroundColor: colors.primary[50], borderColor: colors.primary[200] }]}>
+                              <Text style={[styles.tagText, { color: colors.primary[700] }]}>{skill}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Certifications */}
+                    {requirements.certifications && Array.isArray(requirements.certifications) && requirements.certifications.length > 0 && (
+                      <View style={styles.requirementsSubsection}>
+                        <Text style={[styles.subsectionTitle, { color: colors.text.primary }]}>Certifications</Text>
+                        {requirements.certifications.map((cert: string, index: number) => (
+                          <View key={index} style={styles.requirementItem}>
+                            <Ionicons name="ribbon-outline" size={16} color={colors.primary[600]} />
+                            <Text style={[styles.requirementText, { color: colors.text.secondary }]}>
+                              {cert}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                    {/* Languages */}
+                    {requirements.languages && Array.isArray(requirements.languages) && requirements.languages.length > 0 && (
+                      <View style={styles.requirementsSubsection}>
+                        <Text style={[styles.subsectionTitle, { color: colors.text.primary }]}>Languages</Text>
+                        {requirements.languages.map((lang: string, index: number) => (
+                          <View key={index} style={styles.requirementItem}>
+                            <Ionicons name="chatbubbles-outline" size={16} color={colors.primary[600]} />
+                            <Text style={[styles.requirementText, { color: colors.text.secondary }]}>
+                              {lang}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                    {/* Other Requirements */}
+                    {requirements.other && Array.isArray(requirements.other) && requirements.other.length > 0 && (
+                      <View style={styles.requirementsSubsection}>
+                        <Text style={[styles.subsectionTitle, { color: colors.text.primary }]}>Other Requirements</Text>
+                        {requirements.other.map((other: string, index: number) => (
+                          <View key={index} style={styles.requirementItem}>
+                            <Ionicons name="document-text-outline" size={16} color={colors.primary[600]} />
+                            <Text style={[styles.requirementText, { color: colors.text.secondary }]}>
+                              {other}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </>
+                );
+              }
+              
+              // Legacy string array requirements
+              if (Array.isArray(job.requirements) && job.requirements.length > 0) {
+                return (
+                  <>
+                    {job.requirements.map((requirement, index) => (
+                      <View key={index} style={styles.requirementItem}>
+                        <Ionicons name="checkmark-circle-outline" size={16} color={colors.primary[600]} />
+                        <Text style={[styles.requirementText, { color: colors.text.secondary }]}>
+                          {requirement}
+                        </Text>
+                      </View>
+                    ))}
+                  </>
+                );
+              }
+              
+              return null;
+            })()}
+          </Card>
+        )}
+
+        {/* Company Details Section */}
+        {(rawJobData?.company || (job as any)?.company) && (
+          <Card style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>Company Information</Text>
+            {(rawJobData?.company?.name || (job as any)?.company?.name || (typeof (job as any)?.company === 'string' ? (job as any).company : null)) && (
+              <View style={styles.detailRow}>
+                <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Company:</Text>
+                <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                  {rawJobData?.company?.name || (job as any)?.company?.name || (typeof (job as any)?.company === 'string' ? (job as any).company : 'N/A')}
+                </Text>
+              </View>
+            )}
+            {(rawJobData?.company?.website || (job as any)?.company?.website) && (
+              <View style={styles.detailRow}>
+                <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Website:</Text>
+                <TouchableOpacity onPress={() => {
+                  const website = rawJobData?.company?.website || (job as any)?.company?.website;
+                  const url = website.startsWith('http') 
+                    ? website 
+                    : `https://${website}`;
+                  Linking.openURL(url).catch(() => {
+                    Alert.alert('Error', 'Could not open website');
+                  });
+                }}>
+                  <Text style={[styles.detailValue, { color: colors.primary[600] }]}>
+                    {rawJobData?.company?.website || (job as any)?.company?.website}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            {(rawJobData?.company?.size || (job as any)?.company?.size) && (
+              <View style={styles.detailRow}>
+                <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Company Size:</Text>
+                <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                  {toTitleCase(rawJobData?.company?.size || (job as any)?.company?.size)}
+                </Text>
+              </View>
+            )}
+            {(rawJobData?.company?.industry || (job as any)?.company?.industry) && (
+              <View style={styles.detailRow}>
+                <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Industry:</Text>
+                <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                  {rawJobData?.company?.industry || (job as any)?.company?.industry}
+                </Text>
+              </View>
+            )}
+            {(rawJobData?.company?.location || (job as any)?.company?.location) && (
+              <>
+                {(rawJobData?.company?.location?.address || (job as any)?.company?.location?.address) && (
+                  <View style={styles.detailRow}>
+                    <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Address:</Text>
+                    <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                      {rawJobData?.company?.location?.address || (job as any)?.company?.location?.address}
+                    </Text>
+                  </View>
+                )}
+                {(rawJobData?.company?.location?.city || (job as any)?.company?.location?.city) && (
+                  <View style={styles.detailRow}>
+                    <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>City:</Text>
+                    <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                      {rawJobData?.company?.location?.city || (job as any)?.company?.location?.city}
+                    </Text>
+                  </View>
+                )}
+                {(rawJobData?.company?.location?.state || (job as any)?.company?.location?.state) && (
+                  <View style={styles.detailRow}>
+                    <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>State/Province:</Text>
+                    <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                      {rawJobData?.company?.location?.state || (job as any)?.company?.location?.state}
+                    </Text>
+                  </View>
+                )}
+                {(rawJobData?.company?.location?.country || (job as any)?.company?.location?.country) && (
+                  <View style={styles.detailRow}>
+                    <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Country:</Text>
+                    <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                      {rawJobData?.company?.location?.country || (job as any)?.company?.location?.country}
+                    </Text>
+                  </View>
+                )}
+                {(rawJobData?.company?.location?.remoteType || (job as any)?.company?.location?.remoteType) && (
+                  <View style={styles.detailRow}>
+                    <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Work Type:</Text>
+                    <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                      {toTitleCase((rawJobData?.company?.location?.remoteType || (job as any)?.company?.location?.remoteType || '').replace('_', ' '))}
+                    </Text>
+                  </View>
+                )}
+                {(rawJobData?.company?.location?.coordinates || (job as any)?.company?.location?.coordinates) && (() => {
+                  const coords = rawJobData?.company?.location?.coordinates || (job as any)?.company?.location?.coordinates;
+                  return (
+                    <View style={styles.detailRow}>
+                      <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Coordinates:</Text>
+                      <TouchableOpacity
+                        onPress={() => {
+                          const { lat, lng } = coords;
+                          const url = Platform.select({
+                            ios: `maps://maps.apple.com/?q=${lat},${lng}`,
+                            android: `geo:${lat},${lng}?q=${lat},${lng}`,
+                          });
+                          if (url) {
+                            Linking.openURL(url).catch(() => {
+                              Alert.alert('Error', 'Could not open maps application');
+                            });
+                          }
+                        }}
+                      >
+                        <Text style={[styles.detailValue, { color: colors.primary[600] }]}>
+                          {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })()}
+              </>
+            )}
           </Card>
         )}
 
@@ -476,36 +763,122 @@ function JobDetailScreenContent() {
           <View style={styles.detailRow}>
             <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Job Type:</Text>
             <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
-              {toTitleCase(job.type)}
+              {toTitleCase((job as any)?.jobType || job.type)}
             </Text>
           </View>
-          {job.experienceLevel && (
+          {((job as any)?.experienceLevel || job.experienceLevel) && (
             <View style={styles.detailRow}>
               <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Experience:</Text>
               <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
-                {toTitleCase(job.experienceLevel)} level
+                {toTitleCase((job as any)?.experienceLevel || job.experienceLevel)} level
               </Text>
             </View>
           )}
-          {job.categoryId && (
+          {(job as any)?.category && (
             <View style={styles.detailRow}>
               <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Category:</Text>
               <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
-                {job.categoryId}
+                {(job as any).category.name || job.categoryId}
+              </Text>
+            </View>
+          )}
+          {(job as any)?.subcategory && (job as any).subcategory !== 'No subcategory' && (
+            <View style={styles.detailRow}>
+              <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Subcategory:</Text>
+              <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                {(job as any).subcategory}
               </Text>
             </View>
           )}
           <View style={styles.detailRow}>
             <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Location:</Text>
-            <Text style={[styles.detailValue, { color: colors.text.secondary }]}>{job.location}</Text>
+            <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+              {rawJobData?.company?.location?.address || (job as any)?.company?.location?.address || job.location}
+            </Text>
           </View>
-          {job.remote && (
+          {((rawJobData?.company?.location?.isRemote || (job as any)?.company?.location?.isRemote || job.remote)) && (
             <View style={styles.detailRow}>
               <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Remote:</Text>
-              <Text style={[styles.detailValue, { color: colors.text.secondary }]}>Yes</Text>
+              <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                {(rawJobData?.company?.location?.isRemote || (job as any)?.company?.location?.isRemote || job.remote) ? 'Yes' : 'No'}
+              </Text>
+            </View>
+          )}
+          {(job as any)?.visibility && (
+            <View style={styles.detailRow}>
+              <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Visibility:</Text>
+              <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                {toTitleCase((job as any).visibility)}
+              </Text>
             </View>
           )}
         </Card>
+
+        {/* Employer Information */}
+        {(job as any)?.employer && (
+          <Card style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>Posted By</Text>
+            <View style={styles.employerContainer}>
+              {(job as any).employer.profile?.avatar?.thumbnail ? (
+                <Image
+                  source={{ uri: (job as any).employer.profile.avatar.thumbnail }}
+                  style={styles.employerAvatar}
+                  contentFit="cover"
+                  placeholder={require('../../../assets/images/icon.png')}
+                />
+              ) : (
+                <View style={[styles.employerAvatarPlaceholder, { backgroundColor: colors.primary[100] }]}>
+                  <Ionicons name="person" size={24} color={colors.primary[600]} />
+                </View>
+              )}
+              <View style={styles.employerInfo}>
+                <Text style={[styles.employerName, { color: colors.text.primary }]}>
+                  {(job as any).employer.firstName} {(job as any).employer.lastName}
+                </Text>
+                {(job as any).employer.profile?.bio && (
+                  <Text style={[styles.employerBio, { color: colors.text.secondary }]}>
+                    {(job as any).employer.profile.bio}
+                  </Text>
+                )}
+              </View>
+            </View>
+          </Card>
+        )}
+
+        {/* Tags Section */}
+        {(job as any)?.tags && (job as any).tags.length > 0 && (
+          <Card style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>Tags</Text>
+            <View style={styles.tagsContainer}>
+              {(job as any).tags.map((tag: string, index: number) => (
+                <View key={index} style={[styles.tag, { backgroundColor: colors.primary[50], borderColor: colors.primary[200] }]}>
+                  <Text style={[styles.tagText, { color: colors.primary[700] }]}>{tag}</Text>
+                </View>
+              ))}
+            </View>
+          </Card>
+        )}
+
+        {/* Category Description */}
+        {(job as any)?.category && (
+          <Card style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>About This Category</Text>
+            {(job as any).category.description && (
+              <Text style={[styles.descriptionText, { color: colors.text.secondary }]}>
+                {(job as any).category.description}
+              </Text>
+            )}
+            {(job as any).category.metadata?.tags && (job as any).category.metadata.tags.length > 0 && (
+              <View style={[styles.tagsContainer, { marginTop: Spacing.md }]}>
+                {(job as any).category.metadata.tags.map((tag: string, index: number) => (
+                  <View key={index} style={[styles.tag, { backgroundColor: colors.secondary[50], borderColor: colors.secondary[200] }]}>
+                    <Text style={[styles.tagText, { color: colors.secondary[700] }]}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </Card>
+        )}
 
         {/* Benefits Section */}
         {(job as any)?.benefits && (job as any).benefits.length > 0 && (
@@ -513,31 +886,242 @@ function JobDetailScreenContent() {
         )}
 
         {/* Application Details Section */}
-        <Card style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Application Details</Text>
-          {job.expiresAt && (
-            <View style={styles.detailRow}>
-              <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Application Deadline:</Text>
-              <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
-                {new Date(job.expiresAt).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </Text>
+        {(rawJobData?.applicationProcess || (job as any)?.applicationProcess || job.expiresAt) && (
+          <Card style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>Application Details</Text>
+            {(rawJobData?.applicationProcess || (job as any)?.applicationProcess) ? (
+              <>
+                {(rawJobData?.applicationProcess?.deadline || (job as any)?.applicationProcess?.deadline) && (
+                  <View style={styles.detailRow}>
+                    <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Application Deadline:</Text>
+                    <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                      {new Date(rawJobData?.applicationProcess?.deadline || (job as any)?.applicationProcess?.deadline).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </Text>
+                  </View>
+                )}
+                {(rawJobData?.applicationProcess?.startDate || (job as any)?.applicationProcess?.startDate) && (
+                  <View style={styles.detailRow}>
+                    <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Start Date:</Text>
+                    <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                      {new Date(rawJobData?.applicationProcess?.startDate || (job as any)?.applicationProcess?.startDate).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </Text>
+                  </View>
+                )}
+                {(rawJobData?.applicationProcess?.applicationMethod || (job as any)?.applicationProcess?.applicationMethod) && (
+                  <View style={styles.detailRow}>
+                    <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Application Method:</Text>
+                    <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                      {toTitleCase(rawJobData?.applicationProcess?.applicationMethod || (job as any)?.applicationProcess?.applicationMethod || '')}
+                    </Text>
+                  </View>
+                )}
+                {(rawJobData?.applicationProcess?.contactEmail || (job as any)?.applicationProcess?.contactEmail) && (
+                  <View style={styles.detailRow}>
+                    <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Contact Email:</Text>
+                    <TouchableOpacity onPress={() => {
+                      const email = rawJobData?.applicationProcess?.contactEmail || (job as any)?.applicationProcess?.contactEmail;
+                      Linking.openURL(`mailto:${email}`).catch(() => {
+                        Alert.alert('Error', 'Could not open email client');
+                      });
+                    }}>
+                      <Text style={[styles.detailValue, { color: colors.primary[600] }]}>
+                        {rawJobData?.applicationProcess?.contactEmail || (job as any)?.applicationProcess?.contactEmail}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                {(rawJobData?.applicationProcess?.contactPhone || (job as any)?.applicationProcess?.contactPhone) && (
+                  <View style={styles.detailRow}>
+                    <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Contact Phone:</Text>
+                    <TouchableOpacity onPress={() => {
+                      const phone = rawJobData?.applicationProcess?.contactPhone || (job as any)?.applicationProcess?.contactPhone;
+                      Linking.openURL(`tel:${phone}`).catch(() => {
+                        Alert.alert('Error', 'Could not open phone dialer');
+                      });
+                    }}>
+                      <Text style={[styles.detailValue, { color: colors.primary[600] }]}>
+                        {rawJobData?.applicationProcess?.contactPhone || (job as any)?.applicationProcess?.contactPhone}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                {(rawJobData?.applicationProcess?.instructions || (job as any)?.applicationProcess?.instructions) && (
+                  <View style={styles.instructionsContainer}>
+                    <Text style={[styles.detailLabel, { color: colors.text.tertiary, marginBottom: Spacing.xs }]}>
+                      Application Instructions:
+                    </Text>
+                    <Text style={[styles.instructionsText, { color: colors.text.secondary }]}>
+                      {rawJobData?.applicationProcess?.instructions || (job as any)?.applicationProcess?.instructions}
+                    </Text>
+                  </View>
+                )}
+              </>
+            ) : (
+              <>
+                {job.expiresAt && (
+                  <View style={styles.detailRow}>
+                    <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Application Deadline:</Text>
+                    <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                      {new Date(job.expiresAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </Text>
+                  </View>
+                )}
+                {(rawJobData?.applicationInstructions || (job as any)?.applicationInstructions) && (
+                  <View style={styles.instructionsContainer}>
+                    <Text style={[styles.detailLabel, { color: colors.text.tertiary, marginBottom: Spacing.xs }]}>
+                      Application Instructions:
+                    </Text>
+                    <Text style={[styles.instructionsText, { color: colors.text.secondary }]}>
+                      {rawJobData?.applicationInstructions || (job as any)?.applicationInstructions}
+                    </Text>
+                  </View>
+                )}
+              </>
+            )}
+          </Card>
+        )}
+
+        {/* Analytics Section (for job owners) */}
+        {isJobOwner && (job as any)?.analytics && (
+          <Card style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>Job Analytics</Text>
+            <View style={styles.analyticsContainer}>
+              <View style={styles.analyticsItem}>
+                <Ionicons name="eye-outline" size={20} color={colors.primary[600]} />
+                <Text style={[styles.analyticsValue, { color: colors.text.primary }]}>
+                  {(job as any).analytics.viewsCount || (job as any)?.views?.count || 0}
+                </Text>
+                <Text style={[styles.analyticsLabel, { color: colors.text.tertiary }]}>Views</Text>
+              </View>
+              <View style={styles.analyticsItem}>
+                <Ionicons name="document-text-outline" size={20} color={colors.primary[600]} />
+                <Text style={[styles.analyticsValue, { color: colors.text.primary }]}>
+                  {(job as any).analytics.applicationsCount || 0}
+                </Text>
+                <Text style={[styles.analyticsLabel, { color: colors.text.tertiary }]}>Applications</Text>
+              </View>
+              <View style={styles.analyticsItem}>
+                <Ionicons name="share-outline" size={20} color={colors.primary[600]} />
+                <Text style={[styles.analyticsValue, { color: colors.text.primary }]}>
+                  {(job as any).analytics.sharesCount || 0}
+                </Text>
+                <Text style={[styles.analyticsLabel, { color: colors.text.tertiary }]}>Shares</Text>
+              </View>
+              <View style={styles.analyticsItem}>
+                <Ionicons name="bookmark-outline" size={20} color={colors.primary[600]} />
+                <Text style={[styles.analyticsValue, { color: colors.text.primary }]}>
+                  {(job as any).analytics.savesCount || 0}
+                </Text>
+                <Text style={[styles.analyticsLabel, { color: colors.text.tertiary }]}>Saves</Text>
+              </View>
             </View>
-          )}
-          {(job as any)?.applicationInstructions && (
-            <View style={styles.instructionsContainer}>
-              <Text style={[styles.detailLabel, { color: colors.text.tertiary, marginBottom: Spacing.xs }]}>
-                Application Instructions:
-              </Text>
-              <Text style={[styles.instructionsText, { color: colors.text.secondary }]}>
-                {(job as any).applicationInstructions}
-              </Text>
+            {(job as any)?.views?.unique && (
+              <View style={styles.detailRow}>
+                <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Unique Views:</Text>
+                <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                  {(job as any).views.unique}
+                </Text>
+              </View>
+            )}
+            {(job as any)?.updatedAt && (
+              <View style={[styles.detailRow, { marginTop: Spacing.sm, paddingTop: Spacing.sm, borderTopWidth: 1, borderTopColor: colors.border.light }]}>
+                <Text style={[styles.detailLabel, { color: colors.text.tertiary }]}>Last Updated:</Text>
+                <Text style={[styles.detailValue, { color: colors.text.secondary }]}>
+                  {new Date((job as any).updatedAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Text>
+              </View>
+            )}
+          </Card>
+        )}
+
+        {/* Applications Preview (for job owners) */}
+        {isJobOwner && (job as any)?.applications && Array.isArray((job as any).applications) && (job as any).applications.length > 0 && (
+          <Card style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Recent Applications</Text>
+              <TouchableOpacity
+                onPress={() => router.push(`/(stack)/job/${job.id}/applications` as any)}
+                style={styles.viewAllButton}
+              >
+                <Text style={[styles.viewAllText, { color: colors.primary[600] }]}>View All</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.primary[600]} />
+              </TouchableOpacity>
             </View>
-          )}
-        </Card>
+            {(job as any).applications.slice(0, 3).map((application: any, index: number) => (
+              <TouchableOpacity
+                key={application._id || index}
+                style={[
+                  styles.applicationPreviewItem,
+                  index < Math.min((job as any).applications.length, 3) - 1 && {
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border.light,
+                    paddingBottom: Spacing.md,
+                    marginBottom: Spacing.md,
+                  }
+                ]}
+                onPress={() => router.push(`/(stack)/job/${job.id}/applications` as any)}
+              >
+                <View style={styles.applicationPreviewHeader}>
+                  {application.applicant?.profile?.avatar?.thumbnail ? (
+                    <Image
+                      source={{ uri: application.applicant.profile.avatar.thumbnail }}
+                      style={styles.applicationAvatar}
+                      contentFit="cover"
+                      placeholder={require('../../../assets/images/icon.png')}
+                    />
+                  ) : (
+                    <View style={[styles.applicationAvatarPlaceholder, { backgroundColor: colors.primary[100] }]}>
+                      <Ionicons name="person" size={20} color={colors.primary[600]} />
+                    </View>
+                  )}
+                  <View style={styles.applicationPreviewInfo}>
+                    <Text style={[styles.applicationName, { color: colors.text.primary }]}>
+                      {application.applicant?.firstName} {application.applicant?.lastName}
+                    </Text>
+                    <Text style={[styles.applicationDate, { color: colors.text.tertiary }]}>
+                      Applied {getRelativeTime(application.appliedAt)}
+                    </Text>
+                  </View>
+                  <ApplicationStatusBadge status={application.status} />
+                </View>
+                {application.coverLetter && (
+                  <Text 
+                    style={[styles.applicationCoverLetterPreview, { color: colors.text.secondary }]}
+                    numberOfLines={2}
+                  >
+                    {application.coverLetter}
+                  </Text>
+                )}
+                {application.interviewSchedule && application.interviewSchedule.length > 0 && (
+                  <View style={styles.interviewSchedulePreview}>
+                    <Ionicons name="calendar-outline" size={14} color={colors.primary[600]} />
+                    <Text style={[styles.interviewScheduleText, { color: colors.primary[600] }]}>
+                      {application.interviewSchedule.length} interview{application.interviewSchedule.length > 1 ? 's' : ''} scheduled
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </Card>
+        )}
 
         {/* Salary Section */}
         {job.salary && (
@@ -551,13 +1135,13 @@ function JobDetailScreenContent() {
                 Paid {job.salary.period}
               </Text>
             )}
-            {(job.salary as any)?.negotiable && (
+            {((job.salary as any)?.isNegotiable || (job.salary as any)?.negotiable) && (
               <View style={styles.salaryBadge}>
                 <Ionicons name="information-circle-outline" size={16} color={colors.primary[600]} />
                 <Text style={[styles.salaryBadgeText, { color: colors.primary[600] }]}>Salary is negotiable</Text>
               </View>
             )}
-            {(job.salary as any)?.confidential && (
+            {((job.salary as any)?.isConfidential || (job.salary as any)?.confidential) && (
               <View style={styles.salaryBadge}>
                 <Ionicons name="lock-closed-outline" size={16} color={colors.text.tertiary} />
                 <Text style={[styles.salaryBadgeText, { color: colors.text.tertiary }]}>
@@ -714,6 +1298,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   featuredBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: Colors.primary[50],
     borderRadius: BorderRadius.full,
     paddingHorizontal: Spacing.sm,
@@ -749,8 +1336,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: Typography.fontWeight.semibold,
     lineHeight: 24,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
     fontFamily: Typography.fontFamily?.semibold || 'System',
+  },
+  companyIndustry: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: Spacing.xs,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
   metaRow: {
     flexDirection: 'row',
@@ -962,6 +1555,154 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     backgroundColor: Colors.background.secondary,
+  },
+  requirementsSubsection: {
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  subsectionTitle: {
+    fontSize: 15,
+    fontWeight: Typography.fontWeight.semibold,
+    marginBottom: Spacing.sm,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
+  },
+  tag: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+  },
+  tagText: {
+    fontSize: 12,
+    fontWeight: Typography.fontWeight.medium,
+    fontFamily: Typography.fontFamily?.medium || 'System',
+  },
+  employerContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.md,
+  },
+  employerAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.background.secondary,
+  },
+  employerAvatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  employerInfo: {
+    flex: 1,
+  },
+  employerName: {
+    fontSize: 16,
+    fontWeight: Typography.fontWeight.semibold,
+    marginBottom: Spacing.xs,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
+  },
+  employerBio: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: Typography.fontFamily?.regular || 'System',
+  },
+  analyticsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border.light,
+  },
+  analyticsItem: {
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  analyticsValue: {
+    fontSize: 20,
+    fontWeight: Typography.fontWeight.bold,
+    fontFamily: Typography.fontFamily?.bold || 'System',
+  },
+  analyticsLabel: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily?.regular || 'System',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  viewAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  viewAllText: {
+    fontSize: 14,
+    fontWeight: Typography.fontWeight.semibold,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
+  },
+  applicationPreviewItem: {
+    marginBottom: Spacing.sm,
+  },
+  applicationPreviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  applicationAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.background.secondary,
+  },
+  applicationAvatarPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  applicationPreviewInfo: {
+    flex: 1,
+  },
+  applicationName: {
+    fontSize: 15,
+    fontWeight: Typography.fontWeight.semibold,
+    marginBottom: 2,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
+  },
+  applicationDate: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily?.regular || 'System',
+  },
+  applicationCoverLetterPreview: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: Spacing.xs,
+    fontFamily: Typography.fontFamily?.regular || 'System',
+  },
+  interviewSchedulePreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: Spacing.xs,
+  },
+  interviewScheduleText: {
+    fontSize: 12,
+    fontWeight: Typography.fontWeight.medium,
+    fontFamily: Typography.fontFamily?.medium || 'System',
   },
 });
 

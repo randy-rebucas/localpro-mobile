@@ -320,13 +320,119 @@ export class JobBoardService {
     return transformJobsFromApi(rawJobs);
   }
 
-  static async getJobApplications(jobId: string, filters?: Record<string, any>): Promise<JobApplication[]> {
-    const query = buildQueryParams(filters);
+  static async getJobApplications(jobId: string, filters?: Record<string, any>): Promise<(JobApplication & { applicant?: any })[]> {
+    // Map component status values to API status values for filtering
+    // API valid statuses: pending, reviewing, shortlisted, interviewed, rejected, hired
+    const statusFilterMap: Record<string, string> = {
+      'pending': 'pending',
+      'reviewed': 'shortlisted', // Component uses 'reviewed', API uses 'shortlisted'
+      'interview': 'interviewed', // Component uses 'interview', API uses 'interviewed'
+      'accepted': 'hired', // Component uses 'accepted', API uses 'hired'
+      'rejected': 'rejected',
+    };
+    
+    // Transform filters if status is provided
+    const apiFilters = filters ? { ...filters } : {};
+    if (apiFilters.status && statusFilterMap[apiFilters.status]) {
+      apiFilters.status = statusFilterMap[apiFilters.status];
+    }
+    
+    const query = buildQueryParams(apiFilters);
     const endpoint = query
       ? `${API_ENDPOINTS.jobs.applications.getByJob(jobId)}?${query}`
       : API_ENDPOINTS.jobs.applications.getByJob(jobId);
-    const data = await apiClient.get<JobApplication[]>(endpoint);
-    return data;
+    
+    const response = await apiClient.get<any>(endpoint);
+    const rawApplications = coerceArray<any>(response);
+    
+    // Transform applications from API format
+    return rawApplications.map((apiApp: any) => {
+      // Map API status values to component status values
+      // API: pending, reviewing, shortlisted, interviewed, rejected, hired
+      // UI: pending, reviewed, interview, accepted, rejected
+      const statusMap: Record<string, JobApplication['status']> = {
+        'pending': 'pending',
+        'reviewing': 'reviewed', // API 'reviewing' -> UI 'reviewed'
+        'shortlisted': 'reviewed', // API 'shortlisted' -> UI 'reviewed'
+        'interviewed': 'interview', // API 'interviewed' -> UI 'interview'
+        'rejected': 'rejected',
+        'hired': 'accepted', // API 'hired' -> UI 'accepted'
+        // Legacy mappings for backward compatibility
+        'interview': 'interview',
+        'accepted': 'accepted',
+        'reviewed': 'reviewed',
+      };
+      
+      // Transform applicant data
+      let applicant: any = undefined;
+      if (apiApp.applicant) {
+        const apiApplicant = apiApp.applicant;
+        const firstName = apiApplicant.firstName || '';
+        const lastName = apiApplicant.lastName || '';
+        const fullName = `${firstName} ${lastName}`.trim() || 'Unknown Applicant';
+        
+        // Extract avatar URL (prefer thumbnail, fallback to url)
+        const avatarUrl = apiApplicant.profile?.avatar?.thumbnail || 
+                         apiApplicant.profile?.avatar?.url || 
+                         undefined;
+        
+        applicant = {
+          id: apiApplicant._id || apiApplicant.id || '',
+          name: fullName,
+          email: apiApplicant.email || '',
+          phoneNumber: apiApplicant.phoneNumber || '',
+          avatar: avatarUrl,
+        };
+      }
+      
+      // Transform interview schedule (if exists)
+      let interview: any = undefined;
+      if (apiApp.interviewSchedule && Array.isArray(apiApp.interviewSchedule) && apiApp.interviewSchedule.length > 0) {
+        const firstInterview = apiApp.interviewSchedule[0];
+        interview = {
+          date: firstInterview.date ? new Date(firstInterview.date) : undefined,
+          time: firstInterview.time ? new Date(firstInterview.time) : undefined,
+          location: firstInterview.location,
+          type: firstInterview.type === 'in_person' ? 'in-person' : (firstInterview.type || 'in-person'),
+          notes: firstInterview.notes,
+          meetingLink: firstInterview.meetingLink || firstInterview.link,
+        };
+      }
+
+      // Transform feedback (API returns { strengths: [], weaknesses: [] }, but we might need it as string)
+      let feedback: string | undefined = undefined;
+      if (apiApp.feedback) {
+        if (typeof apiApp.feedback === 'string') {
+          feedback = apiApp.feedback;
+        } else if (apiApp.feedback.strengths || apiApp.feedback.weaknesses) {
+          // Combine strengths and weaknesses into a readable format
+          const parts: string[] = [];
+          if (apiApp.feedback.strengths && apiApp.feedback.strengths.length > 0) {
+            parts.push(`Strengths: ${apiApp.feedback.strengths.join(', ')}`);
+          }
+          if (apiApp.feedback.weaknesses && apiApp.feedback.weaknesses.length > 0) {
+            parts.push(`Weaknesses: ${apiApp.feedback.weaknesses.join(', ')}`);
+          }
+          feedback = parts.join('\n') || undefined;
+        }
+      }
+
+      return {
+        id: apiApp._id || apiApp.id || '',
+        jobId: jobId,
+        userId: apiApp.applicant?._id || apiApp.applicant?.id || apiApp.userId || '',
+        status: statusMap[apiApp.status] || 'pending',
+        appliedAt: apiApp.appliedAt ? new Date(apiApp.appliedAt) : new Date(),
+        coverLetter: apiApp.coverLetter || '',
+        resume: apiApp.resume || apiApp.resumeUrl || '',
+        applicant: applicant,
+        interview: interview,
+        feedback: feedback,
+        expectedSalary: apiApp.expectedSalary,
+        availability: apiApp.availability,
+        interviewSchedule: apiApp.interviewSchedule,
+      } as JobApplication & { applicant?: any; interview?: any; feedback?: string; expectedSalary?: any; availability?: any; interviewSchedule?: any[] };
+    });
   }
 
   static async updateApplicationStatus(
@@ -337,9 +443,22 @@ export class JobBoardService {
     rating?: number,
     feedback?: string
   ): Promise<JobApplication> {
+    // Map UI status values to API status values
+    // UI: pending, reviewed, interview, accepted, rejected
+    // API: pending, reviewing, shortlisted, interviewed, rejected, hired
+    const statusMapToApi: Record<JobApplication['status'], string> = {
+      'pending': 'pending',
+      'reviewed': 'shortlisted', // UI 'reviewed' -> API 'shortlisted'
+      'interview': 'interviewed', // UI 'interview' -> API 'interviewed'
+      'accepted': 'hired', // UI 'accepted' -> API 'hired'
+      'rejected': 'rejected',
+    };
+
+    const apiStatus = statusMapToApi[status] || status;
+
     return apiClient.put<JobApplication>(
       API_ENDPOINTS.jobs.applications.updateStatus(jobId, applicationId),
-      { status, notes, rating, feedback }
+      { status: apiStatus, notes, rating, feedback }
     );
   }
 

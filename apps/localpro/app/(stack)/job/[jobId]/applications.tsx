@@ -1,11 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import {
-  ApplicantCard,
-  ApplicationAnalytics,
-  FeedbackForm,
-  InterviewScheduler,
-  StatusUpdateModal,
-} from '../../../../components/job-board';
 import { JobBoardService } from '@localpro/job-board';
 import type { Job, JobApplication } from '@localpro/types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -26,6 +19,13 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  ApplicantCard,
+  ApplicationAnalytics,
+  FeedbackForm,
+  InterviewScheduler,
+  StatusUpdateModal,
+} from '../../../../components/job-board';
 import { EmptyState, LoadingSkeleton } from '../../../../components/marketplace';
 import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../../../constants/theme';
 import { useRoleContext } from '../../../../contexts/RoleContext';
@@ -59,7 +59,7 @@ export default function JobApplicationsScreen() {
   const [showInterviewScheduler, setShowInterviewScheduler] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
-  // const [updatingStatus, setUpdatingStatus] = useState<string | null>(null); // Reserved for future use
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   const statusFilters = ['all', 'pending', 'reviewed', 'interview', 'accepted', 'rejected'];
 
@@ -95,7 +95,7 @@ export default function JobApplicationsScreen() {
         filters.status = selectedStatus;
       }
       const apps = await JobBoardService.getJobApplications(jobId, filters);
-      setApplications(apps as ApplicationWithApplicant[]);
+      setApplications(Array.isArray(apps) ? (apps as ApplicationWithApplicant[]) : []);
     } catch (err: any) {
       setError(err?.message || 'Failed to load applications');
       console.error('Error fetching applications:', err);
@@ -220,19 +220,21 @@ export default function JobApplicationsScreen() {
   }, []);
 
   const stats = useMemo(() => {
+    const apps = Array.isArray(applications) ? applications : [];
     return {
-      total: applications.length,
-      pending: applications.filter((a) => a.status === 'pending').length,
-      reviewed: applications.filter((a) => a.status === 'reviewed').length,
-      interview: applications.filter((a) => a.status === 'interview').length,
-      accepted: applications.filter((a) => a.status === 'accepted').length,
-      rejected: applications.filter((a) => a.status === 'rejected').length,
+      total: apps.length,
+      pending: apps.filter((a) => a.status === 'pending').length,
+      reviewed: apps.filter((a) => a.status === 'reviewed').length,
+      interview: apps.filter((a) => a.status === 'interview').length,
+      accepted: apps.filter((a) => a.status === 'accepted').length,
+      rejected: apps.filter((a) => a.status === 'rejected').length,
     };
   }, [applications]);
 
   const filteredApplications = useMemo(() => {
-    if (selectedStatus === 'all') return applications;
-    return applications.filter((app) => app.status === selectedStatus);
+    const apps = Array.isArray(applications) ? applications : [];
+    if (selectedStatus === 'all') return apps;
+    return apps.filter((app) => app.status === selectedStatus);
   }, [applications, selectedStatus]);
 
   const renderApplicationCard = useCallback(

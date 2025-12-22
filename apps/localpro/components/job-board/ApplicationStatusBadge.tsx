@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Colors, Spacing, Typography } from '../../constants/theme';
+import { BorderRadius, Colors, Spacing, Typography } from '../../constants/theme';
 
 type ApplicationStatus = 'pending' | 'reviewed' | 'interview' | 'accepted' | 'rejected';
 

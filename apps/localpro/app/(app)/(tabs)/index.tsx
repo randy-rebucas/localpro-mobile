@@ -217,6 +217,7 @@ export default function HomeScreen() {
   
   // Fetch my jobs if provider/admin role
   const [myJobs, setMyJobs] = useState<Job[]>([]);
+  const [myJobsLoading, setMyJobsLoading] = useState(false);
   
   useEffect(() => {
     const fetchMyJobs = async () => {
@@ -567,7 +568,7 @@ export default function HomeScreen() {
         if (jobPage === 1) {
           // First page - replace
           setAccumulatedJobs(data);
-          setJobs(data);
+          setMyJobs(data);
         } else {
           // Subsequent pages - append and deduplicate
           setAccumulatedJobs((prev) => {
@@ -1169,31 +1170,6 @@ export default function HomeScreen() {
                     <Text style={styles.subtitle}>Find work tailored to your skills</Text>
                   </View>
                 </View>
-
-                {accumulatedJobs.length > 0 && (
-                  <Card key="job-header-card" style={styles.jobHeaderCard}>
-                    <Text style={styles.jobHeaderTitle}>
-                      {jobFiltersActive ? 'Filtered results' : 'Job board'} · {jobCount} {jobCount === 1 ? 'listing' : 'listings'}
-                    </Text>
-                    <View style={styles.jobStatsRow}>
-                      <View key="stat-remote" style={styles.jobStatCard}>
-                        <Ionicons name="wifi-outline" size={16} color={colors.primary[600]} />
-                        <Text style={styles.jobStatValue}>{jobRemoteCount}</Text>
-                        <Text style={styles.jobStatLabel}>Remote</Text>
-                      </View>
-                      <View key="stat-nearby" style={styles.jobStatCard}>
-                        <Ionicons name="location" size={16} color={colors.secondary[600]} />
-                        <Text style={styles.jobStatValue}>{jobNearbyCount}</Text>
-                        <Text style={styles.jobStatLabel}>Nearby</Text>
-                      </View>
-                      <View key="stat-featured" style={styles.jobStatCard}>
-                        <Ionicons name="star" size={16} color={colors.semantic.warning[600]} />
-                        <Text style={styles.jobStatValue}>{featuredJobs.length}</Text>
-                        <Text style={styles.jobStatLabel}>Featured</Text>
-                      </View>
-                    </View>
-                  </Card>
-                )}
 
                 <View key="search-section" style={styles.searchSection}>
                   <SearchInput
