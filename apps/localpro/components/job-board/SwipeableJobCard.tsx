@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { Job } from '@localpro/types';
 import React, { useRef } from 'react';
-import { Alert, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { BorderRadius, Colors, Spacing, Typography } from '../../constants/theme';
+import { BorderRadius, Spacing, Typography } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
 
 interface SwipeableJobCardProps {

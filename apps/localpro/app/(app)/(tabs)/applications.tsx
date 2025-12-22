@@ -45,18 +45,16 @@ export default function ApplicationsTabScreen() {
     { key: 'rejected', label: 'Rejected', icon: 'close-circle-outline' },
   ];
 
-  useEffect(() => {
-    fetchApplications();
-  }, [activeFilter]);
-
-  const fetchApplications = async () => {
+  const fetchApplications = useCallback(async () => {
     try {
       setLoading(true);
       const filters: Record<string, any> = {};
       if (activeFilter !== 'all') {
         filters.status = activeFilter;
       }
-      const apps = await JobBoardService.getApplications();
+      
+      // Get applications with job data already included from API
+      const apps = await JobBoardService.getApplications(filters);
       
       // Ensure apps is an array
       if (!Array.isArray(apps)) {
@@ -65,19 +63,8 @@ export default function ApplicationsTabScreen() {
         return;
       }
       
-      // Fetch job details for each application
-      const appsWithJobs = await Promise.all(
-        apps.map(async (app) => {
-          try {
-            const job = await JobBoardService.getJob(app.jobId);
-            return { ...app, job: job || undefined };
-          } catch {
-            return { ...app, job: undefined };
-          }
-        })
-      );
-      
-      setApplications(appsWithJobs);
+      // Applications already have job data from the API response
+      setApplications(apps);
     } catch (err: any) {
       console.error('Error fetching applications:', err);
       Alert.alert('Error', err?.message || 'Failed to load applications');
@@ -86,12 +73,16 @@ export default function ApplicationsTabScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [activeFilter]);
+
+  useEffect(() => {
+    fetchApplications();
+  }, [fetchApplications]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchApplications();
-  }, [activeFilter]);
+  }, [fetchApplications]);
 
   const handleWithdraw = useCallback(async (applicationId: string, jobId: string) => {
     Alert.alert(
@@ -104,7 +95,7 @@ export default function ApplicationsTabScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await JobBoardService.updateApplicationStatus(jobId, applicationId, 'rejected');
+              await JobBoardService.withdrawApplication(jobId, applicationId);
               Alert.alert('Success', 'Application withdrawn successfully');
               await fetchApplications();
             } catch (err: any) {
@@ -114,7 +105,7 @@ export default function ApplicationsTabScreen() {
         },
       ]
     );
-  }, []);
+  }, [fetchApplications]);
 
   const handleViewDetails = useCallback((applicationId: string) => {
     router.push(`/(stack)/application/${applicationId}` as any);
@@ -176,7 +167,7 @@ export default function ApplicationsTabScreen() {
       >
         <View style={styles.content}>
           {/* Header */}
-          <View style={styles.header}>
+          <View style={styles.header}> 
             <Text style={styles.title}>My Applications</Text>
             <Text style={styles.subtitle}>Track your job applications</Text>
           </View>
@@ -228,33 +219,37 @@ export default function ApplicationsTabScreen() {
               {filteredApplications.map((application) => (
                 <Card key={application.id} style={styles.applicationCard}>
                   <View style={styles.applicationHeader}>
-                    <View style={styles.applicationHeaderLeft}>
+                    <View key={`header-left-${application.id}`} style={styles.applicationHeaderLeft}>
                       <ApplicationStatusBadge status={application.status} />
                     </View>
-                    <Text style={[styles.applicationDate, { color: colors.text.tertiary }]}>
-                      {formatDate(application.appliedAt)}
-                    </Text>
+                    <View key={`header-date-${application.id}`}>
+                      <Text style={[styles.applicationDate, { color: colors.text.tertiary }]}>
+                        {formatDate(application.appliedAt)}
+                      </Text>
+                    </View>
                   </View>
 
                   <View style={styles.applicationContent}>
-                    <Text style={styles.jobTitle}>
-                      {application.job?.title || 'Job Title'}
-                    </Text>
+                    <View key={`job-title-${application.id}`}>
+                      <Text style={styles.jobTitle}>
+                        {application.job?.title || 'Job Title'}
+                      </Text>
+                    </View>
                     <View style={styles.jobInfo}>
-                      <View style={styles.jobInfoItem}>
+                      <View key={`company-${application.id}`} style={styles.jobInfoItem}>
                         <Ionicons name="business-outline" size={16} color={colors.text.secondary} />
                         <Text style={styles.jobInfoText}>
                           {application.job?.company || 'Company Name'}
                         </Text>
                       </View>
-                      <View style={styles.jobInfoItem}>
+                      <View key={`location-${application.id}`} style={styles.jobInfoItem}>
                         <Ionicons name="location-outline" size={16} color={colors.text.secondary} />
                         <Text style={styles.jobInfoText}>
                           {application.job?.location || 'Location'}
                         </Text>
                       </View>
-                      {application.job?.type && (
-                        <View style={styles.jobInfoItem}>
+                      {application.job?.type ? (
+                        <View key={`type-${application.id}`} style={styles.jobInfoItem}>
                           <Ionicons 
                             name={getJobTypeIcon(application.job.type)} 
                             size={16} 
@@ -264,25 +259,29 @@ export default function ApplicationsTabScreen() {
                             {application.job.type.charAt(0).toUpperCase() + application.job.type.slice(1)}
                           </Text>
                         </View>
-                      )}
+                      ) : null}
                     </View>
-                    {application.job?.salary && (
-                      <Text style={[styles.salary, { color: colors.secondary[600] }]}>
-                        {formatSalaryRange(application.job.salary)}
-                      </Text>
-                    )}
+                    {application.job?.salary ? (
+                      <View key={`salary-${application.id}`}>
+                        <Text style={[styles.salary, { color: colors.secondary[600] }]}>
+                          {formatSalaryRange(application.job.salary)}
+                        </Text>
+                      </View>
+                    ) : null}
                   </View>
 
                   <View style={styles.applicationActions}>
                     <TouchableOpacity
+                      key={`view-details-${application.id}`}
                       style={[styles.actionButton, { backgroundColor: colors.primary[50], borderColor: colors.primary[200] }]}
                       onPress={() => handleViewDetails(application.id)}
                       activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                     >
                       <Text style={[styles.actionButtonText, { color: colors.primary[600] }]}>View Details</Text>
                     </TouchableOpacity>
-                    {application.status === 'pending' && (
+                    {application.status === 'pending' ? (
                       <TouchableOpacity
+                        key={`withdraw-${application.id}`}
                         style={[styles.actionButton, styles.withdrawButton, { backgroundColor: colors.background.secondary, borderColor: colors.border.light }]}
                         onPress={() => handleWithdraw(application.id, application.jobId)}
                         activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
@@ -291,7 +290,7 @@ export default function ApplicationsTabScreen() {
                           Withdraw
                         </Text>
                       </TouchableOpacity>
-                    )}
+                    ) : null}
                   </View>
                 </Card>
               ))}

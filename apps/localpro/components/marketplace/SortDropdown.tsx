@@ -62,7 +62,6 @@ export function SortDropdown({ selectedSort, onSortChange }: SortDropdownProps) 
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setModalVisible(false)}
-          activeOpacity={1}
         >
           <View style={[styles.modalContent, { backgroundColor: colors.background.primary }]}>
             <View style={styles.modalHeader}>

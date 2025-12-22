@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAuthContext } from '@localpro/auth';
 import {
   ApplicantCard,
   ApplicationAnalytics,
@@ -20,6 +19,7 @@ import {
   Platform,
   RefreshControl,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -27,7 +27,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { EmptyState, LoadingSkeleton } from '../../../../components/marketplace';
-import { BorderRadius, Colors, Spacing, Typography } from '../../../../constants/theme';
+import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../../../constants/theme';
 import { useRoleContext } from '../../../../contexts/RoleContext';
 import { useThemeColors } from '../../../../hooks/use-theme';
 
@@ -48,7 +48,6 @@ export default function JobApplicationsScreen() {
 
   const router = useRouter();
   const colors = useThemeColors();
-  const { user } = useAuthContext();
   const { activeRole } = useRoleContext();
   const [applications, setApplications] = useState<ApplicationWithApplicant[]>([]);
   const [job, setJob] = useState<Job | null>(null);
@@ -60,7 +59,7 @@ export default function JobApplicationsScreen() {
   const [showInterviewScheduler, setShowInterviewScheduler] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
-  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  // const [updatingStatus, setUpdatingStatus] = useState<string | null>(null); // Reserved for future use
 
   const statusFilters = ['all', 'pending', 'reviewed', 'interview', 'accepted', 'rejected'];
 
@@ -78,9 +77,10 @@ export default function JobApplicationsScreen() {
     }
 
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId, selectedStatus, activeRole]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -103,12 +103,12 @@ export default function JobApplicationsScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [jobId, selectedStatus]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchData();
-  }, [jobId, selectedStatus]);
+  }, [fetchData]);
 
   const handleApplicationPress = useCallback((applicationId: string) => {
     router.push(`/(stack)/application/${applicationId}` as any);
@@ -127,7 +127,7 @@ export default function JobApplicationsScreen() {
       } else {
         Alert.alert('Error', 'Cannot open resume URL');
       }
-    } catch (err) {
+    } catch {
       Alert.alert('Error', 'Failed to open resume');
     }
   }, []);
@@ -149,7 +149,7 @@ export default function JobApplicationsScreen() {
         setUpdatingStatus(null);
       }
     },
-    [jobId, selectedApplication]
+    [jobId, selectedApplication, fetchData]
   );
 
   const handleScheduleInterview = useCallback((application: ApplicationWithApplicant) => {
@@ -182,7 +182,7 @@ export default function JobApplicationsScreen() {
         Alert.alert('Error', err?.message || 'Failed to schedule interview');
       }
     },
-    [jobId, selectedApplication]
+    [jobId, selectedApplication, fetchData]
   );
 
   const handleFeedback = useCallback((application: ApplicationWithApplicant) => {
@@ -211,7 +211,7 @@ export default function JobApplicationsScreen() {
         Alert.alert('Error', err?.message || 'Failed to submit feedback');
       }
     },
-    [jobId, selectedApplication]
+    [jobId, selectedApplication, fetchData]
   );
 
   const handleStatusUpdate = useCallback((application: ApplicationWithApplicant) => {
@@ -252,9 +252,22 @@ export default function JobApplicationsScreen() {
     [handleApplicationPress, handleResumePress, handleStatusUpdate, handleScheduleInterview, handleFeedback]
   );
 
+  const handleShare = useCallback(async () => {
+    if (!job) return;
+
+    try {
+      await Share.share({
+        message: `Check out applications for: ${job.title}`,
+        title: `Applications for ${job.title}`,
+      });
+    } catch (err) {
+      console.error('Error sharing applications:', err);
+    }
+  }, [job]);
+
   if (activeRole !== 'provider' && activeRole !== 'admin') {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <EmptyState
           icon="lock-closed-outline"
           title="Access Denied"
@@ -266,7 +279,7 @@ export default function JobApplicationsScreen() {
 
   if (loading && !job) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary[600]} />
           <Text style={[styles.loadingText, { color: colors.text.secondary }]}>Loading applications...</Text>
@@ -277,21 +290,41 @@ export default function JobApplicationsScreen() {
 
   if (error || !job) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <EmptyState icon="alert-circle-outline" title={error || 'Job not found'} subtitle="Please try again later" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={Platform.select({ ios: ['bottom'], android: ['bottom', 'top'] })}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <FlatList
         data={filteredApplications}
         keyExtractor={(item) => item.id}
         renderItem={renderApplicationCard}
         ListHeaderComponent={
           <View>
-            <View style={styles.header}>
+            {/* Header Actions */}
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={() => router.back()}
+                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+              >
+                <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+              </TouchableOpacity>
+              <View style={styles.headerRight}>
+                <TouchableOpacity
+                  style={styles.headerButton}
+                  onPress={handleShare}
+                  activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+                >
+                  <Ionicons name="share-outline" size={24} color={colors.text.primary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={[styles.header, { paddingTop: Platform.select({ ios: 60, android: 70 }) }]}>
               <View>
                 <Text style={styles.title}>Applications</Text>
                 <Text style={styles.subtitle}>{job.title}</Text>
@@ -426,12 +459,38 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: Typography.fontFamily?.regular || 'System',
+  },
+  headerActions: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.lg }),
+    paddingBottom: Spacing.sm,
+    zIndex: 10,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  headerButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.background.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.sm,
   },
   header: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.sm }),
+    paddingTop: Spacing.md,
     paddingBottom: Spacing.md,
   },
   title: {

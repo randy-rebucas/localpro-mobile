@@ -10,11 +10,13 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BorderRadius, Colors, Spacing } from '../constants/theme';
 import { usePackageContext } from '../contexts/PackageContext';
+import { useRoleContext } from '../contexts/RoleContext';
 import { useAppHealth } from '../hooks/use-app-health';
 
 export function CustomDrawerContent(props: any) {
   const { user, logout } = useAuthContext();
   const { activePackage } = usePackageContext();
+  const { activeRole } = useRoleContext();
   const router = useRouter();
   const { status: healthStatus, lastChecked } = useAppHealth(30000); // Check every 30 seconds
 
@@ -196,6 +198,22 @@ export function CustomDrawerContent(props: any) {
               <Ionicons name="chatbubble-outline" size={24} color={Colors.primary[600]} />
               <Text style={styles.menuItemText}>Messages</Text>
             </TouchableOpacity>
+
+            {/* My Jobs - Only for providers and admins */}
+            {(activeRole === 'provider' || activeRole === 'admin') && (
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  props.navigation.closeDrawer();
+                  setTimeout(() => {
+                    router.push('/(stack)/jobs/my-jobs');
+                  }, 100);
+                }}
+              >
+                <Ionicons name="briefcase-outline" size={24} color={Colors.secondary[600]} />
+                <Text style={styles.menuItemText}>My Jobs</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={styles.menuItem}

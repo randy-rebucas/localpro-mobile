@@ -52,7 +52,7 @@ export function StatusUpdateModal({
       setNotes('');
       setRating(undefined);
       onClose();
-    } catch (err) {
+    } catch {
       // Error handling is done in parent
     } finally {
       setUpdating(false);

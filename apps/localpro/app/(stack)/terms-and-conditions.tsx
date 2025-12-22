@@ -33,7 +33,7 @@ export default function TermsAndConditionsScreen() {
             </Text>
 
             <Text style={styles.introText}>
-              Welcome to LocalPro. These Terms and Conditions ("Terms") govern your access to and use of the LocalPro platform, including our mobile application and website (collectively, the "Service"). By accessing or using our Service, you agree to be bound by these Terms.
+              Welcome to LocalPro. These Terms and Conditions (&quot;Terms&quot;) govern your access to and use of the LocalPro platform, including our mobile application and website (collectively, the &quot;Service&quot;). By accessing or using our Service, you agree to be bound by these Terms.
             </Text>
 
             <View style={styles.section}>
@@ -94,7 +94,7 @@ export default function TermsAndConditionsScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>7. Cancellations and Refunds</Text>
               <Text style={styles.sectionText}>
-                Cancellation policies vary by service provider and are displayed at the time of booking. Customers may cancel bookings according to the provider's cancellation policy. Service providers may cancel bookings with reasonable notice. Refunds will be processed according to the applicable cancellation policy.
+                Cancellation policies vary by service provider and are displayed at the time of booking. Customers may cancel bookings according to the provider&apos;s cancellation policy. Service providers may cancel bookings with reasonable notice. Refunds will be processed according to the applicable cancellation policy.
               </Text>
             </View>
 
@@ -129,7 +129,7 @@ export default function TermsAndConditionsScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>11. Disclaimers</Text>
               <Text style={styles.sectionText}>
-                THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND. We do not guarantee that the Service will be uninterrupted, secure, or error-free. We are not responsible for the quality, safety, or legality of services provided by service providers, nor for the accuracy of information posted by users.
+                THE SERVICE IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; WITHOUT WARRANTIES OF ANY KIND. We do not guarantee that the Service will be uninterrupted, secure, or error-free. We are not responsible for the quality, safety, or legality of services provided by service providers, nor for the accuracy of information posted by users.
               </Text>
             </View>
 

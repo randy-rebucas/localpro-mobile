@@ -9,7 +9,9 @@ import {
     ActivityIndicator,
     Alert,
     Image,
+    Platform,
     ScrollView,
+    Share,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -26,7 +28,7 @@ import {
     ReviewFormModal,
     StatusBadge,
 } from '../../../components/marketplace';
-import { BorderRadius, Colors, Spacing } from '../../../constants/theme';
+import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../../constants/theme';
 import { useThemeColors } from '../../../hooks/use-theme';
 
 type BookingStatus = 'pending' | 'confirmed' | 'in-progress' | 'completed' | 'cancelled';
@@ -49,6 +51,7 @@ export default function BookingDetailScreen() {
     if (id) {
       loadBooking();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadBooking = async () => {
@@ -185,12 +188,25 @@ export default function BookingDetailScreen() {
   const canCancel = booking?.status !== 'completed' && booking?.status !== 'cancelled';
   const canReview = booking?.status === 'completed' && isClient && !(booking as any).reviewed;
 
+  const handleShare = async () => {
+    if (!booking) return;
+
+    try {
+      await Share.share({
+        message: `Booking #${booking.id.slice(0, 8)} - ${booking.service.title}`,
+        title: 'Booking Details',
+      });
+    } catch (err) {
+      console.error('Error sharing booking:', err);
+    }
+  };
+
   if (loading) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary[600]} />
-          <Text style={styles.loadingText}>Loading booking...</Text>
+          <Text style={[styles.loadingText, { color: colors.text.secondary }]}>Loading booking...</Text>
         </View>
       </SafeAreaView>
     );
@@ -198,7 +214,7 @@ export default function BookingDetailScreen() {
 
   if (!booking) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <EmptyState
           icon="alert-circle-outline"
           title="Booking not found"
@@ -209,15 +225,30 @@ export default function BookingDetailScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Header Actions */}
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => router.back()}
+            activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+          >
             <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Booking Details</Text>
-          <View style={styles.placeholder} />
+          <View style={styles.headerRight}>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={handleShare}
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+            >
+              <Ionicons name="share-outline" size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.content}>
@@ -509,35 +540,43 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: Colors.text.secondary,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
   scrollView: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
+  scrollContent: {
+    paddingBottom: Spacing.xl,
   },
-  backButton: {
+  headerActions: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.lg }),
+    paddingBottom: Spacing.sm,
+    zIndex: 10,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  headerButton: {
     width: 40,
     height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-  },
-  placeholder: {
-    width: 40,
+    ...Shadows.sm,
   },
   content: {
     padding: Spacing.lg,
+    paddingTop: Platform.select({ ios: 60, android: 70 }),
   },
   statusSection: {
     flexDirection: 'row',
@@ -551,12 +590,14 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: Spacing.md,
+    ...Shadows.md,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
     color: Colors.text.primary,
     marginBottom: Spacing.md,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   timeline: {
     gap: Spacing.md,

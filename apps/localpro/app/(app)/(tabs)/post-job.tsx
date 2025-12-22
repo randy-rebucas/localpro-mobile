@@ -79,7 +79,7 @@ interface JobFormData {
   experienceYears?: number;
   experienceDescription?: string;
   certifications: string[];
-  languages: Array<{ language: string; proficiency: string }>;
+  languages: { language: string; proficiency: string }[];
   otherRequirements: string[];
 
   // Step 5: Application Process
@@ -199,6 +199,7 @@ export default function PostJobTabScreen() {
         expiresAt: prev.expiresAt || dateStr,
       }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId]);
 
   // Fetch categories for display
@@ -209,7 +210,7 @@ export default function PostJobTabScreen() {
         if (data && data.length > 0) {
           setCategories(data);
         }
-      } catch (err) {
+      } catch {
         // Silently handle error
       }
     };
@@ -768,7 +769,7 @@ export default function PostJobTabScreen() {
                           locationLng: longitude,
                         });
                       }
-                    } catch (error: any) {
+                    } catch {
                       Alert.alert('Error', 'Failed to get your location. Please try again.');
                     }
                   }}
@@ -926,7 +927,7 @@ export default function PostJobTabScreen() {
               >
                 <Ionicons name="calendar-outline" size={16} color={colors.primary[600]} />
                 <Text style={[styles.quickDateButtonText, { color: colors.primary[600] }]}>
-                  Use Today's Date
+                  Use Today&apos;s Date
                 </Text>
               </TouchableOpacity>
 

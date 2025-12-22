@@ -210,6 +210,8 @@ export const API_ENDPOINTS = {
       getByJob: (id: string) => `/api/jobs/${id}/applications`,
       // Update application status (employer/admin role)
       updateStatus: (id: string, applicationId: string) => `/api/jobs/${id}/applications/${applicationId}/status`,
+      // Withdraw application (applicant role)
+      withdraw: (jobId: string, applicationId: string) => `/api/jobs/${jobId}/applications/${applicationId}`,
     },
     // Statistics endpoints (auth required, provider/admin role)
     statistics: {

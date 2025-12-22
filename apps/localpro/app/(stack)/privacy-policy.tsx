@@ -33,7 +33,7 @@ export default function PrivacyPolicyScreen() {
             </Text>
 
             <Text style={styles.introText}>
-              At LocalPro, we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application and website (collectively, the "Service"). Please read this Privacy Policy carefully. By using our Service, you consent to the data practices described in this policy.
+              At LocalPro, we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application and website (collectively, the &quot;Service&quot;). Please read this Privacy Policy carefully. By using our Service, you consent to the data practices described in this policy.
             </Text>
 
             <View style={styles.section}>
@@ -133,7 +133,7 @@ export default function PrivacyPolicyScreen() {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>7. Children's Privacy</Text>
+              <Text style={styles.sectionTitle}>7. Children&apos;s Privacy</Text>
               <Text style={styles.sectionText}>
                 Our Service is not intended for children under the age of 18. We do not knowingly collect personal information from children under 18. If you become aware that a child has provided us with personal information, please contact us, and we will take steps to delete such information.
               </Text>
@@ -170,7 +170,7 @@ export default function PrivacyPolicyScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>12. Changes to This Privacy Policy</Text>
               <Text style={styles.sectionText}>
-                We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new Privacy Policy on this page and updating the "Last Updated" date. We encourage you to review this Privacy Policy periodically.
+                We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new Privacy Policy on this page and updating the &quot;Last Updated&quot; date. We encourage you to review this Privacy Policy periodically.
               </Text>
             </View>
 

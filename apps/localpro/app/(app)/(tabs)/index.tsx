@@ -91,8 +91,9 @@ const JOB_SEARCH_TERMS = [
   'Roofing Inspector',
 ];
 
-const JOB_TYPES = ['full-time', 'part-time', 'contract', 'freelance', 'internship', 'temporary'];
-const EXPERIENCE_LEVELS = ['entry', 'junior', 'mid', 'senior', 'lead', 'executive'];
+// Reserved for future use
+// const JOB_TYPES = ['full-time', 'part-time', 'contract', 'freelance', 'internship', 'temporary'];
+// const EXPERIENCE_LEVELS = ['entry', 'junior', 'mid', 'senior', 'lead', 'executive'];
 const JOBS_PER_PAGE = 20;
 
 const toTitleCase = (value: string | undefined | null) => {
@@ -199,7 +200,7 @@ export default function HomeScreen() {
   const [jobFilterSheetVisible, setJobFilterSheetVisible] = useState(false);
   const [jobCategories, setJobCategories] = useState<Category[]>([ALL_CATEGORY]);
   const [jobFilters, setJobFilters] = useState<JobFilters>({});
-  const [jobs, setJobs] = useState<Job[]>([]);
+  // const [jobs, setJobs] = useState<Job[]>([]); // Reserved for future use
   const [jobsLoading, setJobsLoading] = useState(false);
   const [jobError, setJobError] = useState<string | null>(null);
   const [jobRefreshTrigger, setJobRefreshTrigger] = useState(0);
@@ -212,7 +213,27 @@ export default function HomeScreen() {
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
 
   // Fetch my services if provider role
-  const { services: myServices, loading: myServicesLoading } = useMyServices();
+  const { services: myServices } = useMyServices();
+  
+  // Fetch my jobs if provider/admin role
+  const [myJobs, setMyJobs] = useState<Job[]>([]);
+  
+  useEffect(() => {
+    const fetchMyJobs = async () => {
+      if (activeRole === 'provider' || activeRole === 'admin') {
+        try {
+          setMyJobsLoading(true);
+          const jobs = await JobBoardService.getMyJobs({ limit: 5 });
+          setMyJobs(jobs);
+        } catch (err) {
+          console.error('Error fetching my jobs:', err);
+        } finally {
+          setMyJobsLoading(false);
+        }
+      }
+    };
+    fetchMyJobs();
+  }, [activeRole]);
 
   // Load saved jobs on mount
   useEffect(() => {
@@ -283,6 +304,7 @@ export default function HomeScreen() {
     } else {
       setSearchSuggestions([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   // Memoize sort params to prevent unnecessary recalculations
@@ -421,7 +443,7 @@ export default function HomeScreen() {
   }, [services, page]);
 
   // Fetch categories from API
-  const { categories: apiCategories, loading: categoriesLoading } = useCategories();
+  const { categories: apiCategories } = useCategories();
 
   // Detect if a package is selected and show modal if not
   useEffect(() => {
@@ -590,7 +612,7 @@ export default function HomeScreen() {
     return () => {
       isMounted = false;
     };
-  }, [jobFilterKey, jobPage, jobRefreshTrigger]);
+  }, [jobFilterKey, jobPage, jobRefreshTrigger, jobFilterParams]);
 
   // Fetch job categories from API
   useEffect(() => {
@@ -1573,6 +1595,31 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                   </View>
                   {renderHorizontalServiceList(myServices.slice(0, 5), 'my-services')}
+                </View>
+              )}
+
+              {/* My Jobs Section - Only for providers and admins */}
+              {(activeRole === 'provider' || activeRole === 'admin') && myJobs.length > 0 && (
+                <View key="my-jobs-section" style={styles.section}>
+                  <View style={styles.myServicesHeader}>
+                    <View>
+                      <Text style={styles.sectionTitle}>My Jobs</Text>
+                      <Text style={styles.sectionSubtitle}>
+                        {`${myJobs.length} job${myJobs.length !== 1 ? 's' : ''} posted`}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.viewAllButton}
+                      onPress={() => {
+                        router.push('/(stack)/jobs/my-jobs' as any);
+                      }}
+                      activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+                    >
+                      <Text style={[styles.viewAllText, { color: colors.primary[600] }]}>View All</Text>
+                      <Ionicons name="chevron-forward" size={16} color={colors.primary[600]} />
+                    </TouchableOpacity>
+                  </View>
+                  {renderHorizontalJobList(myJobs.slice(0, 5), 'my-jobs')}
                 </View>
               )}
 

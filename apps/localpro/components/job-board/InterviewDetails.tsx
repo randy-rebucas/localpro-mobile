@@ -98,7 +98,7 @@ export function InterviewDetails({
       } else {
         // Handle error
       }
-    } catch (err) {
+    } catch {
       // Handle error
     }
   };

@@ -257,11 +257,57 @@ export class JobBoardService {
     return apiClient.post<JobApplication>(API_ENDPOINTS.jobs.applications.apply(jobId), application);
   }
 
-  static async getApplications(userId?: string): Promise<JobApplication[]> {
-    const data = await apiClient.get<JobApplication[] | { data?: JobApplication[]; results?: JobApplication[] }>(
-      API_ENDPOINTS.jobs.applications.myApplications
-    );
-    return coerceArray<JobApplication>(data);
+  static async getApplications(filters?: Record<string, any>): Promise<(JobApplication & { job?: Job })[]> {
+    // Map component status values to API status values for filtering
+    const statusFilterMap: Record<string, string> = {
+      'pending': 'pending',
+      'reviewed': 'shortlisted', // Component uses 'reviewed', API uses 'shortlisted'
+      'interview': 'interview',
+      'accepted': 'hired', // Component uses 'accepted', API uses 'hired'
+      'rejected': 'rejected',
+    };
+    
+    // Transform filters if status is provided
+    const apiFilters = filters ? { ...filters } : {};
+    if (apiFilters.status && statusFilterMap[apiFilters.status]) {
+      apiFilters.status = statusFilterMap[apiFilters.status];
+    }
+    
+    const query = buildQueryParams(apiFilters);
+    const endpoint = query
+      ? `${API_ENDPOINTS.jobs.applications.myApplications}?${query}`
+      : API_ENDPOINTS.jobs.applications.myApplications;
+    
+    const response = await apiClient.get<any>(endpoint);
+    const rawApplications = coerceArray<any>(response);
+    
+    // Transform applications from API format
+    return rawApplications.map((apiApp: any) => {
+      // Transform nested job object
+      const job = apiApp.job ? transformJobFromApi(apiApp.job) : undefined;
+      
+      // Map API status values to component status values
+      const statusMap: Record<string, JobApplication['status']> = {
+        'pending': 'pending',
+        'shortlisted': 'reviewed',
+        'interview': 'interview',
+        'rejected': 'rejected',
+        'hired': 'accepted',
+        'accepted': 'accepted',
+        'reviewed': 'reviewed',
+      };
+      
+      return {
+        id: apiApp._id || apiApp.id || '',
+        jobId: apiApp.job?._id || apiApp.job?.id || apiApp.jobId || '',
+        userId: apiApp.userId || apiApp.user?._id || apiApp.user?.id || apiApp.applicant?._id || apiApp.applicant?.id || '',
+        status: statusMap[apiApp.status] || 'pending',
+        appliedAt: apiApp.appliedAt ? new Date(apiApp.appliedAt) : new Date(),
+        coverLetter: apiApp.coverLetter || '',
+        resume: apiApp.resume || apiApp.resumeUrl || '',
+        job: job, // Include transformed job data
+      } as JobApplication & { job?: Job };
+    });
   }
 
   static async getMyJobs(filters?: Record<string, any>): Promise<Job[]> {
@@ -295,6 +341,10 @@ export class JobBoardService {
       API_ENDPOINTS.jobs.applications.updateStatus(jobId, applicationId),
       { status, notes, rating, feedback }
     );
+  }
+
+  static async withdrawApplication(jobId: string, applicationId: string): Promise<void> {
+    await apiClient.delete(API_ENDPOINTS.jobs.applications.withdraw(jobId, applicationId));
   }
 
   static async searchJobs(query: string, filters?: Record<string, any>): Promise<Job[]> {

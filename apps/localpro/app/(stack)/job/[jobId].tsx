@@ -590,11 +590,14 @@ function JobDetailScreenContent() {
           />
         </TouchableOpacity>
         {isJobOwner ? (
-          <View style={[styles.applyButton, styles.applyButtonDisabled, { backgroundColor: colors.neutral.gray400 }]}>
-            <Text style={[styles.applyButtonText, { color: colors.text.tertiary }]}>
-              Your Job Posting
-            </Text>
-          </View>
+          <TouchableOpacity
+            style={[styles.applyButton, { backgroundColor: colors.secondary[600] }]}
+            onPress={() => router.push(`/(stack)/job/${job.id}/applications` as any)}
+            activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+          >
+            <Ionicons name="people-outline" size={18} color={Colors.text.inverse} style={{ marginRight: 6 }} />
+            <Text style={styles.applyButtonText}>View Applicants</Text>
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={[

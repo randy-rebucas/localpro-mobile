@@ -109,7 +109,7 @@ export function ApplicationForm({ jobId, jobTitle, onSubmit, onCancel, existingA
         <Card style={styles.sectionCard}>
           <Text style={styles.label}>Cover Letter *</Text>
           <Text style={[styles.hint, { color: colors.text.tertiary }]}>
-            Tell us why you're a great fit for this position (minimum 10 characters)
+            Tell us why you&apos;re a great fit for this position (minimum 10 characters)
           </Text>
           <TextInput
             multiline

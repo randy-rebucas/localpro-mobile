@@ -3,13 +3,15 @@ import { MarketplaceService } from '@localpro/marketplace';
 import type { Review, Service } from '@localpro/types';
 import { Card } from '@localpro/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Image,
   Linking,
+  Platform,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -21,7 +23,7 @@ import {
   ReviewList,
   ServiceCard
 } from '../../../components/marketplace';
-import { BorderRadius, Colors, Shadows, Spacing } from '../../../constants/theme';
+import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../../constants/theme';
 import { useThemeColors } from '../../../hooks/use-theme';
 
 interface Provider {
@@ -59,21 +61,7 @@ function ProviderProfileScreenContent() {
   const [hasMoreReviews, setHasMoreReviews] = useState(false);
   const [error, setError] = useState<{ status?: number; message?: string } | null>(null);
 
-  useEffect(() => {
-    if (providerId) {
-      loadProvider();
-      loadServices();
-      loadReviews();
-    }
-  }, [providerId]);
-
-  useEffect(() => {
-    if (providerId && reviewsPage > 1) {
-      loadMoreReviews();
-    }
-  }, [reviewsPage]);
-
-  const loadProvider = async () => {
+  const loadProvider = useCallback(async () => {
     if (!providerId) return;
     setLoading(true);
     try {
@@ -125,9 +113,9 @@ function ProviderProfileScreenContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [providerId]);
 
-  const loadServices = async () => {
+  const loadServices = useCallback(async () => {
     if (!providerId) return;
     // Only load services if not already loaded from provider response
     if (services.length > 0) {
@@ -143,9 +131,9 @@ function ProviderProfileScreenContent() {
     } finally {
       setServicesLoading(false);
     }
-  };
+  }, [providerId, services.length]);
 
-  const loadReviews = async () => {
+  const loadReviews = useCallback(async () => {
     if (!providerId) return;
     setReviewsLoading(true);
     try {
@@ -157,9 +145,9 @@ function ProviderProfileScreenContent() {
     } finally {
       setReviewsLoading(false);
     }
-  };
+  }, [providerId]);
 
-  const loadMoreReviews = async () => {
+  const loadMoreReviews = useCallback(async () => {
     if (!providerId) return;
     try {
       const result = await MarketplaceService.getProviderReviews(providerId as string, reviewsPage, 10);
@@ -168,7 +156,21 @@ function ProviderProfileScreenContent() {
     } catch (error: any) {
       console.error('Error loading more reviews:', error);
     }
-  };
+  }, [providerId, reviewsPage]);
+
+  useEffect(() => {
+    if (providerId) {
+      loadProvider();
+      loadServices();
+      loadReviews();
+    }
+  }, [providerId, loadProvider, loadServices, loadReviews]);
+
+  useEffect(() => {
+    if (providerId && reviewsPage > 1) {
+      loadMoreReviews();
+    }
+  }, [providerId, reviewsPage, loadMoreReviews]);
 
   const handleLoadMoreReviews = () => {
     if (!reviewsLoading && hasMoreReviews) {
@@ -196,12 +198,25 @@ function ProviderProfileScreenContent() {
     router.push(`/(stack)/service/${String(serviceId)}` as any);
   };
 
+  const handleShare = async () => {
+    if (!provider) return;
+
+    try {
+      await Share.share({
+        message: `Check out ${provider.name}${provider.location ? ` - ${provider.location}` : ''}`,
+        title: provider.name,
+      });
+    } catch (err) {
+      console.error('Error sharing provider:', err);
+    }
+  };
+
   if (loading) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary[600]} />
-          <Text style={styles.loadingText}>Loading provider...</Text>
+          <Text style={[styles.loadingText, { color: colors.text.secondary }]}>Loading provider...</Text>
         </View>
       </SafeAreaView>
     );
@@ -209,20 +224,22 @@ function ProviderProfileScreenContent() {
 
   // Handle specific error cases
   if (error) {
-    const isInactiveProvider = error.status === 403 && error.message?.toLowerCase().includes('not active');
     const isPendingProvider = error.message?.toLowerCase().includes('pending');
     
     return (
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        {/* Header Actions */}
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => router.back()}
+            activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+          >
             <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Provider Profile</Text>
-          <View style={styles.placeholder} />
         </View>
         
-        <View style={styles.errorContainer}>
+        <View style={[styles.errorContainer, { paddingTop: Platform.select({ ios: 60, android: 70 }) }]}>
           <View style={[styles.errorIconContainer, { backgroundColor: colors.semantic.warning + '20' }]}>
             <Ionicons 
               name={isPendingProvider ? "time-outline" : "lock-closed-outline"} 
@@ -266,15 +283,18 @@ function ProviderProfileScreenContent() {
   if (!provider || !providerId) {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        {/* Header Actions */}
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => router.back()}
+            activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+          >
             <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Provider Profile</Text>
-          <View style={styles.placeholder} />
         </View>
         
-        <View style={styles.errorContainer}>
+        <View style={[styles.errorContainer, { paddingTop: Platform.select({ ios: 60, android: 70 }) }]}>
           <View style={[styles.errorIconContainer, { backgroundColor: colors.semantic.error + '20' }]}>
             <Ionicons name="person-remove-outline" size={64} color={colors.semantic.error} />
           </View>
@@ -282,7 +302,7 @@ function ProviderProfileScreenContent() {
           <Text style={styles.errorTitle}>Provider Not Found</Text>
           
           <Text style={styles.errorMessage}>
-            The provider you're looking for doesn't exist or has been removed.
+            The provider you&apos;re looking for doesn&apos;t exist or has been removed.
           </Text>
           
           <TouchableOpacity
@@ -300,17 +320,32 @@ function ProviderProfileScreenContent() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Header Actions */}
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => router.back()}
+            activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+          >
             <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Provider Profile</Text>
-          <View style={styles.placeholder} />
+          <View style={styles.headerRight}>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={handleShare}
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+            >
+              <Ionicons name="share-outline" size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={styles.content}>
+        <View style={[styles.content, { paddingTop: Platform.select({ ios: 60, android: 70 }) }]}>
           {/* Provider Header Card */}
           <Card style={styles.profileCard}>
             <View style={styles.profileHeader}>
@@ -481,32 +516,39 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: Colors.text.secondary,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
   scrollView: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
+  scrollContent: {
+    paddingBottom: Spacing.xl,
   },
-  backButton: {
+  headerActions: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.lg }),
+    paddingBottom: Spacing.sm,
+    zIndex: 10,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  headerButton: {
     width: 40,
     height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-  },
-  placeholder: {
-    width: 40,
+    ...Shadows.sm,
   },
   content: {
     padding: Spacing.lg,
@@ -620,6 +662,7 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: Spacing.md,
+    ...Shadows.md,
   },
   statsRow: {
     flexDirection: 'row',
@@ -652,8 +695,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
     color: Colors.text.primary,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   sectionSubtitle: {
     fontSize: 14,

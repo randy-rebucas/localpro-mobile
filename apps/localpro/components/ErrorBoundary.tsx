@@ -90,7 +90,7 @@ function ErrorFallback({ error, onReset }: ErrorFallbackProps) {
         <Text style={styles.title}>Something went wrong</Text>
         
         <Text style={styles.message}>
-          We're sorry, but something unexpected happened. Please try again or go back.
+          We&apos;re sorry, but something unexpected happened. Please try again or go back.
         </Text>
 
         {__DEV__ && error && (

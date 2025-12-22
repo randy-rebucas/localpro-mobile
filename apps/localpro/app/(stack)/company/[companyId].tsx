@@ -71,9 +71,10 @@ function CompanyDetailScreenContent() {
     }
 
     fetchCompanyData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId]);
 
-  const fetchCompanyData = async () => {
+  const fetchCompanyData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -127,12 +128,12 @@ function CompanyDetailScreenContent() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [companyId]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchCompanyData();
-  }, [companyId]);
+  }, [fetchCompanyData]);
 
   const handleJobPress = useCallback(
     (jobId: string) => {
@@ -152,7 +153,7 @@ function CompanyDetailScreenContent() {
     } catch (err) {
       console.error('Error sharing company:', err);
     }
-  }, [company?.name, company?.industry]);
+  }, [company]);
 
   const stats = useMemo(() => {
     const activeJobs = jobs.filter((j) => j.status === 'open').length;
@@ -173,7 +174,7 @@ function CompanyDetailScreenContent() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary[600]} />
           <Text style={[styles.loadingText, { color: colors.text.secondary }]}>Loading company...</Text>
@@ -184,7 +185,7 @@ function CompanyDetailScreenContent() {
 
   if (error || !company) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <EmptyState
           icon="business-outline"
           title={error || 'Company not found'}
@@ -296,7 +297,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.lg }),
+    paddingBottom: Spacing.sm,
     zIndex: 10,
   },
   headerButton: {
@@ -306,7 +309,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.md,
+    ...Shadows.sm,
   },
   headerSection: {
     paddingHorizontal: Spacing.lg,

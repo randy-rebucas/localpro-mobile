@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { JobBoardService } from '@localpro/job-board';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';

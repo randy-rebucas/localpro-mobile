@@ -28,6 +28,7 @@ export function ReviewSentiment({ reviewId, autoLoad = true }: ReviewSentimentPr
     if (autoLoad && reviewId) {
       loadSentiment();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reviewId, autoLoad]);
 
   const loadSentiment = async () => {

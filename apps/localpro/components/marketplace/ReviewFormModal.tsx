@@ -45,7 +45,7 @@ export function ReviewFormModal({
       setRating(0);
       setComment('');
       onClose();
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to submit review. Please try again.');
     } finally {
       setSubmitting(false);

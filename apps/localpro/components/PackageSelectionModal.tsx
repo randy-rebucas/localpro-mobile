@@ -1,18 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { BorderRadius, Colors, Spacing, Typography } from '../constants/theme';
+import { Colors, Spacing, Typography } from '../constants/theme';
 import { PackageType } from '../contexts/PackageContext';
 import { useThemeColors } from '../hooks/use-theme';
 
 // Package definitions with icons and display names
-const PACKAGES: Array<{
+type PackageDefinition = {
   id: PackageType;
   name: string;
   icon: keyof typeof Ionicons.glyphMap;
   description: string;
   color: string;
-}> = [
+};
+
+const PACKAGES: PackageDefinition[] = [
   { id: 'marketplace', name: 'Marketplace', icon: 'storefront-outline', description: 'Browse and book services', color: '#3B82F6' },
   { id: 'job-board', name: 'Job Board', icon: 'briefcase-outline', description: 'Find your next opportunity', color: '#10B981' },
   { id: 'finance', name: 'Finance', icon: 'wallet-outline', description: 'Manage your wallet', color: '#F59E0B' },

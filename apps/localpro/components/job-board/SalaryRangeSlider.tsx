@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../constants/theme';
+import { Colors, Shadows, Spacing, Typography } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
 
 interface SalaryRangeSliderProps {
@@ -34,17 +34,18 @@ export function SalaryRangeSlider({
     return `${currency}${formatter.format(amount)}`;
   };
 
-  const handleMinChange = (value: number) => {
-    const newMin = Math.min(value, max - 1);
-    setMin(newMin);
-    onSalaryChange(newMin, max);
-  };
+  // Reserved for future use - direct slider handlers
+  // const handleMinChange = (value: number) => {
+  //   const newMin = Math.min(value, max - 1);
+  //   setMin(newMin);
+  //   onSalaryChange(newMin, max);
+  // };
 
-  const handleMaxChange = (value: number) => {
-    const newMax = Math.max(value, min + 1);
-    setMax(newMax);
-    onSalaryChange(min, newMax);
-  };
+  // const handleMaxChange = (value: number) => {
+  //   const newMax = Math.max(value, min + 1);
+  //   setMax(newMax);
+  //   onSalaryChange(min, newMax);
+  // };
 
   const minPercentage = ((min - minSalary) / (maxSalary - minSalary)) * 100;
   const maxPercentage = ((max - minSalary) / (maxSalary - minSalary)) * 100;

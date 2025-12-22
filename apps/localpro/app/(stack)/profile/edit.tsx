@@ -13,7 +13,7 @@ import { useThemeColors } from '../../../hooks/use-theme';
 
 export default function EditProfileScreen() {
   const { user, updateProfile, uploadAvatar, checkAuth } = useAuthContext();
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false); // Reserved for future use
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);

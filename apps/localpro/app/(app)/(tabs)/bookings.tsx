@@ -82,7 +82,7 @@ export default function BookingsTabScreen() {
               // TODO: Implement API call to cancel booking
               // await MarketplaceService.cancelBooking(bookingId);
               Alert.alert('Success', 'Booking cancelled successfully.');
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'Failed to cancel booking. Please try again.');
             }
           },
@@ -91,10 +91,11 @@ export default function BookingsTabScreen() {
     );
   };
 
-  const handleReview = (booking: Booking) => {
-    setSelectedBookingForReview(booking);
-    setReviewModalVisible(true);
-  };
+  // Reserved for future use
+  // const handleReview = (booking: Booking) => {
+  //   setSelectedBookingForReview(booking);
+  //   setReviewModalVisible(true);
+  // };
 
   const handleSubmitReview = async (rating: number, comment: string) => {
     if (!selectedBookingForReview) return;
@@ -110,10 +111,11 @@ export default function BookingsTabScreen() {
     }
   };
 
-  const handleUploadPhotos = (bookingId: string) => {
-    // Navigate to booking detail where photo upload is available
-    router.push(`/(stack)/booking/${bookingId}` as any);
-  };
+  // Reserved for future use
+  // const handleUploadPhotos = (bookingId: string) => {
+  //   // Navigate to booking detail where photo upload is available
+  //   router.push(`/(stack)/booking/${bookingId}` as any);
+  // };
 
   const getPackageTitle = () => {
     switch (activePackage) {

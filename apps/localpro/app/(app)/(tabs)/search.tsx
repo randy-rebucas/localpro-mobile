@@ -297,9 +297,9 @@ export default function SearchScreen() {
     setJobFilters(filters);
   };
 
-  const handleJobPress = (jobId: string) => {
+  const handleJobPress = useCallback((jobId: string) => {
     router.push(`/(stack)/job/${jobId}` as any);
-  };
+  }, [router]);
 
   const handleFilterApply = (newFilters: FilterState) => {
     setFilters(newFilters);

@@ -30,7 +30,7 @@ export function FeedbackForm({ visible, application, onSubmit, onClose }: Feedba
       setFeedback('');
       setRating(undefined);
       onClose();
-    } catch (err) {
+    } catch {
       // Error handling is done in parent
     } finally {
       setSubmitting(false);

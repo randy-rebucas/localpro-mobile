@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import type { Booking } from '@localpro/types';
 import React, { useMemo, useState } from 'react';
 import {
-  FlatList,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -26,10 +25,13 @@ export function BookingCalendar({
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Get first day of month and number of days
-  const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-  const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
-  const startDate = new Date(monthStart);
-  startDate.setDate(startDate.getDate() - startDate.getDay()); // Start from Sunday
+  // const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0); // Reserved for future use
+  const startDate = useMemo(() => {
+    const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+    const date = new Date(monthStart);
+    date.setDate(date.getDate() - date.getDay()); // Start from Sunday
+    return date;
+  }, [currentMonth]);
 
   // Generate calendar days
   const calendarDays = useMemo(() => {

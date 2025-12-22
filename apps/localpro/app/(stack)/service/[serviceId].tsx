@@ -8,6 +8,7 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   ScrollView,
   Share,
   StyleSheet,
@@ -25,7 +26,7 @@ import {
   ProviderCard,
   ReviewList,
 } from '../../../components/marketplace';
-import { BorderRadius, Colors, Shadows, Spacing } from '../../../constants/theme';
+import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../../constants/theme';
 import { useRoleContext } from '../../../contexts/RoleContext';
 import { useThemeColors } from '../../../hooks/use-theme';
 
@@ -203,10 +204,10 @@ function ServiceDetailScreenContent() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary[600]} />
-          <Text style={styles.loadingText}>Loading service...</Text>
+          <Text style={[styles.loadingText, { color: colors.text.secondary }]}>Loading service...</Text>
         </View>
       </SafeAreaView>
     );
@@ -214,7 +215,7 @@ function ServiceDetailScreenContent() {
 
   if (error || !service || !service.id) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <EmptyState
           icon="alert-circle-outline"
           title="Service not found"
@@ -240,12 +241,17 @@ function ServiceDetailScreenContent() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* Header Actions */}
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.headerButton}
             onPress={() => router.back()}
+            activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
           >
             <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
           </TouchableOpacity>
@@ -256,6 +262,7 @@ function ServiceDetailScreenContent() {
                   style={styles.headerButton}
                   onPress={handleEdit}
                   disabled={isDeleting || isTogglingStatus}
+                  activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                 >
                   <Ionicons name="create-outline" size={24} color={colors.primary[600]} />
                 </TouchableOpacity>
@@ -263,6 +270,7 @@ function ServiceDetailScreenContent() {
                   style={styles.headerButton}
                   onPress={handleDelete}
                   disabled={isDeleting || isTogglingStatus}
+                  activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                 >
                   {isDeleting ? (
                     <ActivityIndicator size="small" color={colors.semantic.error} />
@@ -273,10 +281,18 @@ function ServiceDetailScreenContent() {
               </>
             ) : (
               <>
-                <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
+                <TouchableOpacity
+                  style={styles.headerButton}
+                  onPress={handleShare}
+                  activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+                >
                   <Ionicons name="share-outline" size={24} color={colors.text.primary} />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.headerButton} onPress={handleReport}>
+                <TouchableOpacity
+                  style={styles.headerButton}
+                  onPress={handleReport}
+                  activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+                >
                   <Ionicons name="flag-outline" size={24} color={colors.semantic.error} />
                 </TouchableOpacity>
               </>
@@ -288,7 +304,7 @@ function ServiceDetailScreenContent() {
         <ImageCarousel images={service.images || []} height={300} />
 
         {/* Service Info */}
-        <View style={styles.content}>
+        <View style={[styles.content, { paddingTop: Platform.select({ ios: 60, android: 70 }) }]}>
           {/* Title and Price */}
           <View style={styles.titleSection}>
             <Text style={styles.title}>{service.title || 'Untitled Service'}</Text>
@@ -465,7 +481,10 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: Colors.text.secondary,
+    fontFamily: Typography.fontFamily?.regular || 'System',
+  },
+  scrollContent: {
+    paddingBottom: Spacing.xl,
   },
   headerActions: {
     position: 'absolute',
@@ -475,7 +494,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.lg }),
+    paddingBottom: Spacing.sm,
     zIndex: 10,
   },
   headerRight: {
@@ -489,7 +510,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.md,
+    ...Shadows.sm,
   },
   content: {
     padding: Spacing.lg,
@@ -545,12 +566,14 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: Spacing.md,
+    ...Shadows.md,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
     color: Colors.text.primary,
     marginBottom: Spacing.md,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   description: {
     fontSize: 16,

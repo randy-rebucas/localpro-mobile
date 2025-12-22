@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../constants/theme';
+import { BorderRadius, Shadows, Spacing, Typography } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
 
 export type JobSortOption = 'relevance' | 'date' | 'salary' | 'company';

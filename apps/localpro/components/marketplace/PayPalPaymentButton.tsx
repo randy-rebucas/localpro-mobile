@@ -3,7 +3,6 @@ import { Button } from '@localpro/ui';
 import React, { useState } from 'react';
 import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
 import { Colors, Spacing } from '../../constants/theme';
-import { useThemeColors } from '../../hooks/use-theme';
 
 interface PayPalPaymentButtonProps {
   bookingId: string;
@@ -18,7 +17,6 @@ export function PayPalPaymentButton({
   onPaymentSuccess,
   onPaymentError,
 }: PayPalPaymentButtonProps) {
-  const colors = useThemeColors();
   const [loading, setLoading] = useState(false);
 
   const handlePayPalPayment = async () => {

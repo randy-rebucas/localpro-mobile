@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { BorderRadius, Colors, Spacing, Typography } from '../../constants/theme';
-import { useThemeColors } from '../../hooks/use-theme';
+import { Colors, Spacing, Typography } from '../../constants/theme';
 
 type ApplicationStatus = 'pending' | 'reviewed' | 'interview' | 'accepted' | 'rejected';
 
@@ -19,7 +18,6 @@ const STATUS_CONFIG: Record<ApplicationStatus, { label: string; icon: keyof type
 };
 
 export function ApplicationStatusBadge({ status }: ApplicationStatusBadgeProps) {
-  const colors = useThemeColors();
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
 
   return (

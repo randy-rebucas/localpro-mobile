@@ -1,11 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAuthContext } from '@localpro/auth';
 import { JobBoardService } from '@localpro/job-board';
-import {
-  JobAnalyticsSummary,
-  JobStatsCard,
-  QuickActionButtons,
-} from '../../../components/job-board';
 import type { Job } from '@localpro/types';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -21,6 +15,10 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  JobStatsCard,
+  QuickActionButtons
+} from '../../../components/job-board';
 import { EmptyState, LoadingSkeleton } from '../../../components/marketplace';
 import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../../constants/theme';
 import { useRoleContext } from '../../../contexts/RoleContext';
@@ -29,18 +27,17 @@ import { useThemeColors } from '../../../hooks/use-theme';
 const toTitleCase = (value: string) =>
   value.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 
-const formatSalaryRange = (salary?: Job['salary']) => {
-  if (!salary || salary.min == null || salary.max == null || !salary.currency) {
-    return 'Salary not disclosed';
-  }
-
-  const formatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
-  const min = formatter.format(Math.min(salary.min, salary.max));
-  const max = formatter.format(Math.max(salary.min, salary.max));
-  const period = salary.period ? ` / ${salary.period}` : '';
-
-  return `${salary.currency}${min} - ${salary.currency}${max}${period}`;
-};
+// Reserved for future use
+// const formatSalaryRange = (salary?: Job['salary']) => {
+//   if (!salary || salary.min == null || salary.max == null || !salary.currency) {
+//     return 'Salary not disclosed';
+//   }
+//   const formatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
+//   const min = formatter.format(Math.min(salary.min, salary.max));
+//   const max = formatter.format(Math.max(salary.min, salary.max));
+//   const period = salary.period ? ` / ${salary.period}` : '';
+//   return `${salary.currency}${min} - ${salary.currency}${max}${period}`;
+// };
 
 const getRelativeTime = (isoDate?: string | number | Date) => {
   if (!isoDate) {
@@ -83,7 +80,6 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 export default function MyJobsScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const { user } = useAuthContext();
   const { activeRole } = useRoleContext();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,9 +97,10 @@ export default function MyJobsScreen() {
     }
 
     fetchJobs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedStatus, activeRole]);
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -120,12 +117,12 @@ export default function MyJobsScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [selectedStatus]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchJobs();
-  }, [selectedStatus]);
+  }, [fetchJobs]);
 
   const handleJobPress = useCallback((jobId: string) => {
     router.push(`/(stack)/job/${jobId}` as any);
@@ -158,7 +155,7 @@ export default function MyJobsScreen() {
         Alert.alert('Error', err?.message || 'Failed to update job status');
       }
     },
-    [jobs]
+    [jobs, fetchJobs]
   );
 
   const handleClose = useCallback(
@@ -171,7 +168,7 @@ export default function MyJobsScreen() {
         Alert.alert('Error', err?.message || 'Failed to close job');
       }
     },
-    []
+    [fetchJobs]
   );
 
   const handleDelete = useCallback(
@@ -184,7 +181,7 @@ export default function MyJobsScreen() {
         Alert.alert('Error', err?.message || 'Failed to delete job');
       }
     },
-    []
+    [fetchJobs]
   );
 
   const filteredJobs = useMemo(() => {
@@ -371,7 +368,13 @@ export default function MyJobsScreen() {
             />
           )
         }
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary[600]}
+          />
+        }
         contentContainerStyle={styles.listContent}
       />
     </SafeAreaView>
@@ -395,7 +398,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: Typography.fontWeight.bold,
     lineHeight: 34,
-    marginBottom: 4,
+    marginBottom: Spacing.xs,
     color: Colors.text.primary,
     fontFamily: Typography.fontFamily?.bold || 'System',
   },
@@ -408,11 +411,12 @@ const styles = StyleSheet.create({
   createButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: Spacing.md,
     paddingVertical: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
     borderRadius: BorderRadius.full,
     gap: Spacing.xs,
-    minHeight: Platform.select({ ios: 36, android: 40 }),
+    minHeight: Platform.select({ ios: 44, android: 48 }),
   },
   createButtonText: {
     fontSize: 14,
@@ -429,10 +433,12 @@ const styles = StyleSheet.create({
   },
   filterChip: {
     paddingHorizontal: Spacing.md,
-    paddingVertical: Platform.select({ ios: 8, android: 10 }),
+    paddingVertical: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
     borderRadius: BorderRadius.full,
     borderWidth: Platform.select({ ios: 1, android: 1.5 }),
     marginRight: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterChipText: {
     fontSize: 14,
@@ -448,7 +454,14 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: BorderRadius.xl,
     backgroundColor: Colors.background.primary,
+    borderWidth: Platform.select({ ios: 1, android: 1.5 }),
+    borderColor: Colors.border.light,
     ...Shadows.sm,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.sm.elevation,
+      },
+    }),
   },
   jobCardHeader: {
     flexDirection: 'row',
@@ -475,8 +488,12 @@ const styles = StyleSheet.create({
   },
   statusBadge: {
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
+    paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: Platform.select({ ios: 1, android: 1.5 }),
+    borderColor: 'transparent',
   },
   statusBadgeText: {
     fontSize: 11,
@@ -505,7 +522,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     marginBottom: Spacing.md,
     paddingTop: Spacing.sm,
-    borderTopWidth: 1,
+    borderTopWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderTopColor: Colors.border.light,
     flexWrap: 'wrap',
   },

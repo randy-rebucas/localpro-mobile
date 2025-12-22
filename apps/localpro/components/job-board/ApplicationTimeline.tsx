@@ -3,7 +3,7 @@ import { Card } from '@localpro/ui';
 import type { JobApplication } from '@localpro/types';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { BorderRadius, Colors, Spacing, Typography } from '../../constants/theme';
+import { Colors, Spacing, Typography } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
 
 interface ApplicationTimelineProps {

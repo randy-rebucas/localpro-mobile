@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Button, Card, Input } from '@localpro/ui';
 import React, { useState } from 'react';
-import { Alert, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { BorderRadius, Colors, Spacing, Typography } from '../../constants/theme';
+import { Alert, Platform, StyleSheet, Text, View } from 'react-native';
+import { Colors, Spacing, Typography } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
 
 interface InterviewSchedulerProps {

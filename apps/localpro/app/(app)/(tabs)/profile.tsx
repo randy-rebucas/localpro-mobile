@@ -13,7 +13,7 @@ import { useRoleContext } from '../../../contexts/RoleContext';
 import { useThemeColors } from '../../../hooks/use-theme';
 
 export default function ProfileScreen() {
-  const { user: contextUser, logout, checkAuth, uploadAvatar } = useAuthContext();
+  const { user: contextUser, logout, uploadAvatar } = useAuthContext();
   const { activeRole, setActiveRole, availableRoles } = useRoleContext();
   const [roleModalVisible, setRoleModalVisible] = useState(false);
   const [user, setUser] = useState<User | null>(contextUser);
@@ -33,6 +33,7 @@ export default function ProfileScreen() {
   // Fetch fresh user data on mount
   useEffect(() => {
     fetchCurrentUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount
 
   const fetchCurrentUser = async (showRefreshIndicator = false) => {

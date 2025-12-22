@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { BorderRadius, Colors } from '../../constants/theme';
+import { Colors } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
 
 interface CompanyLogoProps {

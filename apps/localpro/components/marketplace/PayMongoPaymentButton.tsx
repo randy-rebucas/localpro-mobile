@@ -3,7 +3,6 @@ import { Button } from '@localpro/ui';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { Colors, Spacing } from '../../constants/theme';
-import { useThemeColors } from '../../hooks/use-theme';
 
 interface PayMongoPaymentButtonProps {
   bookingId: string;
@@ -20,14 +19,13 @@ export function PayMongoPaymentButton({
   onPaymentSuccess,
   onPaymentError,
 }: PayMongoPaymentButtonProps) {
-  const colors = useThemeColors();
   const [loading, setLoading] = useState(false);
 
   const handlePayMongoPayment = async () => {
     setLoading(true);
     try {
       // Create PayMongo payment intent
-      const { intentId, clientSecret, publishableKey } = await MarketplaceService.createPayMongoIntent(
+      const { intentId } = await MarketplaceService.createPayMongoIntent(
         bookingId,
         providerId,
         amount,

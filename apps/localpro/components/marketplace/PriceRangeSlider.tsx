@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { BorderRadius, Colors, Shadows, Spacing } from '../../constants/theme';
+import { Colors, Shadows, Spacing } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
 
 interface PriceRangeSliderProps {
@@ -19,24 +19,25 @@ export function PriceRangeSlider({
   onPriceChange,
 }: PriceRangeSliderProps) {
   const colors = useThemeColors();
-  const [min, setMin] = useState(initialMin ?? minPrice);
-  const [max, setMax] = useState(initialMax ?? maxPrice);
+  const [min] = useState(initialMin ?? minPrice);
+  const [max] = useState(initialMax ?? maxPrice);
 
   const formatCurrency = (amount: number) => {
     return `$${amount.toFixed(0)}`;
   };
 
-  const handleMinChange = (value: number) => {
-    const newMin = Math.min(value, max - 1);
-    setMin(newMin);
-    onPriceChange(newMin, max);
-  };
+  // Reserved for future use - direct slider handlers
+  // const handleMinChange = (value: number) => {
+  //   const newMin = Math.min(value, max - 1);
+  //   setMin(newMin);
+  //   onPriceChange(newMin, max);
+  // };
 
-  const handleMaxChange = (value: number) => {
-    const newMax = Math.max(value, min + 1);
-    setMax(newMax);
-    onPriceChange(min, newMax);
-  };
+  // const handleMaxChange = (value: number) => {
+  //   const newMax = Math.max(value, min + 1);
+  //   setMax(newMax);
+  //   onPriceChange(min, newMax);
+  // };
 
   return (
     <View style={styles.container}>

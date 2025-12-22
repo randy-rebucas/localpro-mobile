@@ -1,29 +1,29 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAuthContext } from '@localpro/auth';
 import { JobBoardService } from '@localpro/job-board';
 import type { Job, JobApplication } from '@localpro/types';
 import { Card } from '@localpro/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Linking,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Linking,
+  Platform,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '../../../components/ErrorBoundary';
 import {
-    ApplicationStatusBadge,
-    ApplicationTimeline,
-    FeedbackDisplay,
-    InterviewDetails,
-    ResumeViewer,
+  ApplicationStatusBadge,
+  ApplicationTimeline,
+  FeedbackDisplay,
+  InterviewDetails,
+  ResumeViewer,
 } from '../../../components/job-board';
 import { EmptyState } from '../../../components/marketplace';
 import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../../constants/theme';
@@ -64,7 +64,6 @@ function ApplicationDetailScreenContent() {
 
   const router = useRouter();
   const colors = useThemeColors();
-  const { user } = useAuthContext();
   const { activeRole } = useRoleContext();
   const [application, setApplication] = useState<ApplicationWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,9 +78,10 @@ function ApplicationDetailScreenContent() {
     }
 
     fetchApplication();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applicationId]);
 
-  const fetchApplication = async () => {
+  const fetchApplication = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -113,7 +113,7 @@ function ApplicationDetailScreenContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [applicationId]);
 
   const handleWithdraw = useCallback(async () => {
     if (!application || !application.jobId) {
@@ -147,7 +147,7 @@ function ApplicationDetailScreenContent() {
         },
       ]
     );
-  }, [application]);
+  }, [application, fetchApplication]);
 
   const handleContactEmployer = useCallback(() => {
     if (!application?.job) {
@@ -189,12 +189,25 @@ function ApplicationDetailScreenContent() {
     );
   }, [application]);
 
+  const handleShare = async () => {
+    if (!application || !application.job) return;
+
+    try {
+      await Share.share({
+        message: `I applied for ${application.job.title} at ${application.job.company}`,
+        title: 'My Job Application',
+      });
+    } catch (err) {
+      console.error('Error sharing application:', err);
+    }
+  };
+
   const isJobSeeker = activeRole !== 'provider' && activeRole !== 'admin';
   const canWithdraw = isJobSeeker && application?.status === 'pending';
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary[600]} />
           <Text style={[styles.loadingText, { color: colors.text.secondary }]}>
@@ -207,7 +220,7 @@ function ApplicationDetailScreenContent() {
 
   if (error || !application) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <EmptyState
           icon="alert-circle-outline"
           title={error || 'Application not found'}
@@ -218,134 +231,156 @@ function ApplicationDetailScreenContent() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Application Status */}
-        <Card style={styles.sectionCard}>
-          <View style={styles.statusHeader}>
-            <ApplicationStatusBadge status={application.status} />
-            <Text style={[styles.appliedDate, { color: colors.text.tertiary }]}>
-              Applied {new Date(application.appliedAt).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </Text>
-          </View>
-        </Card>
-
-        {/* Application Timeline */}
-        <ApplicationTimeline application={application} />
-
-        {/* Job Details */}
-        {application.job && (
-          <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Job Applied For</Text>
-            <Text style={[styles.jobTitle, { color: colors.text.primary }]}>
-              {application.job.title}
-            </Text>
-            <Text style={[styles.jobCompany, { color: colors.text.secondary }]}>
-              {application.job.company}
-            </Text>
-            <Text style={[styles.jobLocation, { color: colors.text.tertiary }]}>
-              {application.job.location}
-            </Text>
+        {/* Header Actions */}
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => router.back()}
+            activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+          </TouchableOpacity>
+          <View style={styles.headerRight}>
             <TouchableOpacity
-              style={styles.viewJobButton}
-              onPress={() => router.push(`/(stack)/job/${application.jobId}` as any)}
+              style={styles.headerButton}
+              onPress={handleShare}
               activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
             >
-              <Text style={[styles.viewJobButtonText, { color: colors.primary[600] }]}>
-                View Job Details
+              <Ionicons name="share-outline" size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.content}>
+          {/* Application Status */}
+          <Card style={styles.sectionCard}>
+            <View style={styles.statusHeader}>
+              <ApplicationStatusBadge status={application.status} />
+              <Text style={[styles.appliedDate, { color: colors.text.tertiary }]}>
+                Applied {new Date(application.appliedAt).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
               </Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.primary[600]} />
-            </TouchableOpacity>
+            </View>
           </Card>
-        )}
 
-        {/* Cover Letter */}
-        {application.coverLetter && (
+          {/* Application Timeline */}
+          <ApplicationTimeline application={application} />
+
+          {/* Job Details */}
+          {application.job && (
+            <Card style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Job Applied For</Text>
+              <Text style={[styles.jobTitle, { color: colors.text.primary }]}>
+                {application.job.title}
+              </Text>
+              <Text style={[styles.jobCompany, { color: colors.text.secondary }]}>
+                {application.job.company}
+              </Text>
+              <Text style={[styles.jobLocation, { color: colors.text.tertiary }]}>
+                {application.job.location}
+              </Text>
+              <TouchableOpacity
+                style={styles.viewJobButton}
+                onPress={() => router.push(`/(stack)/job/${application.jobId}` as any)}
+                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+              >
+                <Text style={[styles.viewJobButtonText, { color: colors.primary[600] }]}>
+                  View Job Details
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.primary[600]} />
+              </TouchableOpacity>
+            </Card>
+          )}
+
+          {/* Cover Letter */}
+          {application.coverLetter && (
+            <Card style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Cover Letter</Text>
+              <Text style={[styles.coverLetterText, { color: colors.text.secondary }]}>
+                {application.coverLetter}
+              </Text>
+            </Card>
+          )}
+
+          {/* Resume */}
+          <ResumeViewer resumeUrl={application.resume} resumeName="Resume.pdf" />
+
+          {/* Interview Details */}
+          {application.status === 'interview' && (
+            <InterviewDetails
+              date={application.interview?.date}
+              time={application.interview?.time}
+              location={application.interview?.location}
+              type={application.interview?.type}
+              notes={application.interview?.notes}
+              meetingLink={application.interview?.meetingLink}
+            />
+          )}
+
+          {/* Feedback */}
+          {(application.feedback || application.rating || application.notes) && (
+            <FeedbackDisplay
+              feedback={application.feedback}
+              rating={application.rating}
+              notes={application.notes}
+            />
+          )}
+
+          {/* Actions */}
           <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Cover Letter</Text>
-            <Text style={[styles.coverLetterText, { color: colors.text.secondary }]}>
-              {application.coverLetter}
-            </Text>
+            <Text style={styles.sectionTitle}>Actions</Text>
+            <View style={styles.actionsContainer}>
+              {canWithdraw && (
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.withdrawButton, { borderColor: colors.semantic.error[200] }]}
+                  onPress={handleWithdraw}
+                  disabled={withdrawing}
+                  activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+                >
+                  {withdrawing ? (
+                    <ActivityIndicator size="small" color={colors.semantic.error[600]} />
+                  ) : (
+                    <Ionicons name="close-circle-outline" size={20} color={colors.semantic.error[600]} />
+                  )}
+                  <Text style={[styles.actionButtonText, { color: colors.semantic.error[600] }]}>
+                    {withdrawing ? 'Withdrawing...' : 'Withdraw Application'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity
+                style={[styles.actionButton, styles.viewJobActionButton, { borderColor: colors.border.light }]}
+                onPress={() => router.push(`/(stack)/job/${application.jobId}` as any)}
+                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+              >
+                <Ionicons name="briefcase-outline" size={20} color={colors.primary[600]} />
+                <Text style={[styles.actionButtonText, { color: colors.primary[600] }]}>View Job</Text>
+              </TouchableOpacity>
+
+              {isJobSeeker && (
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.contactButton, { borderColor: colors.border.light }]}
+                  onPress={handleContactEmployer}
+                  activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+                >
+                  <Ionicons name="mail-outline" size={20} color={colors.text.secondary} />
+                  <Text style={[styles.actionButtonText, { color: colors.text.secondary }]}>
+                    Contact Employer
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </Card>
-        )}
-
-        {/* Resume */}
-        <ResumeViewer resumeUrl={application.resume} resumeName="Resume.pdf" />
-
-        {/* Interview Details */}
-        {application.status === 'interview' && (
-          <InterviewDetails
-            date={application.interview?.date}
-            time={application.interview?.time}
-            location={application.interview?.location}
-            type={application.interview?.type}
-            notes={application.interview?.notes}
-            meetingLink={application.interview?.meetingLink}
-          />
-        )}
-
-        {/* Feedback */}
-        {(application.feedback || application.rating || application.notes) && (
-          <FeedbackDisplay
-            feedback={application.feedback}
-            rating={application.rating}
-            notes={application.notes}
-          />
-        )}
-
-        {/* Actions */}
-        <Card style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Actions</Text>
-          <View style={styles.actionsContainer}>
-            {canWithdraw && (
-              <TouchableOpacity
-                style={[styles.actionButton, styles.withdrawButton, { borderColor: colors.semantic.error[200] }]}
-                onPress={handleWithdraw}
-                disabled={withdrawing}
-                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
-              >
-                {withdrawing ? (
-                  <ActivityIndicator size="small" color={colors.semantic.error[600]} />
-                ) : (
-                  <Ionicons name="close-circle-outline" size={20} color={colors.semantic.error[600]} />
-                )}
-                <Text style={[styles.actionButtonText, { color: colors.semantic.error[600] }]}>
-                  {withdrawing ? 'Withdrawing...' : 'Withdraw Application'}
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity
-              style={[styles.actionButton, styles.viewJobActionButton, { borderColor: colors.border.light }]}
-              onPress={() => router.push(`/(stack)/job/${application.jobId}` as any)}
-              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
-            >
-              <Ionicons name="briefcase-outline" size={20} color={colors.primary[600]} />
-              <Text style={[styles.actionButtonText, { color: colors.primary[600] }]}>View Job</Text>
-            </TouchableOpacity>
-
-            {isJobSeeker && (
-              <TouchableOpacity
-                style={[styles.actionButton, styles.contactButton, { borderColor: colors.border.light }]}
-                onPress={handleContactEmployer}
-                activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
-              >
-                <Ionicons name="mail-outline" size={20} color={colors.text.secondary} />
-                <Text style={[styles.actionButtonText, { color: colors.text.secondary }]}>
-                  Contact Employer
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </Card>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -368,7 +403,37 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    paddingBottom: Spacing.xl,
+  },
+  headerActions: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.lg }),
+    paddingBottom: Spacing.sm,
+    zIndex: 10,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  headerButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.background.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.sm,
+  },
+  content: {
     padding: Spacing.lg,
+    paddingTop: Platform.select({ ios: 60, android: 70 }),
   },
   loadingContainer: {
     flex: 1,
@@ -377,7 +442,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
   sectionCard: {
@@ -385,7 +450,7 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderRadius: BorderRadius.xl,
     backgroundColor: Colors.background.primary,
-    ...Shadows.sm,
+    ...Shadows.md,
   },
   statusHeader: {
     flexDirection: 'row',

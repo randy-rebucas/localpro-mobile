@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PhotoUpload } from '../../../components/marketplace';
-import { BorderRadius, Colors, Spacing } from '../../../constants/theme';
+import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../../constants/theme';
 import { useThemeColors } from '../../../hooks/use-theme';
 
 interface Category {
@@ -221,20 +221,24 @@ export default function CreateServiceScreen() {
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        {/* Header Actions */}
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => router.back()}
+            activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+          >
             <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create Service</Text>
-          <View style={styles.placeholder} />
         </View>
 
         <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContent}
         >
-          <View style={styles.content}>
+          <View style={[styles.content, { paddingTop: Platform.select({ ios: 60, android: 70 }) }]}>
             {/* Basic Information */}
             <Card style={styles.card}>
               <Text style={styles.sectionTitle}>Basic Information</Text>
@@ -494,42 +498,47 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
-  header: {
+  headerActions: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    padding: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.lg }),
+    paddingBottom: Spacing.sm,
+    zIndex: 10,
   },
-  backButton: {
+  headerButton: {
     width: 40,
     height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-  },
-  placeholder: {
-    width: 40,
+    ...Shadows.sm,
   },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: Spacing.xl,
   },
   content: {
     padding: Spacing.lg,
   },
   card: {
     marginBottom: Spacing.md,
+    ...Shadows.md,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
     color: Colors.text.primary,
     marginBottom: Spacing.md,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   label: {
     fontSize: 14,

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { BorderRadius, Colors, Spacing } from '../../constants/theme';
+import { BorderRadius, Spacing } from '../../constants/theme';
 import { useThemeColors } from '../../hooks/use-theme';
 
 export type BookingStatus = 'pending' | 'confirmed' | 'in-progress' | 'completed' | 'cancelled';
