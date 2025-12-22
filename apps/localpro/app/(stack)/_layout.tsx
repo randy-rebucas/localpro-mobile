@@ -20,6 +20,8 @@ export default function StackLayout() {
             <Stack.Screen name="job" options={{ headerShown: false, title: "Job" }} />
             <Stack.Screen name="application" options={{ headerShown: false, title: "Application" }} />
             <Stack.Screen name="company" options={{ headerShown: false, title: "Company" }} />
+            <Stack.Screen name="favorites" options={{ headerShown: false, title: "Favorites" }} />
+            <Stack.Screen name="notifications" options={{ headerShown: false, title: "Notifications" }} />
         </Stack>
     );
 }

@@ -59,7 +59,6 @@ export default function JobApplicationsScreen() {
   const [showInterviewScheduler, setShowInterviewScheduler] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
-  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   const statusFilters = ['all', 'pending', 'reviewed', 'interview', 'accepted', 'rejected'];
 

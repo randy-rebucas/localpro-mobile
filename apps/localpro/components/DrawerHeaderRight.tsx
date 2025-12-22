@@ -344,7 +344,7 @@ export function DrawerHeaderRight() {
                         if (packageType === 'marketplace') {
                           router.push('/(app)/(tabs)');
                         } else if (packageType === 'job-board') {
-                          router.push('/(app)/(tabs)');
+                          router.push('/(app)/(tabs)/browse-jobs');
                         } else if (packageType === 'finance') {
                           router.push('/(app)/(tabs)/wallet');
                         } else if (packageType === 'academy') {

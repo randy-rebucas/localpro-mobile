@@ -180,7 +180,7 @@ export function CustomDrawerContent(props: any) {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => router.push('/(app)/(tabs)/favorites')}
+              onPress={() => router.push('/(stack)/favorites')}
             >
               <Ionicons name="star-outline" size={24} color={Colors.semantic.warning} />
               <Text style={styles.menuItemText}>Favorites</Text>
@@ -217,7 +217,7 @@ export function CustomDrawerContent(props: any) {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => router.push('/(app)/(tabs)/notifications-comm')}
+              onPress={() => router.push('/(stack)/notifications')}
             >
               <Ionicons name="notifications-outline" size={24} color={Colors.semantic.warning} />
               <Text style={styles.menuItemText}>Notifications</Text>
