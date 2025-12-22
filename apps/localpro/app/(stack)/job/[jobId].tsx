@@ -355,28 +355,42 @@ function JobDetailScreenContent() {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Header Actions */}
-        <View style={styles.headerActions}>
+        <View style={[styles.headerActions, { backgroundColor: Platform.select({ 
+          ios: 'rgba(255, 255, 255, 0.9)', // 90% opacity
+          android: 'rgba(255, 255, 255, 0.92)' // 92% opacity
+        }) }]}>
           <TouchableOpacity
-            style={styles.headerButton}
+            style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
             onPress={() => router.back()}
             activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
           >
-            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            <Ionicons name="arrow-back" size={26} color={colors.text.primary} />
           </TouchableOpacity>
           <View style={styles.headerRight}>
             <TouchableOpacity
-              style={styles.headerButton}
+              style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
               onPress={handleShare}
               activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
             >
-              <Ionicons name="share-outline" size={24} color={colors.text.primary} />
+              <Ionicons name="share-outline" size={26} color={colors.text.primary} />
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.headerButton}
+              style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
+              onPress={handleSaveJob}
+              activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+            >
+              <Ionicons
+                name={isSaved ? 'bookmark' : 'bookmark-outline'}
+                size={26}
+                color={isSaved ? colors.primary[600] : colors.text.secondary}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.headerButton, { backgroundColor: colors.background.primary }]}
               onPress={handleReportJob}
               activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
             >
-              <Ionicons name="flag-outline" size={24} color={colors.semantic.error[600]} />
+              <Ionicons name="flag-outline" size={26} color={colors.semantic.error[600]} />
             </TouchableOpacity>
           </View>
         </View>
@@ -1162,24 +1176,12 @@ function JobDetailScreenContent() {
 
       {/* Action Buttons */}
       <View style={[styles.actionBar, { backgroundColor: colors.background.primary, borderTopColor: colors.border.light }]}>
-        <TouchableOpacity
-          style={[styles.iconButton, { borderColor: colors.border.light }]}
-          onPress={handleSaveJob}
-          activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
-        >
-          <Ionicons
-            name={isSaved ? 'bookmark' : 'bookmark-outline'}
-            size={20}
-            color={isSaved ? colors.primary[600] : colors.text.secondary}
-          />
-        </TouchableOpacity>
         {isJobOwner ? (
           <TouchableOpacity
             style={[styles.applyButton, { backgroundColor: colors.secondary[600] }]}
             onPress={() => router.push(`/(stack)/job/${job.id}/applications` as any)}
             activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
           >
-            <Ionicons name="people-outline" size={18} color={Colors.text.inverse} style={{ marginRight: 6 }} />
             <Text style={styles.applyButtonText}>View Applicants</Text>
           </TouchableOpacity>
         ) : (
@@ -1247,7 +1249,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 0,
-    paddingBottom: Spacing['3xl'],
+    paddingBottom: Platform.select({ ios: Spacing['3xl'], android: Spacing['3xl'] + 8 }),
   },
   loadingContainer: {
     flex: 1,
@@ -1263,33 +1265,47 @@ const styles = StyleSheet.create({
   headerCard: {
     marginBottom: Spacing.md,
     padding: Spacing.lg,
-    borderRadius: BorderRadius.xl,
+    borderRadius: Platform.select({ ios: BorderRadius.xl, android: BorderRadius.lg }),
     backgroundColor: Colors.background.primary,
     ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
   },
   headerActions: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: Spacing.md,
-    zIndex: 10,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    paddingTop: Platform.select({ ios: Spacing.lg, android: Spacing.xl }),
+    ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
+    borderBottomWidth: Platform.select({ ios: 0.5, android: 1 }),
+    borderBottomColor: Colors.border.light,
   },
   headerRight: {
     flexDirection: 'row',
     gap: Spacing.sm,
   },
   headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.background.primary,
+    width: Platform.select({ ios: 48, android: 48 }),
+    height: Platform.select({ ios: 48, android: 48 }),
+    borderRadius: Platform.select({ ios: 24, android: 24 }),
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.md,
+    ...Shadows.lg,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.lg.elevation,
+      },
+    }),
   },
   headerTop: {
     flexDirection: 'row',
@@ -1303,45 +1319,45 @@ const styles = StyleSheet.create({
     gap: 4,
     backgroundColor: Colors.primary[50],
     borderRadius: BorderRadius.full,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderWidth: 1,
+    paddingHorizontal: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
+    paddingVertical: Platform.select({ ios: 4, android: 5 }),
+    borderWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderColor: Colors.primary[200],
   },
   featuredBadgeText: {
-    fontSize: 11,
+    fontSize: Platform.select({ ios: 11, android: 10 }),
     fontWeight: Typography.fontWeight.semibold,
     color: Colors.primary[600],
     fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   statusBadge: {
     borderRadius: BorderRadius.full,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
+    paddingHorizontal: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
+    paddingVertical: Platform.select({ ios: 4, android: 5 }),
   },
   statusBadgeText: {
-    fontSize: 11,
+    fontSize: Platform.select({ ios: 11, android: 10 }),
     fontWeight: Typography.fontWeight.semibold,
     fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   jobTitle: {
-    fontSize: 28,
+    fontSize: Platform.select({ ios: 28, android: 26 }),
     fontWeight: Typography.fontWeight.bold,
-    lineHeight: 36,
+    lineHeight: Platform.select({ ios: 36, android: 34 }),
     color: Colors.text.primary,
     marginBottom: Spacing.xs,
     fontFamily: Typography.fontFamily?.bold || 'System',
   },
   companyName: {
-    fontSize: 18,
+    fontSize: Platform.select({ ios: 18, android: 17 }),
     fontWeight: Typography.fontWeight.semibold,
-    lineHeight: 24,
+    lineHeight: Platform.select({ ios: 24, android: 23 }),
     marginBottom: Spacing.xs,
     fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   companyIndustry: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: Platform.select({ ios: 14, android: 13 }),
+    lineHeight: Platform.select({ ios: 20, android: 19 }),
     marginBottom: Spacing.xs,
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
@@ -1358,22 +1374,22 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   metaText: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: Platform.select({ ios: 14, android: 13 }),
+    lineHeight: Platform.select({ ios: 20, android: 19 }),
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
   remoteBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
+    paddingHorizontal: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
+    paddingVertical: Platform.select({ ios: 4, android: 5 }),
     borderRadius: BorderRadius.full,
-    borderWidth: 1,
+    borderWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderColor: Colors.primary[200],
   },
   remoteText: {
-    fontSize: 12,
+    fontSize: Platform.select({ ios: 12, android: 11 }),
     fontWeight: Typography.fontWeight.semibold,
     fontFamily: Typography.fontFamily?.semibold || 'System',
   },
@@ -1383,38 +1399,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: Spacing.sm,
     paddingTop: Spacing.md,
-    borderTopWidth: 1,
+    borderTopWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderTopColor: Colors.border.light,
   },
   salaryText: {
-    fontSize: 18,
+    fontSize: Platform.select({ ios: 18, android: 17 }),
     fontWeight: Typography.fontWeight.bold,
-    lineHeight: 24,
+    lineHeight: Platform.select({ ios: 24, android: 23 }),
     fontFamily: Typography.fontFamily?.bold || 'System',
   },
   postedText: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: Platform.select({ ios: 12, android: 11 }),
+    lineHeight: Platform.select({ ios: 16, android: 15 }),
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
   sectionCard: {
     marginBottom: Spacing.md,
     padding: Spacing.lg,
-    borderRadius: BorderRadius.xl,
+    borderRadius: Platform.select({ ios: BorderRadius.xl, android: BorderRadius.lg }),
     backgroundColor: Colors.background.primary,
     ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: Platform.select({ ios: 18, android: 17 }),
     fontWeight: Typography.fontWeight.semibold,
-    lineHeight: 24,
+    lineHeight: Platform.select({ ios: 24, android: 23 }),
     color: Colors.text.primary,
     marginBottom: Spacing.md,
     fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   descriptionText: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: Platform.select({ ios: 15, android: 14 }),
+    lineHeight: Platform.select({ ios: 22, android: 21 }),
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
   requirementItem: {
@@ -1425,8 +1446,8 @@ const styles = StyleSheet.create({
   },
   requirementText: {
     flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: Platform.select({ ios: 14, android: 13 }),
+    lineHeight: Platform.select({ ios: 20, android: 19 }),
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
   detailRow: {
@@ -1435,44 +1456,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.sm,
     paddingBottom: Spacing.sm,
-    borderBottomWidth: 1,
+    borderBottomWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderBottomColor: Colors.border.light,
   },
   detailLabel: {
-    fontSize: 14,
+    fontSize: Platform.select({ ios: 14, android: 13 }),
     fontWeight: Typography.fontWeight.medium,
     fontFamily: Typography.fontFamily?.medium || 'System',
   },
   detailValue: {
-    fontSize: 14,
+    fontSize: Platform.select({ ios: 14, android: 13 }),
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
   salaryDetailText: {
-    fontSize: 20,
+    fontSize: Platform.select({ ios: 20, android: 19 }),
     fontWeight: Typography.fontWeight.bold,
-    lineHeight: 28,
+    lineHeight: Platform.select({ ios: 28, android: 27 }),
     marginBottom: Spacing.xs,
     fontFamily: Typography.fontFamily?.bold || 'System',
   },
   salaryPeriodText: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: Platform.select({ ios: 14, android: 13 }),
+    lineHeight: Platform.select({ ios: 20, android: 19 }),
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
   actionBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    justifyContent: 'center',
     padding: Spacing.lg,
+    paddingBottom: Platform.select({ ios: Spacing.lg, android: Spacing.lg + 4 }),
     borderTopWidth: Platform.select({ ios: 1, android: 1.5 }),
     ...Shadows.md,
+    ...Platform.select({
+      android: {
+        elevation: Shadows.md.elevation,
+      },
+    }),
   },
   companySection: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
     marginBottom: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
   },
   companyInfo: {
     flex: 1,
@@ -1484,21 +1511,21 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   companyLinkText: {
-    fontSize: 13,
+    fontSize: Platform.select({ ios: 13, android: 12 }),
     fontWeight: Typography.fontWeight.semibold,
     fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   applicationStatusContainer: {
     marginTop: Spacing.md,
     paddingTop: Spacing.md,
-    borderTopWidth: 1,
+    borderTopWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderTopColor: Colors.border.light,
   },
   salaryInfo: {
     flex: 1,
   },
   salaryNote: {
-    fontSize: 12,
+    fontSize: Platform.select({ ios: 12, android: 11 }),
     marginTop: 2,
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
@@ -1507,50 +1534,65 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.xs,
     marginTop: Spacing.sm,
-    padding: Spacing.sm,
-    borderRadius: BorderRadius.md,
+    padding: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
+    borderRadius: Platform.select({ ios: BorderRadius.md, android: BorderRadius.sm }),
     backgroundColor: Colors.background.secondary,
   },
   salaryBadgeText: {
-    fontSize: 13,
+    fontSize: Platform.select({ ios: 13, android: 12 }),
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
   instructionsContainer: {
     marginTop: Spacing.sm,
   },
   instructionsText: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: Platform.select({ ios: 14, android: 13 }),
+    lineHeight: Platform.select({ ios: 20, android: 19 }),
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
   iconButton: {
-    width: 48,
-    height: 48,
+    width: Platform.select({ ios: 48, android: 48 }),
+    height: Platform.select({ ios: 48, android: 48 }),
     borderRadius: BorderRadius.full,
     borderWidth: Platform.select({ ios: 1, android: 1.5 }),
     backgroundColor: Colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    ...Platform.select({
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   applyButton: {
     flex: 1,
-    height: 48,
+    height: Platform.select({ ios: 48, android: 50 }),
     borderRadius: BorderRadius.full,
     justifyContent: 'center',
     alignItems: 'center',
+    ...Platform.select({
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   content: {
-    padding: Spacing.lg,
-    paddingTop: Spacing.md,
+    padding: Platform.select({ ios: Spacing.lg, android: Spacing.lg }),
+    paddingTop: Platform.select({ ios: Spacing.md, android: Spacing.md + 2 }),
   },
   applyButtonDisabled: {
     opacity: 0.6,
   },
   applyButtonText: {
-    fontSize: 16,
+    fontSize: Platform.select({ ios: 16, android: 15 }),
     fontWeight: Typography.fontWeight.semibold,
     color: Colors.text.inverse,
     fontFamily: Typography.fontFamily?.semibold || 'System',
+    ...Platform.select({
+      android: {
+        letterSpacing: 0.3,
+      },
+    }),
   },
   modalContainer: {
     flex: 1,
@@ -1561,7 +1603,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   subsectionTitle: {
-    fontSize: 15,
+    fontSize: Platform.select({ ios: 15, android: 14 }),
     fontWeight: Typography.fontWeight.semibold,
     marginBottom: Spacing.sm,
     fontFamily: Typography.fontFamily?.semibold || 'System',
@@ -1573,13 +1615,13 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   tag: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 6,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
+    paddingHorizontal: Platform.select({ ios: Spacing.sm, android: Spacing.sm + 2 }),
+    paddingVertical: Platform.select({ ios: 6, android: 7 }),
+    borderRadius: Platform.select({ ios: BorderRadius.md, android: BorderRadius.sm }),
+    borderWidth: Platform.select({ ios: 1, android: 1.5 }),
   },
   tagText: {
-    fontSize: 12,
+    fontSize: Platform.select({ ios: 12, android: 11 }),
     fontWeight: Typography.fontWeight.medium,
     fontFamily: Typography.fontFamily?.medium || 'System',
   },
@@ -1589,15 +1631,15 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   employerAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: Platform.select({ ios: 48, android: 48 }),
+    height: Platform.select({ ios: 48, android: 48 }),
+    borderRadius: Platform.select({ ios: 24, android: 24 }),
     backgroundColor: Colors.background.secondary,
   },
   employerAvatarPlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: Platform.select({ ios: 48, android: 48 }),
+    height: Platform.select({ ios: 48, android: 48 }),
+    borderRadius: Platform.select({ ios: 24, android: 24 }),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1605,14 +1647,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   employerName: {
-    fontSize: 16,
+    fontSize: Platform.select({ ios: 16, android: 15 }),
     fontWeight: Typography.fontWeight.semibold,
     marginBottom: Spacing.xs,
     fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   employerBio: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: Platform.select({ ios: 14, android: 13 }),
+    lineHeight: Platform.select({ ios: 20, android: 19 }),
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
   analyticsContainer: {
@@ -1620,7 +1662,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     marginTop: Spacing.md,
     paddingTop: Spacing.md,
-    borderTopWidth: 1,
+    borderTopWidth: Platform.select({ ios: 1, android: 1.5 }),
     borderTopColor: Colors.border.light,
   },
   analyticsItem: {
@@ -1628,12 +1670,12 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   analyticsValue: {
-    fontSize: 20,
+    fontSize: Platform.select({ ios: 20, android: 19 }),
     fontWeight: Typography.fontWeight.bold,
     fontFamily: Typography.fontFamily?.bold || 'System',
   },
   analyticsLabel: {
-    fontSize: 12,
+    fontSize: Platform.select({ ios: 12, android: 11 }),
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
   sectionHeader: {
@@ -1648,7 +1690,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   viewAllText: {
-    fontSize: 14,
+    fontSize: Platform.select({ ios: 14, android: 13 }),
     fontWeight: Typography.fontWeight.semibold,
     fontFamily: Typography.fontFamily?.semibold || 'System',
   },
@@ -1662,15 +1704,15 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   applicationAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: Platform.select({ ios: 40, android: 40 }),
+    height: Platform.select({ ios: 40, android: 40 }),
+    borderRadius: Platform.select({ ios: 20, android: 20 }),
     backgroundColor: Colors.background.secondary,
   },
   applicationAvatarPlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: Platform.select({ ios: 40, android: 40 }),
+    height: Platform.select({ ios: 40, android: 40 }),
+    borderRadius: Platform.select({ ios: 20, android: 20 }),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1678,18 +1720,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   applicationName: {
-    fontSize: 15,
+    fontSize: Platform.select({ ios: 15, android: 14 }),
     fontWeight: Typography.fontWeight.semibold,
     marginBottom: 2,
     fontFamily: Typography.fontFamily?.semibold || 'System',
   },
   applicationDate: {
-    fontSize: 12,
+    fontSize: Platform.select({ ios: 12, android: 11 }),
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
   applicationCoverLetterPreview: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: Platform.select({ ios: 13, android: 12 }),
+    lineHeight: Platform.select({ ios: 18, android: 17 }),
     marginTop: Spacing.xs,
     fontFamily: Typography.fontFamily?.regular || 'System',
   },
@@ -1700,7 +1742,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   interviewScheduleText: {
-    fontSize: 12,
+    fontSize: Platform.select({ ios: 12, android: 11 }),
     fontWeight: Typography.fontWeight.medium,
     fontFamily: Typography.fontFamily?.medium || 'System',
   },
