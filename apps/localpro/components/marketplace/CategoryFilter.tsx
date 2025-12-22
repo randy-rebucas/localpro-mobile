@@ -23,13 +23,25 @@ export function CategoryFilter({
 }: CategoryFilterProps) {
   const colors = useThemeColors();
 
+  // Filter out invalid categories and ensure unique IDs
+  const validCategories = React.useMemo(() => {
+    const seen = new Set<string>();
+    return categories.filter((category) => {
+      if (!category || !category.id || !category.name || seen.has(category.id)) {
+        return false;
+      }
+      seen.add(category.id);
+      return true;
+    });
+  }, [categories]);
+
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.categoryContainer}
     >
-      {categories.map((category) => (
+      {validCategories.map((category) => (
         <TouchableOpacity
           key={category.id}
           style={[

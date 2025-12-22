@@ -174,5 +174,48 @@ export const API_ENDPOINTS = {
       reviewSentiment: '/api/ai/marketplace/review-sentiment',
     },
   },
+  // Jobs endpoints
+  jobs: {
+    // Public endpoints (no auth required)
+    public: {
+      // Get job categories
+      categories: '/api/job-categories',
+      // Get all jobs with filters
+      list: '/api/jobs',
+      // Search jobs (full-text search)
+      search: '/api/jobs/search',
+      // Get job details by ID
+      getById: (id: string) => `/api/jobs/${id}`,
+    },
+    // Job management endpoints (auth required, provider/admin role)
+    management: {
+      // Create job posting
+      create: '/api/jobs',
+      // Update job posting
+      update: (id: string) => `/api/jobs/${id}`,
+      // Delete job posting
+      delete: (id: string) => `/api/jobs/${id}`,
+      // Upload company logo
+      uploadLogo: (id: string) => `/api/jobs/${id}/logo`,
+      // Get my jobs (employer's job postings)
+      myJobs: '/api/jobs/my-jobs',
+    },
+    // Application endpoints (auth required)
+    applications: {
+      // Apply for a job
+      apply: (id: string) => `/api/jobs/${id}/apply`,
+      // Get my applications (applicant's applications)
+      myApplications: '/api/jobs/my-applications',
+      // Get job applications (employer view, provider/admin role)
+      getByJob: (id: string) => `/api/jobs/${id}/applications`,
+      // Update application status (employer/admin role)
+      updateStatus: (id: string, applicationId: string) => `/api/jobs/${id}/applications/${applicationId}/status`,
+    },
+    // Statistics endpoints (auth required, provider/admin role)
+    statistics: {
+      // Get job statistics
+      getByJob: (id: string) => `/api/jobs/${id}/stats`,
+    },
+  },
 } as const;
 

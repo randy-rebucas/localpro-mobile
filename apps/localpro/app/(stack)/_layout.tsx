@@ -16,6 +16,10 @@ export default function StackLayout() {
             <Stack.Screen name="booking" options={{ headerShown: false, title: "Booking" }} />
             <Stack.Screen name="provider" options={{ headerShown: false, title: "Provider" }} />
             <Stack.Screen name="service" options={{ headerShown: false, title: "Service" }} />
+            <Stack.Screen name="jobs" options={{ headerShown: false, title: "Jobs" }} />
+            <Stack.Screen name="job" options={{ headerShown: false, title: "Job" }} />
+            <Stack.Screen name="application" options={{ headerShown: false, title: "Application" }} />
+            <Stack.Screen name="company" options={{ headerShown: false, title: "Company" }} />
         </Stack>
     );
 }

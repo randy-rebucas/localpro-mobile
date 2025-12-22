@@ -1,19 +1,40 @@
 import { Ionicons } from '@expo/vector-icons';
+import { JobBoardService } from '@localpro/job-board';
+import type { Job, JobApplication } from '@localpro/types';
 import { Card } from '@localpro/ui';
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BorderRadius, Colors, Spacing } from '../../../constants/theme';
+import {
+  ApplicationStatusBadge,
+} from '../../../components/job-board';
+import { BorderRadius, Colors, Spacing, Typography } from '../../../constants/theme';
 import { useThemeColors } from '../../../hooks/use-theme';
 
 type ApplicationStatus = 'all' | 'pending' | 'reviewed' | 'interview' | 'accepted' | 'rejected';
 
+type ApplicationWithJob = JobApplication & {
+  job?: Job;
+};
+
 export default function ApplicationsTabScreen() {
   const [activeFilter, setActiveFilter] = useState<ApplicationStatus>('all');
+  const [applications, setApplications] = useState<ApplicationWithJob[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const colors = useThemeColors();
-
-  // Mock applications data - replace with actual API call
-  const applications: any[] = [];
+  const router = useRouter();
 
   const filters: { key: ApplicationStatus; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
     { key: 'all', label: 'All', icon: 'list-outline' },
@@ -24,42 +45,98 @@ export default function ApplicationsTabScreen() {
     { key: 'rejected', label: 'Rejected', icon: 'close-circle-outline' },
   ];
 
+  useEffect(() => {
+    fetchApplications();
+  }, [activeFilter]);
+
+  const fetchApplications = async () => {
+    try {
+      setLoading(true);
+      const filters: Record<string, any> = {};
+      if (activeFilter !== 'all') {
+        filters.status = activeFilter;
+      }
+      const apps = await JobBoardService.getApplications();
+      
+      // Ensure apps is an array
+      if (!Array.isArray(apps)) {
+        console.warn('getApplications returned non-array:', apps);
+        setApplications([]);
+        return;
+      }
+      
+      // Fetch job details for each application
+      const appsWithJobs = await Promise.all(
+        apps.map(async (app) => {
+          try {
+            const job = await JobBoardService.getJob(app.jobId);
+            return { ...app, job: job || undefined };
+          } catch {
+            return { ...app, job: undefined };
+          }
+        })
+      );
+      
+      setApplications(appsWithJobs);
+    } catch (err: any) {
+      console.error('Error fetching applications:', err);
+      Alert.alert('Error', err?.message || 'Failed to load applications');
+      setApplications([]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchApplications();
+  }, [activeFilter]);
+
+  const handleWithdraw = useCallback(async (applicationId: string, jobId: string) => {
+    Alert.alert(
+      'Withdraw Application',
+      'Are you sure you want to withdraw this application? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Withdraw',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await JobBoardService.updateApplicationStatus(jobId, applicationId, 'rejected');
+              Alert.alert('Success', 'Application withdrawn successfully');
+              await fetchApplications();
+            } catch (err: any) {
+              Alert.alert('Error', err?.message || 'Failed to withdraw application');
+            }
+          },
+        },
+      ]
+    );
+  }, []);
+
+  const handleViewDetails = useCallback((applicationId: string) => {
+    router.push(`/(stack)/application/${applicationId}` as any);
+  }, [router]);
+
+  const handleBrowseJobs = useCallback(() => {
+    router.push('/(app)/(tabs)/index' as any);
+  }, [router]);
+
   const filteredApplications = activeFilter === 'all' 
     ? applications 
     : applications.filter(app => app.status === activeFilter);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return colors.semantic.warning;
-      case 'reviewed':
-        return colors.primary[600];
-      case 'interview':
-        return colors.secondary[600];
-      case 'accepted':
-        return colors.secondary[600];
-      case 'rejected':
-        return colors.semantic.error;
-      default:
-        return colors.text.secondary;
+  const formatSalaryRange = (salary?: Job['salary']) => {
+    if (!salary || salary.min == null || salary.max == null || !salary.currency) {
+      return 'Salary not disclosed';
     }
-  };
-
-  const getStatusIcon = (status: string): keyof typeof Ionicons.glyphMap => {
-    switch (status) {
-      case 'pending':
-        return 'time-outline';
-      case 'reviewed':
-        return 'eye-outline';
-      case 'interview':
-        return 'calendar-outline';
-      case 'accepted':
-        return 'checkmark-circle-outline';
-      case 'rejected':
-        return 'close-circle-outline';
-      default:
-        return 'help-circle-outline';
-    }
+    const formatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
+    const min = formatter.format(Math.min(salary.min, salary.max));
+    const max = formatter.format(Math.max(salary.min, salary.max));
+    const period = salary.period ? ` / ${salary.period}` : '';
+    return `${salary.currency}${min} - ${salary.currency}${max}${period}`;
   };
 
   const formatDate = (date: Date | string): string => {
@@ -92,7 +169,11 @@ export default function ApplicationsTabScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary[600]} />}
+      >
         <View style={styles.content}>
           {/* Header */}
           <View style={styles.header}>
@@ -137,25 +218,21 @@ export default function ApplicationsTabScreen() {
           </ScrollView>
 
           {/* Applications List */}
-          {filteredApplications.length > 0 ? (
+          {loading && applications.length === 0 ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary[600]} />
+              <Text style={[styles.loadingText, { color: colors.text.secondary }]}>Loading applications...</Text>
+            </View>
+          ) : filteredApplications.length > 0 ? (
             <View style={styles.applicationsList}>
               {filteredApplications.map((application) => (
                 <Card key={application.id} style={styles.applicationCard}>
                   <View style={styles.applicationHeader}>
                     <View style={styles.applicationHeaderLeft}>
-                      <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(application.status)}15` }]}>
-                        <Ionicons
-                          name={getStatusIcon(application.status)}
-                          size={16}
-                          color={getStatusColor(application.status)}
-                        />
-                        <Text style={[styles.statusText, { color: getStatusColor(application.status) }]}>
-                          {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
-                        </Text>
-                      </View>
+                      <ApplicationStatusBadge status={application.status} />
                     </View>
-                    <Text style={styles.applicationDate}>
-                      {formatDate(application.appliedAt || application.createdAt)}
+                    <Text style={[styles.applicationDate, { color: colors.text.tertiary }]}>
+                      {formatDate(application.appliedAt)}
                     </Text>
                   </View>
 
@@ -190,21 +267,29 @@ export default function ApplicationsTabScreen() {
                       )}
                     </View>
                     {application.job?.salary && (
-                      <Text style={styles.salary}>
-                        {application.job.salary.currency} {application.job.salary.min.toLocaleString()} - {application.job.salary.max.toLocaleString()}
+                      <Text style={[styles.salary, { color: colors.secondary[600] }]}>
+                        {formatSalaryRange(application.job.salary)}
                       </Text>
                     )}
                   </View>
 
                   <View style={styles.applicationActions}>
-                    <TouchableOpacity style={styles.actionButton}>
-                      <Text style={styles.actionButtonText}>View Details</Text>
+                    <TouchableOpacity
+                      style={[styles.actionButton, { backgroundColor: colors.primary[50], borderColor: colors.primary[200] }]}
+                      onPress={() => handleViewDetails(application.id)}
+                      activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
+                    >
+                      <Text style={[styles.actionButtonText, { color: colors.primary[600] }]}>View Details</Text>
                     </TouchableOpacity>
                     {application.status === 'pending' && (
-                      <TouchableOpacity 
-                        style={[styles.actionButton, styles.withdrawButton]}
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.withdrawButton, { backgroundColor: colors.background.secondary, borderColor: colors.border.light }]}
+                        onPress={() => handleWithdraw(application.id, application.jobId)}
+                        activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                       >
-                        <Text style={[styles.actionButtonText, styles.withdrawButtonText]}>Withdraw</Text>
+                        <Text style={[styles.actionButtonText, styles.withdrawButtonText, { color: colors.semantic.error[600] }]}>
+                          Withdraw
+                        </Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -215,7 +300,7 @@ export default function ApplicationsTabScreen() {
             <Card style={styles.emptyCard}>
               <View style={styles.emptyState}>
                 <Ionicons 
-                  name={activeFilter === 'all' ? 'document-text-outline' : getStatusIcon(activeFilter)} 
+                  name={activeFilter === 'all' ? 'document-text-outline' : filters.find(f => f.key === activeFilter)?.icon || 'document-text-outline'} 
                   size={64} 
                   color={colors.text.tertiary} 
                 />
@@ -227,8 +312,10 @@ export default function ApplicationsTabScreen() {
                     ? 'Your job applications will appear here when you apply for positions'
                     : `You don't have any ${filters.find(f => f.key === activeFilter)?.label.toLowerCase()} applications at the moment`}
                 </Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.browseJobsButton, { backgroundColor: colors.primary[600] }]}
+                  onPress={handleBrowseJobs}
+                  activeOpacity={Platform.select({ ios: 0.7, android: 0.8 })}
                 >
                   <Ionicons name="search-outline" size={20} color={colors.text.inverse} />
                   <Text style={styles.browseJobsButtonText}>Browse Jobs</Text>
@@ -419,6 +506,17 @@ const styles = StyleSheet.create({
   browseJobsButtonText: {
     color: Colors.text.inverse,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
+    fontFamily: Typography.fontFamily?.semibold || 'System',
+  },
+  loadingContainer: {
+    padding: Spacing['3xl'],
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.md,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontFamily: Typography.fontFamily?.regular || 'System',
   },
 });

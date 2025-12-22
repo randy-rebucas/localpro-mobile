@@ -4,16 +4,22 @@ export interface Job {
   description: string;
   company: string;
   location: string;
-  type: 'full-time' | 'part-time' | 'contract' | 'freelance';
+  type: 'full-time' | 'part-time' | 'contract' | 'freelance' | 'internship' | 'temporary';
   salary?: {
     min: number;
     max: number;
     currency: string;
+    period?: string;
   };
-  requirements: string[];
+  experienceLevel?: 'entry' | 'junior' | 'mid' | 'senior' | 'lead' | 'executive';
+  remote?: boolean;
+  categoryId?: string;
+  featured?: boolean;
+  nearby?: boolean;
+  requirements?: string[];
   postedBy: string;
-  postedAt: Date;
-  expiresAt?: Date;
+  postedAt: string;
+  expiresAt?: string;
   status: 'open' | 'closed' | 'filled';
 }
 
